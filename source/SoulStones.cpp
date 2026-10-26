@@ -497,7 +497,7 @@ namespace SoulStones
 			}
 			if (weapon && any && settings::stones::weaponGlow && bestTier >= 0 && g_t.tiers[bestTier].glow)
 			{
-				out.push_back({ g_t.tiers[bestTier].glow, 0.0F, 0, 0 });
+				out.insert(out.begin(), Want{ g_t.tiers[bestTier].glow, 0.0F, 0, 0 });   // first AND costliest: whichever the game reads
 			}
 			return out;
 		}
