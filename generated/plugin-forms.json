@@ -417,6 +417,38 @@
       "vendorLists": 1
     }
   },
+  "runesmith": {
+    "npc": "0xC00",
+    "npcRef": "0xC01",
+    "quest": "0xC02",
+    "learnedGlobal": "0xBFA",
+    "faction": "0xBFF",
+    "chest": "0xBFC",
+    "chestRef": "0xBFE",
+    "topics": {
+      "Meet": {
+        "topic": "0xC04",
+        "info": "0xC05"
+      },
+      "Where": {
+        "topic": "0xC06",
+        "info": "0xC07"
+      },
+      "Learned": {
+        "topic": "0xC08",
+        "info": "0xC09"
+      },
+      "Socket": {
+        "topic": "0xC0A",
+        "info": "0xC0B"
+      },
+      "Barter": {
+        "topic": "0xC0C",
+        "info": "0xC0D"
+      }
+    },
+    "home": "RiverwoodSleepingGiantInn at -314,4,13 (near XMarkerHeading)"
+  },
   "dll": [
     "NJCGO_Rank_crusader_A2: your shield bash on a target with a spell in hand casts Silenced (3 s)",
     "NJCGO_Rank_crusader_B2: a spell hit you block restores 10 magicka",

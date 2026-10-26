@@ -1,0 +1,41 @@
+{
+  "_comment": [
+    "Njordlinger Combat Gameplay Overhaul - the runesmith (PLAN.md phase 4 step 3, D22; Q28 DEFAULT set 2026-10-26 while the",
+    "owner slept, for Fable's review and the owner's word): Thorvar Stone-Speaker, a dragon-tongue scholar staying at the",
+    "Sleeping Giant Inn in Riverwood, below Bleak Falls Barrow's word wall. His quest in one line: learn a word of power at",
+    "any word wall and tell him. Then he sets and takes out soul stones (fee: one soul gem of the stone's tier) and sells",
+    "stones. Dialogue is text only (Fuz Ro D-oh shows it as subtitles); the plugin's text is English (as every ESP string of",
+    "this mod so far). tools/PluginBuild builds it."
+  ],
+  "npc": {
+    "name": "Thorvar Stone-Speaker",
+    "shortName": "Thorvar",
+    "template": "LCharBanditWizardNordM",
+    "race": "NordRace",
+    "class": "Citizen",
+    "outfit": "ClothesMageRobesOutfitNoHood",
+    "level": 10
+  },
+  "home": { "cell": "RiverwoodSleepingGiantInn", "near": ["XMarkerHeading", "Chair", "Bench"], "offset": [64, 0, 0] },
+  "quest": {
+    "name": "Words in Stone",
+    "stages": {
+      "10": "I met Thorvar Stone-Speaker at the Sleeping Giant Inn in Riverwood. He sets soul stones into gear, but only for one who has learned a word of power.",
+      "100": "Thorvar now sets and takes out my soul stones, for one soul gem of each stone's size."
+    },
+    "objective": "Learn a word of power at a word wall, then return to Thorvar"
+  },
+  "topics": [
+    { "id": "Meet", "prompt": "You carve words into stones?", "stage": "<10", "script": "TIF_NJCGO_RunesmithMeet",
+      "say": ["Words of the dragon tongue, set in soul stones. A sword that holds the word for fire burns what it strikes.", "But a word means nothing from a mouth that never spoke one. Learn a word of power at one of the old walls, then come back to me."] },
+    { "id": "Where", "prompt": "Where would I find a word of power?", "stage": "10", "learned": 0,
+      "say": ["On the walls in the old barrows. Bleak Falls Barrow, up the mountain from here, has one."] },
+    { "id": "Learned", "prompt": "I have learned a word of power.", "stage": "10", "learned": 1, "script": "TIF_NJCGO_RunesmithLearned",
+      "say": ["I can hear it in your breath. Good.", "Bring me your gear and your stones whenever you like. One soul gem of the stone's own size for each stone I set or take out."] },
+    { "id": "Socket", "prompt": "Set my soul stones.", "stage": ">=100", "socket": true,
+      "say": ["Show me what you carry."] },
+    { "id": "Barter", "prompt": "Do you have stones to sell?", "stage": ">=100", "script": "TIF_NJCGO_RunesmithBarter",
+      "say": ["A few. Have a look."] }
+  ],
+  "shopChest": { "name": "Thorvar's stones", "vendorStones": 8 }
+}

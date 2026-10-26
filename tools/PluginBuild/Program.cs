@@ -576,6 +576,12 @@ if (File.Exists(stonesPath))
 {
     StoneBuild.Run(mod, modKey, repo, JsonNode.Parse(File.ReadAllText(stonesPath))!, JsonNode.Parse(File.ReadAllText(schemePath))!,
         keywords, forms, stubs, approx, dllDone, MakeCondition, TabCount);
+    // Phase 4 step 3: the runesmith, his quest and dialogue (config/runesmith.json), after every stone record.
+    var runesmithPath = Path.Combine(repo, "config", "runesmith.json");
+    if (File.Exists(runesmithPath))
+    {
+        RunesmithBuild.Run(mod, modKey, repo, JsonNode.Parse(File.ReadAllText(runesmithPath))!, forms, keywords);
+    }
 }
 
 forms["dll"] =new JsonArray(dllDone.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());

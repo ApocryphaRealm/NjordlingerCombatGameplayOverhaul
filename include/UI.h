@@ -18,6 +18,9 @@ namespace UI
 		void __stdcall SoulStones();
 	}
 
+	// The runesmith's window (phase 4, D22): the Soul Stones page while his service is open.
+	void __stdcall RunesmithWindow();
+
 	// For the DevBench tool: the page's last status line.
 	const char* LastStatus();
 }

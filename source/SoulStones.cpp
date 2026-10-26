@@ -159,6 +159,19 @@ namespace SoulStones
 		std::atomic<bool> g_running{ false };
 		std::atomic<std::uint32_t> g_procsFired{ 0 };
 
+		// ---- the runesmith (runesmith.json; PLAN.md phase 4 step 3, D22) ------------------------------------------------
+		struct Runesmith
+		{
+			bool loaded = false;
+			RE::FormID npcRef = 0;
+			RE::FormID socketInfo = 0;
+			RE::TESGlobal* learned = nullptr;
+			float radius = 1500.0F;
+		};
+		Runesmith g_rs;
+		std::function<void(bool)> g_windowOpener;   // the settings page's runesmith window (UI registers it)
+		std::atomic<bool> g_checkDistance{ false };
+
 		RE::PlayerCharacter* Player() { return RE::PlayerCharacter::GetSingleton(); }
 
 		void SetResult(std::string a_text)
@@ -851,6 +864,31 @@ namespace SoulStones
 			}
 		}
 
+		// The runesmith's quest asks for a word of power learned at a wall: any word of the game's, ours excluded.
+		void UpdateLearnedGlobal()
+		{
+			if (!g_rs.learned) { return; }
+			auto* handler = RE::TESDataHandler::GetSingleton();
+			if (!handler || g_rs.learned->value >= 1.0F) { return; }
+			for (auto* w : handler->GetFormArray<RE::TESWordOfPower>())
+			{
+				if (!w || (w->formFlags & kWordLearned) == 0) { continue; }
+				bool clone = false;
+				for (const auto& ph : g_t.phrases) { for (auto* c : ph.cloneWords) { clone |= c == w; } }
+				if (clone) { continue; }
+				g_rs.learned->value = 1.0F;
+				logger::info("soul stones: a word of power is learned ({}) - the runesmith's quest can go on", w->GetName());
+				return;
+			}
+		}
+
+		void CloseService(const char* a_why)
+		{
+			if (!g_service.exchange(false)) { return; }
+			logger::info("soul stones: the runesmith's service closes ({})", a_why);
+			if (g_windowOpener) { g_windowOpener(false); }
+		}
+
 		// ---- the main-thread pass ----------------------------------------------------------------------------------------
 		void BuildSnapshot();
 
@@ -860,6 +898,7 @@ namespace SoulStones
 		{
 			if (!g_t.loaded) { return; }
 			g_knowledgeHash = KnowledgeHash();
+			UpdateLearnedGlobal();
 			g_equipped.clear();
 			std::vector<std::pair<RE::TESBoundObject*, RE::ExtraDataList*>> reequip;
 			ForEachInstance([&](RE::InventoryEntryData* e, RE::ExtraDataList* x) {
@@ -1320,7 +1359,27 @@ namespace SoulStones
 			}
 		};
 
+		class TopicSink : public RE::BSTEventSink<RE::TESTopicInfoEvent>
+		{
+		public:
+			RE::BSEventNotifyControl ProcessEvent(const RE::TESTopicInfoEvent* a_e, RE::BSTEventSource<RE::TESTopicInfoEvent>*) override
+			{
+				if (!a_e || !g_rs.loaded || a_e->topicInfoFormID != g_rs.socketInfo || a_e->type.get() != RE::TESTopicInfoEvent::TopicInfoEventType::kTopicEnd)
+				{
+					return RE::BSEventNotifyControl::kContinue;
+				}
+				Queue([]() {
+					g_service = true;
+					logger::info("soul stones: the runesmith opens his service");
+					BuildSnapshot();
+					if (g_windowOpener) { g_windowOpener(true); }
+				});
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+
 		HitSink g_hit;
+		TopicSink g_topic;
 		DeathSink g_death;
 		EquipSink g_equip;
 		MenuSink g_menu;
@@ -1332,6 +1391,15 @@ namespace SoulStones
 			while (g_running)
 			{
 				std::this_thread::sleep_for(std::chrono::milliseconds(250));
+				static int ticks = 0;
+				if (g_service && g_rs.loaded && ++ticks % 4 == 0)
+				{
+					Queue([]() {
+						auto* p = Player();
+						auto* ref = RE::TESForm::LookupByID<RE::TESObjectREFR>(g_rs.npcRef);
+						if (p && ref && (ref->GetParentCell() != p->GetParentCell() || ref->GetPosition().GetDistance(p->GetPosition()) > g_rs.radius)) { CloseService("you walked away"); }
+					});
+				}
 				const bool dirty = g_dirty.exchange(false);
 				const bool knowledge = g_knowledgeDirty.exchange(false);
 				if (!dirty && !knowledge) { continue; }
@@ -1442,8 +1510,26 @@ namespace SoulStones
 		{
 			if (w) { logger::info("soul stones: word {} {:08X} flags {:08X} (learned bit {}, unlocked bit {})", w->GetName(), w->GetFormID(), w->formFlags, (w->formFlags & kWordLearned) != 0, (w->formFlags & kWordUnlocked) != 0); }
 		}
+		try
+		{
+			std::ifstream rin(std::filesystem::path("Data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul/runesmith.json"));
+			if (rin)
+			{
+				const auto r = nlohmann::json::parse(rin);
+				auto* ref = Form<RE::TESObjectREFR>(r.value("npcRef", nlohmann::json()), "runesmith reference");
+				auto* info = Form<RE::TESForm>(r.value("socketInfo", nlohmann::json()), "runesmith line");
+				g_rs.learned = Form<RE::TESGlobal>(r.value("learnedGlobal", nlohmann::json()), "runesmith global");
+				g_rs.radius = r.value("serviceRadius", 1500.0F);
+				g_rs.npcRef = ref ? ref->GetFormID() : 0;
+				g_rs.socketInfo = info ? info->GetFormID() : 0;
+				g_rs.loaded = ref && info && g_rs.learned;
+			}
+		}
+		catch (const std::exception& e) { logger::warn("soul stones: runesmith.json is not valid ({}) - no runesmith", e.what()); }
+		logger::info("soul stones: runesmith {}", g_rs.loaded ? fmt::format("ref {:08X}, socketing line {:08X}", g_rs.npcRef, g_rs.socketInfo) : std::string("not loaded"));
 		if (auto* holder = RE::ScriptEventSourceHolder::GetSingleton())
 		{
+			holder->AddEventSink<RE::TESTopicInfoEvent>(&g_topic);
 			holder->AddEventSink<RE::TESHitEvent>(&g_hit);
 			holder->AddEventSink<RE::TESDeathEvent>(&g_death);
 			holder->AddEventSink<RE::TESEquipEvent>(&g_equip);
@@ -1582,9 +1668,12 @@ namespace SoulStones
 
 	void SetServiceOpen(bool a_open)
 	{
-		g_service = a_open;
+		if (!a_open) { Queue([]() { CloseService("closed"); BuildSnapshot(); }); return; }
+		g_service = true;
 		RequestRefresh();
 	}
+
+	void SetWindowOpener(std::function<void(bool)> a_fn) { g_windowOpener = std::move(a_fn); }
 
 	bool IsServiceOpen() { return g_service.load(); }
 

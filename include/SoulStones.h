@@ -29,6 +29,7 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -120,6 +121,9 @@ namespace SoulStones
 	// The runesmith opens the service (his dialogue after the quest); DevBench may open it for a test.
 	void SetServiceOpen(bool a_open);
 	bool IsServiceOpen();
+
+	// The settings page registers how its runesmith window opens and closes (true = open); called on the main thread.
+	void SetWindowOpener(std::function<void(bool)> a_fn);
 
 	// DevBench: gives the player stones and fee gems (tests only), and the live state as JSON.
 	void RequestGiveForTest(int a_word, int a_tier, int a_count);

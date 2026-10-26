@@ -38,6 +38,8 @@ namespace UI
 		std::string g_statusCopy;
 		std::string g_selectedSlider;
 		char g_perksTable[128]{};
+		bool g_inRunesmithWindow = false;               // the Soul Stones page drawn inside the runesmith's window
+		SKSEMenuFramework::Model::WindowInterface* g_runesmithWindow = nullptr;
 		bool g_perksTableSeeded = false;
 
 		void SetStatus(std::string a_text)
@@ -115,7 +117,10 @@ namespace UI
 				"igBeginChild_Str",
 				"igEndChild",
 				"igTextColoredV",
-				"igSmallButton"
+				"igSmallButton",
+				"igBegin",               // the runesmith's window
+				"igEnd",
+				"AddWindow"
 			};
 			for (const char* name : required)
 			{
@@ -259,6 +264,9 @@ namespace UI
 		SKSEMenuFramework::AddSectionItem("Quest Rewards", Pages::QuestRewards);
 		SKSEMenuFramework::AddSectionItem("Gear", Pages::Gear);
 		SKSEMenuFramework::AddSectionItem("Soul Stones", Pages::SoulStones);
+		// the runesmith's window: the same socketing page, opened when his "Set my soul stones." line ends
+		g_runesmithWindow = SKSEMenuFramework::AddWindow(RunesmithWindow, true);
+		::SoulStones::SetWindowOpener([](bool a_open) { if (g_runesmithWindow) { g_runesmithWindow->IsOpen = a_open; } });
 		logger::info("Registered the settings pages with the menu framework");
 	}
 
@@ -490,6 +498,25 @@ namespace UI
 		RenderButtons();
 	}
 
+	// The runesmith's window (D22): his socketing service, drawn with the Soul Stones page; closing it ends the service.
+	void __stdcall RunesmithWindow()
+	{
+		strings::Tick();
+		bool open = true;
+		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), &open, 0))
+		{
+			g_inRunesmithWindow = true;
+			Pages::SoulStones();
+			g_inRunesmithWindow = false;
+		}
+		ImGuiMCP::End();
+		if (!open)
+		{
+			if (g_runesmithWindow) { g_runesmithWindow->IsOpen = false; }
+			::SoulStones::SetServiceOpen(false);
+		}
+	}
+
 	// PLAN.md phase 4 step 4 (Q13): the socketing page - the eligible items, a slot list in word order, the stones you
 	// carry with what each does in THIS item, the phrase the slots spell (highlighted when you know it), take out.
 	// Every action is a request the main thread runs; the page draws the module's snapshot.
@@ -639,6 +666,7 @@ namespace UI
 		}
 		if (shown == 0) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoPhrases", "You have not learned all three words of any Shout yet.")); }
 
+		if (g_inRunesmithWindow) { return; }
 		ImGuiMCP::SeparatorText(strings::TR("NJ_SS_SettingsTitle", "Settings"));
 		if (ImGuiMCP::Toggle(strings::TR("NJ_SS_Enabled", "Soul stones"), &stones::enabled)) { ::SoulStones::RequestRecompose(); }
 		HelpMarker(strings::TR("NJ_SS_HelpEnabled", "Off: socketed stones do nothing and items show only their own enchantment; the stones stay in their slots."));
