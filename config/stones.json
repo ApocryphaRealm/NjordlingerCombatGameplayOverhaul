@@ -1,0 +1,441 @@
+{
+  "_comment": [
+    "Njordlinger Combat Gameplay Overhaul - soul stones (PLAN.md phase 4, D17-D22; WORD-TABLE.md). Every number is a TUNE",
+    "default (WORD-TABLE.md 'First numbers', for Fable's review). tools/PluginBuild turns this into records; the SKSE plugin",
+    "reads the generated data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul/stones.json.",
+    "Cell kinds: rec = the composed enchantment's effect does it (contact on a weapon, constant on armour); perk = a perk of",
+    "entry points the SKSE plugin gives the player while the item is equipped, its value set by the stone's tier; self = an",
+    "ability spell the plugin gives the player while the item is equipped; proc = the plugin's event handler (hit, hit-by,",
+    "kill) casts or applies something; grant = the armour reading of a Shout-only phrase (D21); stub = not built yet (the",
+    "item card still shows the effect line so the slot is never silent). approx marks a stand-in for the written effect.",
+    "m / dur / mult / add: one number, or [petty, grand] interpolated linearly across the five tiers. chance: a fixed",
+    "percent (the tier scales strength, not chance). Phrases do not scale with tier (WORD-TABLE.md)."
+  ],
+  "tiers": ["Petty", "Lesser", "Common", "Greater", "Grand"],
+  "tierSoulGems": ["SoulGemPettyFilled", "SoulGemLesserFilled", "SoulGemCommonFilled", "SoulGemGreaterFilled", "SoulGemGrandFilled"],
+  "tierFeeGems": [["SoulGemPetty", "SoulGemPettyFilled"], ["SoulGemLesser", "SoulGemLesserFilled"], ["SoulGemCommon", "SoulGemCommonFilled"], ["SoulGemGreater", "SoulGemGreaterFilled"], ["SoulGemGrand", "SoulGemGrandFilled"]],
+  "tierValue": [25, 50, 100, 200, 400],
+  "tierColour": ["#CFE3F5", "#4E8CFF", "#6A5CFF", "#9B4DFF", "#6B1FB8"],
+  "glowShaderFrom": "EnchFrostDamageFFContact",
+  "lowHealth": 0.30,
+  "lootLevels": [1, 10, 20, 30, 40],
+  "lootChanceNone": 80,
+  "lootLists": ["LootBanditGoldBoss", "LootDraugrChestBossBase", "LootDwarvenChestBossBase", "LootFalmerChestBossBase", "LootForswornChestBossBase", "LootHagravenChestBossBase", "LootVampireChestBossBase", "LootWarlockChestBossBase", "LootWerewolfChestBossBase"],
+  "vendorLists": ["LItemMiscVendorSoulGem75"],
+  "shoutEdids": {"Unrelenting Force": "UnrelentingForceShout", "Fire Breath": "FireBreathShout", "Frost Breath": "FrostBreathShout", "Ice Form": "IceFormShout", "Become Ethereal": "BecomeEtherealShout", "Disarm": "DisarmShout", "Kyne's Peace": "KynesPeaceShout", "Aura Whisper": "AuraWhisperShout", "Call Dragon": "CallDragonShout", "Whirlwind Sprint": "WhirlwindSprintShout", "Elemental Fury": "ElementalFuryShout", "Storm Call": "StormCallShout", "Slow Time": "SlowTimeShout", "Clear Skies": "ClearSkiesShout", "Dismay": "Dismay", "Soul Tear": "DLC1SoulTearShout", "Bend Will": "DLC2BendWillShout", "Dragon Aspect": "DLC2DragonAspectShout", "Call of Valor": "CallofValorShout", "Marked for Death": "MarkedforDeathShout", "Dragonrend": "DragonrendShout"},
+  "vanillaKeywords": ["MagicDamageFire", "MagicDamageFrost", "MagicDamageShock", "ActorTypeUndead", "ActorTypeAnimal", "ActorTypeDragon", "ActorTypeGhost", "ActorTypeNPC", "VendorItemSoulGem"],
+  "helpers": {
+    "Burn": { "name": "Soul stone fire", "target": true, "effects": [{ "av": "Health", "det": true, "m": 3, "dur": 3, "res": "ResistFire", "mkw": "MagicDamageFire", "copyMgef": "EnchFireDamageFFContact" }] },
+    "Chill": { "name": "Soul stone frost", "target": true, "effects": [{ "av": "SpeedMult", "det": true, "m": 30, "dur": 3, "res": "ResistFrost", "mkw": "MagicDamageFrost", "copyMgef": "EnchFrostDamageFFContact" }] },
+    "Snare": { "name": "Soul stone snare", "target": true, "effects": [{ "av": "SpeedMult", "det": true, "m": 40, "dur": 2 }] },
+    "Shock": { "name": "Soul stone shock", "target": true, "effects": [{ "av": "Health", "det": true, "m": 10, "res": "ResistShock", "mkw": "MagicDamageShock", "copyMgef": "EnchShockDamageFFContact" }] },
+    "AbsorbHealth": { "name": "Soul stone absorb", "target": true, "effects": [{ "a": "Absorb", "av": "Health", "det": true, "m": 3 }] },
+    "Drain": { "name": "Soul stone drain", "target": true, "effects": [{ "av": "Health", "det": true, "m": 2, "dur": 5 }] },
+    "DragonFire": { "name": "Dragon fire", "target": true, "effects": [{ "av": "Health", "det": true, "m": 30, "res": "ResistFire", "mkw": "MagicDamageFire", "copyMgef": "EnchFireDamageFFContact" }] },
+    "Fury": { "name": "Soul stone fury", "target": false, "effects": [{ "av": "AttackDamageMult", "m": 0.2, "dur": 5 }] },
+    "BowHaste": { "name": "Soul stone haste", "target": false, "effects": [{ "av": "BowSpeedBonus", "m": 0.2, "dur": 5 }] },
+    "Haste": { "name": "Soul stone swiftness", "target": false, "effects": [{ "av": "SpeedMult", "m": 15, "dur": 5 }] },
+    "Restore": { "name": "Soul stone vigour", "target": false, "effects": [{ "av": "Stamina", "m": 50, "restore": true }] }
+  },
+  "phrases": [
+    { "shout": "Unrelenting Force", "words": ["Fus", "Ro", "Dah"],
+      "word": {
+        "Fus": {
+          "melee": { "k": "rec", "d": "One hit in five staggers the target (strength <mag>).", "a": "Stagger", "m": [0.25, 1.0], "chance": 20, "copy": "Unrelenting Force" },
+          "ranged": { "k": "rec", "d": "One arrow in five staggers the target (strength <mag>).", "a": "Stagger", "m": [0.25, 1.0], "chance": 20, "copy": "Unrelenting Force" },
+          "armour": { "k": "perk", "d": "Stagger taken is reduced.", "ep": "ModIncomingStagger", "mult": [0.9, 0.5] } },
+        "Ro": {
+          "melee": { "k": "self", "d": "Stamina regenerates <mag>% faster while the weapon is drawn.", "av": "StaminaRateMult", "m": [10, 50], "if": [{ "f": "IsWeaponOut" }] },
+          "ranged": { "k": "self", "approx": "stamina regeneration while the bow is out stands in for 'no stamina to hold the draw; sway reduced'", "d": "Stamina regenerates <mag>% faster while the bow is drawn.", "av": "StaminaRateMult", "m": [10, 50], "if": [{ "f": "IsWeaponOut" }] },
+          "armour": { "k": "rec", "d": "Stamina regenerates <mag>% faster.", "av": "StaminaRateMult", "m": [10, 50] } },
+        "Dah": {
+          "melee": { "k": "proc", "d": "Power attacks knock the target back.", "proc": { "on": "hit", "power": true, "cast": { "shout": "Unrelenting Force", "level": 1 }, "at": "target", "cd": 2 } },
+          "ranged": { "k": "rec", "approx": "a stagger stands in for 'pushed back a step'", "d": "Arrows push the target back (strength <mag>).", "a": "Stagger", "m": [0.3, 0.7] },
+          "armour": { "k": "proc", "d": "Attackers who hit you are pushed back.", "proc": { "on": "hitBy", "chance": 25, "cast": { "shout": "Unrelenting Force", "level": 1 }, "at": "attacker", "cd": 5 } } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "d": "Fus Ro Dah: power attacks throw light enemies.", "proc": { "on": "hit", "power": true, "cast": { "shout": "Unrelenting Force", "level": 3 }, "at": "target", "cd": 4 } },
+        "ranged": { "k": "proc", "approx": "one shot in four, not only a fully drawn one", "d": "Fus Ro Dah: one shot in four throws the target.", "proc": { "on": "hit", "chance": 25, "cast": { "shout": "Unrelenting Force", "level": 2 }, "at": "target", "cd": 4 } },
+        "armour": { "k": "proc", "d": "Fus Ro Dah: hit below 30% health, a shockwave throws your attackers back (every 60 s).", "proc": { "on": "hitBy", "lowHealth": true, "cast": { "shout": "Unrelenting Force", "level": 3 }, "at": "nearby", "cd": 60 } } } },
+
+    { "shout": "Fire Breath", "words": ["Yol", "Toor", "Shul"],
+      "word": {
+        "Yol": {
+          "melee": { "k": "rec", "d": "Strikes burn for <mag> fire damage.", "av": "Health", "det": true, "m": [5, 25], "res": "ResistFire", "mkw": "MagicDamageFire", "copy": "Fire Breath" },
+          "ranged": { "k": "rec", "d": "Arrows burn for <mag> fire damage.", "av": "Health", "det": true, "m": [5, 25], "res": "ResistFire", "mkw": "MagicDamageFire", "copy": "Fire Breath" },
+          "armour": { "k": "rec", "d": "Resist fire <mag>%.", "av": "ResistFire", "m": [10, 50] } },
+        "Toor": {
+          "melee": { "k": "rec", "d": "Struck targets burn for <mag> fire damage per second for <dur> seconds.", "av": "Health", "det": true, "m": [2, 6], "dur": 3, "res": "ResistFire", "mkw": "MagicDamageFire", "copyMgef": "EnchFireDamageFFContact" },
+          "ranged": { "k": "rec", "approx": "the target burns instead of a burning patch on the ground", "d": "Arrows set the target burning for <mag> per second for <dur> seconds.", "av": "Health", "det": true, "m": [2, 6], "dur": 3, "res": "ResistFire", "mkw": "MagicDamageFire", "copyMgef": "EnchFireDamageFFContact" },
+          "armour": { "k": "proc", "d": "Attackers who hit you catch fire.", "proc": { "on": "hitBy", "cast": { "helper": "Burn" }, "at": "attacker", "mag": [2, 6], "cd": 2 } } },
+        "Shul": {
+          "melee": { "k": "perk", "d": "Extra damage to the undead.", "ep": "ModAttackDamage", "mult": [1.1, 1.5], "if": [{ "f": "HasKeyword", "kw": "ActorTypeUndead", "tab": 2 }] },
+          "ranged": { "k": "perk", "d": "Arrows deal extra damage to the undead.", "ep": "ModAttackDamage", "mult": [1.1, 1.5], "if": [{ "f": "HasKeyword", "kw": "ActorTypeUndead", "tab": 2 }] },
+          "armour": { "k": "stub", "d": "Undead near you take light damage.", "note": "an aura needs a cloak spell and its hit spell; not built yet" } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "approx": "the target burns harder instead of the ground igniting", "d": "Yol Toor Shul: one hit in four sets the target ablaze.", "proc": { "on": "hit", "chance": 25, "cast": { "helper": "Burn" }, "at": "target", "mag": 8, "cd": 2 } },
+        "ranged": { "k": "proc", "d": "Yol Toor Shul: one arrow in four bursts into a fireball.", "proc": { "on": "hit", "chance": 25, "cast": { "edid": "FireballLeftHand" }, "at": "target", "cd": 3 } },
+        "armour": { "k": "proc", "d": "Yol Toor Shul: hit below 30% health, you burst into flame that burns attackers (every 60 s).", "proc": { "on": "hitBy", "lowHealth": true, "cast": { "edid": "FlameCloakLeftHand" }, "at": "self", "cd": 60 } } } },
+
+    { "shout": "Frost Breath", "words": ["Fo", "Krah", "Diin"],
+      "word": {
+        "Fo": {
+          "melee": { "k": "rec", "d": "Strikes freeze for <mag> frost damage.", "av": "Health", "det": true, "m": [5, 25], "res": "ResistFrost", "mkw": "MagicDamageFrost", "copy": "Frost Breath" },
+          "ranged": { "k": "rec", "d": "Arrows freeze for <mag> frost damage.", "av": "Health", "det": true, "m": [5, 25], "res": "ResistFrost", "mkw": "MagicDamageFrost", "copy": "Frost Breath" },
+          "armour": { "k": "rec", "d": "Resist frost <mag>%.", "av": "ResistFrost", "m": [10, 50] } },
+        "Krah": {
+          "melee": { "k": "rec", "d": "Struck targets are slowed by <mag>% for <dur> seconds.", "av": "SpeedMult", "det": true, "m": [10, 30], "dur": 3, "copyMgef": "EnchFrostDamageFFContact" },
+          "ranged": { "k": "rec", "d": "Arrows slow the target by <mag>% for <dur> seconds.", "av": "SpeedMult", "det": true, "m": [10, 30], "dur": 3, "copyMgef": "EnchFrostDamageFFContact" },
+          "armour": { "k": "stub", "d": "Frost does not slow you.", "note": "no record makes frost slows skip the wearer; needs a magic-effect filter" } },
+        "Diin": {
+          "melee": { "k": "rec", "d": "One hit in ten freezes the target solid for <dur> seconds.", "a": "Paralysis", "m": 1, "dur": [1, 3], "chance": 10, "copy": "Ice Form" },
+          "ranged": { "k": "rec", "d": "One arrow in ten freezes the target solid for <dur> seconds.", "a": "Paralysis", "m": 1, "dur": [1, 3], "chance": 10, "copy": "Ice Form" },
+          "armour": { "k": "proc", "d": "Attackers who hit you are chilled and slowed.", "proc": { "on": "hitBy", "cast": { "helper": "Chill" }, "at": "attacker", "mag": [15, 40], "cd": 3 } } }
+      },
+      "phrase": {
+        "melee": { "k": "rec", "d": "Fo Krah Diin: frozen targets shatter for <mag> extra damage.", "av": "Health", "det": true, "m": 30, "if": [{ "f": "GetActorValue", "av": "Paralysis", "op": ">=", "v": 1 }] },
+        "ranged": { "k": "rec", "d": "Fo Krah Diin: a frozen target hit again shatters for <mag> damage.", "av": "Health", "det": true, "m": 30, "if": [{ "f": "GetActorValue", "av": "Paralysis", "op": ">=", "v": 1 }] },
+        "armour": { "k": "proc", "d": "Fo Krah Diin: hit below 30% health, a frost wave freezes your attackers (every 60 s).", "proc": { "on": "hitBy", "lowHealth": true, "cast": { "shout": "Ice Form", "level": 2 }, "at": "nearby", "cd": 60 } } } },
+
+    { "shout": "Ice Form", "words": ["Iiz", "Slen", "Nus"],
+      "word": {
+        "Iiz": {
+          "melee": { "k": "rec", "d": "Struck targets lose <mag> armour for <dur> seconds.", "av": "DamageResist", "det": true, "m": [20, 100], "dur": 5 },
+          "ranged": { "k": "rec", "d": "Arrows strip <mag> armour for <dur> seconds.", "av": "DamageResist", "det": true, "m": [20, 100], "dur": 5 },
+          "armour": { "k": "rec", "d": "Armour rating +<mag>.", "av": "DamageResist", "m": [10, 50] } },
+        "Slen": {
+          "melee": { "k": "rec", "d": "Hits restore <mag> health.", "a": "Absorb", "av": "Health", "det": true, "m": [1, 5] },
+          "ranged": { "k": "rec", "d": "Arrow hits restore <mag> health.", "a": "Absorb", "av": "Health", "det": true, "m": [1, 5] },
+          "armour": { "k": "rec", "d": "Health regenerates <mag>% faster.", "av": "HealRateMult", "m": [10, 50] } },
+        "Nus": {
+          "melee": { "k": "rec", "d": "One hit in seven roots the target for <dur> seconds.", "av": "SpeedMult", "det": true, "m": 100, "dur": [1, 2], "chance": 15 },
+          "ranged": { "k": "rec", "d": "One arrow in seven pins the target for <dur> seconds.", "av": "SpeedMult", "det": true, "m": 100, "dur": [1, 2], "chance": 15 },
+          "armour": { "k": "perk", "d": "Stagger taken while blocking is reduced.", "ep": "ModIncomingStagger", "mult": [0.6, 0.0], "if": [{ "f": "IsBlocking", "tab": 0 }] } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "d": "Iiz Slen Nus: power attacks encase the target in ice.", "proc": { "on": "hit", "power": true, "cast": { "shout": "Ice Form", "level": 3 }, "at": "target", "cd": 6 } },
+        "ranged": { "k": "proc", "approx": "one shot in four, not only a fully drawn one", "d": "Iiz Slen Nus: one shot in four encases the target in ice.", "proc": { "on": "hit", "chance": 25, "cast": { "shout": "Ice Form", "level": 2 }, "at": "target", "cd": 6 } },
+        "armour": { "k": "proc", "d": "Iiz Slen Nus: blocking a power attack freezes the attacker.", "proc": { "on": "hitBy", "blocked": true, "power": true, "cast": { "shout": "Ice Form", "level": 1 }, "at": "attacker", "cd": 4 } } } },
+
+    { "shout": "Become Ethereal", "words": ["Feim", "Zii", "Gron"],
+      "word": {
+        "Feim": {
+          "melee": { "k": "rec", "approx": "a slow with the ethereal shader stands in for 'slower to react'", "d": "Struck targets fade and slow by <mag>% for <dur> seconds.", "av": "SpeedMult", "det": true, "m": [10, 30], "dur": 2, "copy": "Become Ethereal" },
+          "ranged": { "k": "stub", "d": "Arrows pass through the first body and hit a second.", "note": "projectile pierce needs a projectile hook" },
+          "armour": { "k": "perk", "d": "Below 30% health, damage taken is reduced.", "ep": "ModIncomingDamage", "mult": [0.9, 0.5], "if": [{ "f": "GetHealthPercentage", "op": "<", "v": 0.3, "tab": 0 }] } },
+        "Zii": {
+          "melee": { "k": "perk", "d": "Extra damage to ghosts and spirits.", "ep": "ModAttackDamage", "mult": [1.1, 1.5], "if": [{ "f": "HasKeyword", "kw": "ActorTypeGhost", "tab": 2 }] },
+          "ranged": { "k": "perk", "approx": "extra damage to ghosts stands in for 'ignore spirit resistances'", "d": "Arrows deal extra damage to ghosts and spirits.", "ep": "ModAttackDamage", "mult": [1.1, 1.5], "if": [{ "f": "HasKeyword", "kw": "ActorTypeGhost", "tab": 2 }] },
+          "armour": { "k": "rec", "d": "Resist magic <mag>%.", "av": "ResistMagic", "m": [5, 25] } },
+        "Gron": {
+          "melee": { "k": "rec", "d": "Struck targets are snared by <mag>% for <dur> seconds.", "av": "SpeedMult", "det": true, "m": [20, 50], "dur": 2 },
+          "ranged": { "k": "rec", "d": "Arrows snare the target by <mag>% for <dur> seconds.", "av": "SpeedMult", "det": true, "m": [20, 50], "dur": 2 },
+          "armour": { "k": "proc", "d": "Attackers who hit you are snared.", "proc": { "on": "hitBy", "cast": { "helper": "Snare" }, "at": "attacker", "mag": [20, 50], "cd": 3 } } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "d": "Feim Zii Gron: a hit while below 30% health makes you briefly ethereal (every 90 s).", "proc": { "on": "hit", "lowHealth": true, "cast": { "shout": "Become Ethereal", "level": 1 }, "at": "self", "cd": 90 } },
+        "ranged": { "k": "proc", "d": "Feim Zii Gron: a killing shot makes you briefly ethereal (every 60 s).", "proc": { "on": "kill", "cast": { "shout": "Become Ethereal", "level": 1 }, "at": "self", "cd": 60 } },
+        "armour": { "k": "proc", "d": "Feim Zii Gron: hit below 30% health, you become ethereal (every 90 s).", "proc": { "on": "hitBy", "lowHealth": true, "cast": { "shout": "Become Ethereal", "level": 3 }, "at": "self", "cd": 90 } } } },
+
+    { "shout": "Disarm", "words": ["Zun", "Haal", "Viik"],
+      "word": {
+        "Zun": {
+          "melee": { "k": "rec", "d": "One hit in ten disarms the target (up to level <mag>).", "a": "Disarm", "m": [20, 60], "chance": 10, "copy": "Disarm" },
+          "ranged": { "k": "rec", "d": "One arrow in ten knocks the weapon from the hand (up to level <mag>).", "a": "Disarm", "m": [20, 60], "chance": 10, "copy": "Disarm" },
+          "armour": { "k": "stub", "d": "You cannot be disarmed.", "note": "no actor value or record blocks disarm; needs a hook" } },
+        "Haal": {
+          "melee": { "k": "rec", "d": "Struck targets deal <mag>% less damage for <dur> seconds.", "av": "AttackDamageMult", "det": true, "m": [0.05, 0.25], "dur": 5 },
+          "ranged": { "k": "rec", "d": "Arrows weaken the target's attacks by <mag> for <dur> seconds.", "av": "AttackDamageMult", "det": true, "m": [0.05, 0.25], "dur": 5 },
+          "armour": { "k": "perk", "approx": "applies to every weapon, not only unarmed and one-handed", "d": "Your attacks deal more damage.", "ep": "ModAttackDamage", "mult": [1.05, 1.25] } },
+        "Viik": {
+          "melee": { "k": "perk", "d": "Extra damage to targets below 30% health.", "ep": "ModAttackDamage", "mult": [1.1, 1.5], "if": [{ "f": "GetHealthPercentage", "op": "<", "v": 0.3, "tab": 2 }] },
+          "ranged": { "k": "perk", "d": "Arrows deal extra damage to wounded targets.", "ep": "ModAttackDamage", "mult": [1.1, 1.5], "if": [{ "f": "GetHealthPercentage", "op": "<", "v": 0.3, "tab": 2 }] },
+          "armour": { "k": "perk", "d": "Below 30% health, you deal more damage.", "ep": "ModAttackDamage", "mult": [1.1, 1.5], "if": [{ "f": "GetHealthPercentage", "op": "<", "v": 0.3, "tab": 0 }] } }
+      },
+      "phrase": {
+        "melee": { "k": "stub", "d": "Zun Haal Viik: disarmed targets drop their shield too.", "note": "unequipping an NPC's shield on disarm needs the disarm event; not built yet" },
+        "ranged": { "k": "proc", "approx": "one arrow in ten, not a hit on the hand", "d": "Zun Haal Viik: one arrow in ten disarms outright.", "proc": { "on": "hit", "chance": 10, "cast": { "shout": "Disarm", "level": 3 }, "at": "target", "cd": 5 } },
+        "armour": { "k": "proc", "d": "Zun Haal Viik: attackers who hit you may drop their weapon.", "proc": { "on": "hitBy", "chance": 15, "cast": { "shout": "Disarm", "level": 2 }, "at": "attacker", "cd": 10 } } } },
+
+    { "shout": "Kyne's Peace", "words": ["Kaan", "Drem", "Ov"],
+      "word": {
+        "Kaan": {
+          "melee": { "k": "rec", "d": "Struck animals up to level <mag> are calmed.", "a": "Calm", "m": [10, 50], "dur": 30, "if": [{ "f": "HasKeyword", "kw": "ActorTypeAnimal" }], "copy": "Kyne's Peace" },
+          "ranged": { "k": "rec", "d": "Arrows calm animals up to level <mag>.", "a": "Calm", "m": [10, 50], "dur": 30, "if": [{ "f": "HasKeyword", "kw": "ActorTypeAnimal" }], "copy": "Kyne's Peace" },
+          "armour": { "k": "stub", "d": "Animals do not attack you.", "note": "needs a cloak spell or a combat hook; not built yet" } },
+        "Drem": {
+          "melee": { "k": "rec", "d": "One hit in ten calms a person up to level <mag>.", "a": "Calm", "m": [10, 50], "dur": 10, "chance": 10, "if": [{ "f": "HasKeyword", "kw": "ActorTypeNPC" }] },
+          "ranged": { "k": "rec", "d": "One arrow in ten calms a person up to level <mag>.", "a": "Calm", "m": [10, 50], "dur": 10, "chance": 10, "if": [{ "f": "HasKeyword", "kw": "ActorTypeNPC" }] },
+          "armour": { "k": "stub", "d": "Creatures nearby start combat later.", "note": "the aggression radius is not an actor value; needs a hook" } },
+        "Ov": {
+          "melee": { "k": "rec", "approx": "lowered confidence stands in for 'flee less, surrender sooner'", "d": "Struck targets lose heart for <dur> seconds.", "av": "Confidence", "det": true, "m": [1, 2], "dur": 10 },
+          "ranged": { "k": "rec", "approx": "lowered confidence stands in for 'yield at low health'", "d": "Arrows make the target lose heart for <dur> seconds.", "av": "Confidence", "det": true, "m": [1, 2], "dur": 10 },
+          "armour": { "k": "perk", "d": "Merchants sell to you for less.", "ep": "ModBuyPrices", "mult": [0.95, 0.75] } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "d": "Kaan Drem Ov: a kill calms the animals around you.", "proc": { "on": "kill", "cast": { "shout": "Kyne's Peace", "level": 3 }, "at": "self", "cd": 10 } },
+        "ranged": { "k": "proc", "d": "Kaan Drem Ov: arrows pacify the animals they strike.", "proc": { "on": "hit", "cast": { "shout": "Kyne's Peace", "level": 1 }, "at": "target", "cd": 5 } },
+        "armour": { "k": "stub", "d": "Kaan Drem Ov: animals ignore you.", "note": "needs a combat hook; not built yet" } } },
+
+    { "shout": "Aura Whisper", "words": ["Laas", "Yah", "Nir"],
+      "word": {
+        "Laas": {
+          "melee": { "k": "stub", "d": "Struck targets are revealed through walls.", "note": "needs a target-side detect shader; not built yet" },
+          "ranged": { "k": "stub", "d": "Arrows mark the target through walls.", "note": "needs a target-side detect shader; not built yet" },
+          "armour": { "k": "rec", "d": "While sneaking you sense life around you.", "a": "DetectLife", "m": [50, 150], "if": [{ "f": "IsSneaking" }], "copy": "Aura Whisper" } },
+        "Yah": {
+          "melee": { "k": "stub", "d": "Hits show nearby enemies briefly.", "note": "needs a detect pulse from the hit; not built yet" },
+          "ranged": { "k": "stub", "d": "Arrows reveal enemies near the impact.", "note": "needs a detect pulse from the hit; not built yet" },
+          "armour": { "k": "rec", "approx": "detect life stands in for detect dead", "d": "While sneaking you sense the dead around you.", "a": "DetectLife", "m": [50, 150], "if": [{ "f": "IsSneaking" }] } },
+        "Nir": {
+          "melee": { "k": "perk", "d": "Sneak attacks deal more damage.", "ep": "ModSneakAttackMult", "mult": [1.1, 1.5] },
+          "ranged": { "k": "perk", "d": "Sneak attacks with the bow deal more damage.", "ep": "ModSneakAttackMult", "mult": [1.1, 1.5] },
+          "armour": { "k": "rec", "d": "You make <mag> less noise.", "av": "MovementNoiseMult", "det": true, "m": [0.1, 0.5] } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "d": "Laas Yah Nir: a sneak attack reveals every enemy nearby.", "proc": { "on": "hit", "sneak": true, "cast": { "shout": "Aura Whisper", "level": 3 }, "at": "self", "cd": 10 } },
+        "ranged": { "k": "proc", "d": "Laas Yah Nir: a sneak shot reveals every enemy nearby.", "proc": { "on": "hit", "sneak": true, "cast": { "shout": "Aura Whisper", "level": 3 }, "at": "self", "cd": 10 } },
+        "armour": { "k": "rec", "d": "Laas Yah Nir: while sneaking you sense everything living and dead around you.", "a": "DetectLife", "m": 250, "if": [{ "f": "IsSneaking" }], "copy": "Aura Whisper" } } },
+
+    { "shout": "Call Dragon", "words": ["Od", "Ah", "Viing"],
+      "word": {
+        "Od": {
+          "melee": { "k": "rec", "d": "In snow, strikes deal <mag> frost damage.", "av": "Health", "det": true, "m": [5, 25], "res": "ResistFrost", "mkw": "MagicDamageFrost", "if": [{ "f": "IsSnowing" }], "copyMgef": "EnchFrostDamageFFContact" },
+          "ranged": { "k": "rec", "d": "In snow, arrows deal <mag> frost damage.", "av": "Health", "det": true, "m": [5, 25], "res": "ResistFrost", "mkw": "MagicDamageFrost", "if": [{ "f": "IsSnowing" }], "copyMgef": "EnchFrostDamageFFContact" },
+          "armour": { "k": "rec", "d": "Resist frost <mag>%.", "av": "ResistFrost", "m": [10, 50] } },
+        "Ah": {
+          "melee": { "k": "perk", "d": "Extra damage to animals.", "ep": "ModAttackDamage", "mult": [1.1, 1.5], "if": [{ "f": "HasKeyword", "kw": "ActorTypeAnimal", "tab": 2 }] },
+          "ranged": { "k": "perk", "d": "Bow damage is increased.", "ep": "ModAttackDamage", "mult": [1.05, 1.25] },
+          "armour": { "k": "stub", "d": "Animal carcasses yield more.", "note": "harvest yield needs the activation hook; not built yet" } },
+        "Viing": {
+          "melee": { "k": "stub", "d": "Power attacks lunge further.", "note": "attack reach is not per weapon instance; not built yet" },
+          "ranged": { "k": "stub", "d": "Arrows fly faster and farther.", "note": "projectile speed needs a projectile hook" },
+          "armour": { "k": "perk", "d": "Falling damage is reduced.", "ep": "ModFallingDamage", "mult": [0.9, 0.5] } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "d": "Od Ah Viing: killing an animal restores stamina.", "proc": { "on": "kill", "targetKeyword": "ActorTypeAnimal", "cast": { "helper": "Restore" }, "at": "self", "mag": 50, "cd": 1 } },
+        "ranged": { "k": "stub", "d": "Od Ah Viing: arrows pierce through one target.", "note": "projectile pierce needs a projectile hook" },
+        "armour": { "k": "stub", "d": "Od Ah Viing: you glide a little when falling.", "note": "slow fall needs a havok hook; not built yet" } } },
+
+    { "shout": "Whirlwind Sprint", "words": ["Wuld", "Nah", "Kest"],
+      "word": {
+        "Wuld": {
+          "melee": { "k": "perk", "d": "Hits while sprinting deal more damage.", "ep": "ModAttackDamage", "mult": [1.1, 1.5], "if": [{ "f": "IsSprinting", "tab": 0 }] },
+          "ranged": { "k": "stub", "d": "Arrows fired while moving are steadier.", "note": "bow sway is not an actor value; not built yet" },
+          "armour": { "k": "rec", "approx": "movement speed while sprinting stands in for sprint speed", "d": "You sprint <mag>% faster.", "av": "SpeedMult", "m": [5, 25], "if": [{ "f": "IsSprinting" }] } },
+        "Nah": {
+          "melee": { "k": "proc", "d": "After a kill your attacks deal more damage for 5 seconds.", "proc": { "on": "kill", "cast": { "helper": "Fury" }, "at": "self", "mag": [0.1, 0.5], "cd": 0 } },
+          "ranged": { "k": "proc", "d": "After a kill you draw faster for 5 seconds.", "proc": { "on": "kill", "cast": { "helper": "BowHaste" }, "at": "self", "mag": [0.1, 0.3], "cd": 0 } },
+          "armour": { "k": "proc", "d": "After a kill you move faster for 5 seconds.", "proc": { "on": "kill", "cast": { "helper": "Haste" }, "at": "self", "mag": [5, 25], "cd": 0 } } },
+        "Kest": {
+          "melee": { "k": "perk", "d": "Power attacks cost less stamina.", "ep": "ModPowerAttackStamina", "mult": [0.9, 0.5] },
+          "ranged": { "k": "stub", "d": "Shots cost no stamina to hold.", "note": "the hold cost is a game setting shared by every bow; not built yet" },
+          "armour": { "k": "rec", "approx": "faster stamina regeneration while sprinting stands in for 'stamina on sprint'", "d": "While sprinting, stamina regenerates <mag>% faster.", "av": "StaminaRateMult", "m": [10, 50], "if": [{ "f": "IsSprinting" }] } }
+      },
+      "phrase": {
+        "melee": { "k": "stub", "d": "Wuld Nah Kest: a sprinting power attack closes the gap with a dash.", "note": "the dash needs an impulse hook; not built yet" },
+        "ranged": { "k": "stub", "d": "Wuld Nah Kest: a shot fired after a sprint dash has no sway.", "note": "bow sway is not an actor value; not built yet" },
+        "armour": { "k": "stub", "d": "Wuld Nah Kest: a short dash when a sprint begins (every 20 s).", "note": "needs the sprint-start animation event; not built yet" } } },
+
+    { "shout": "Elemental Fury", "words": ["Su", "Grah", "Dun"],
+      "word": {
+        "Su": {
+          "melee": { "k": "stub", "d": "Consecutive hits build damage.", "note": "stacking needs a hit counter with stacks; not built yet" },
+          "ranged": { "k": "stub", "d": "Consecutive hits build damage.", "note": "stacking needs a hit counter with stacks; not built yet" },
+          "armour": { "k": "rec", "d": "You move <mag>% faster.", "av": "SpeedMult", "m": [5, 25] } },
+        "Grah": {
+          "melee": { "k": "perk", "d": "Damage is increased.", "ep": "ModAttackDamage", "mult": [1.05, 1.25] },
+          "ranged": { "k": "perk", "d": "Damage is increased.", "ep": "ModAttackDamage", "mult": [1.05, 1.25] },
+          "armour": { "k": "perk", "approx": "applies in and out of combat", "d": "You deal more damage in battle.", "ep": "ModAttackDamage", "mult": [1.05, 1.25] } },
+        "Dun": {
+          "melee": { "k": "perk", "approx": "while power attacking", "d": "Power attacks cannot be interrupted by stagger.", "ep": "ModIncomingStagger", "mult": [0.6, 0.0], "if": [{ "f": "IsPowerAttacking", "tab": 0 }] },
+          "ranged": { "k": "perk", "approx": "while the bow is out", "d": "Stagger taken while the bow is drawn is reduced.", "ep": "ModIncomingStagger", "mult": [0.8, 0.4], "if": [{ "f": "IsWeaponOut", "tab": 0 }] },
+          "armour": { "k": "perk", "d": "Stagger taken is reduced.", "ep": "ModIncomingStagger", "mult": [0.9, 0.5] } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "approx": "the fourth hit deals a bonus strike's damage", "d": "Su Grah Dun: every fourth hit in a row strikes twice.", "proc": { "on": "hit", "every": 4, "window": 3, "damage": 25, "at": "target", "cd": 0 } },
+        "ranged": { "k": "proc", "approx": "the fourth arrow deals a second arrow's damage", "d": "Su Grah Dun: every fourth arrow in a row counts twice.", "proc": { "on": "hit", "every": 4, "window": 3, "damage": 25, "at": "target", "cd": 0 } },
+        "armour": { "k": "stub", "d": "Su Grah Dun: you move at full speed while drawing or blocking.", "note": "the draw and block slowdowns are game settings shared by every actor; not built yet" } } },
+
+    { "shout": "Storm Call", "words": ["Strun", "Bah", "Qo"],
+      "word": {
+        "Strun": {
+          "melee": { "k": "rec", "d": "Strikes shock for <mag> damage.", "av": "Health", "det": true, "m": [5, 25], "res": "ResistShock", "mkw": "MagicDamageShock", "copyMgef": "EnchShockDamageFFContact" },
+          "ranged": { "k": "rec", "d": "Arrows shock for <mag> damage.", "av": "Health", "det": true, "m": [5, 25], "res": "ResistShock", "mkw": "MagicDamageShock", "copyMgef": "EnchShockDamageFFContact" },
+          "armour": { "k": "rec", "d": "Resist shock <mag>%.", "av": "ResistShock", "m": [10, 50] } },
+        "Bah": {
+          "melee": { "k": "rec", "d": "Struck targets crackle for <mag> shock damage per second for <dur> seconds.", "av": "Health", "det": true, "m": [2, 6], "dur": 3, "res": "ResistShock", "mkw": "MagicDamageShock", "copyMgef": "EnchShockDamageFFContact" },
+          "ranged": { "k": "rec", "approx": "the target crackles instead of a patch on the ground", "d": "Arrows crackle for <mag> shock damage per second for <dur> seconds.", "av": "Health", "det": true, "m": [2, 6], "dur": 3, "res": "ResistShock", "mkw": "MagicDamageShock", "copyMgef": "EnchShockDamageFFContact" },
+          "armour": { "k": "proc", "d": "Attackers who hit you are shocked.", "proc": { "on": "hitBy", "cast": { "helper": "Shock" }, "at": "attacker", "mag": [5, 20], "cd": 2 } } },
+        "Qo": {
+          "melee": { "k": "proc", "d": "One hit in four chains lightning to a second enemy.", "proc": { "on": "hit", "chance": 25, "cast": { "helper": "Shock" }, "at": "second", "mag": [5, 20], "cd": 1 } },
+          "ranged": { "k": "proc", "d": "One arrow in four chains lightning to a second enemy.", "proc": { "on": "hit", "chance": 25, "cast": { "helper": "Shock" }, "at": "second", "mag": [5, 20], "cd": 1 } },
+          "armour": { "k": "rec", "approx": "rain stands in for storms", "d": "In rain, magicka regenerates <mag>% faster.", "av": "MagickaRateMult", "m": [10, 50], "if": [{ "f": "IsRaining" }] } }
+      },
+      "phrase": {
+        "melee": { "k": "rec", "d": "Strun Bah Qo: in rain or snow, strikes deal <mag> extra shock damage.", "av": "Health", "det": true, "m": 15, "res": "ResistShock", "mkw": "MagicDamageShock", "if": [{ "f": "IsRaining", "or": true }, { "f": "IsSnowing" }], "copyMgef": "EnchShockDamageFFContact" },
+        "ranged": { "k": "proc", "d": "Strun Bah Qo: one arrow in four calls lightning down where it lands.", "proc": { "on": "hit", "chance": 25, "cast": { "edid": "LightningBoltLeftHand" }, "at": "target", "cd": 3 } },
+        "armour": { "k": "grant", "d": "Strun Bah Qo: grants Storm Call as a Shout.", "grant": "Storm Call" } } },
+
+    { "shout": "Slow Time", "words": ["Tiid", "Klo", "Ul"],
+      "word": {
+        "Tiid": {
+          "melee": { "k": "rec", "approx": "one hit in ten, as the game has no critical-hit event for this", "d": "One hit in ten slows the target by <mag>% for <dur> seconds.", "av": "SpeedMult", "det": true, "m": [10, 30], "dur": 3, "chance": 10, "copy": "Slow Time" },
+          "ranged": { "k": "rec", "approx": "one shot in ten, as the game has no critical-hit event for this", "d": "One shot in ten slows the target by <mag>% for <dur> seconds.", "av": "SpeedMult", "det": true, "m": [10, 30], "dur": 3, "chance": 10, "copy": "Slow Time" },
+          "armour": { "k": "proc", "d": "The cooldowns of your soul stone effects are shorter.", "proc": { "on": "cooldown", "mult": [0.9, 0.5] } } },
+        "Klo": {
+          "melee": { "k": "perk", "d": "Power attacks cost less stamina.", "ep": "ModPowerAttackStamina", "mult": [0.9, 0.5] },
+          "ranged": { "k": "self", "d": "You draw the bow <mag> faster.", "av": "BowSpeedBonus", "m": [0.05, 0.25], "if": [{ "f": "IsWeaponOut" }] },
+          "armour": { "k": "perk", "approx": "power attacks only", "d": "Power attacks cost less stamina.", "ep": "ModPowerAttackStamina", "mult": [0.9, 0.5] } },
+        "Ul": {
+          "melee": { "k": "stub", "d": "The weapon wears slower.", "note": "needs Equipment Durability System's interface; not built yet" },
+          "ranged": { "k": "stub", "d": "The bow wears slower.", "note": "needs Equipment Durability System's interface; not built yet" },
+          "armour": { "k": "stub", "d": "The armour wears slower.", "note": "needs Equipment Durability System's interface; not built yet" } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "approx": "one power attack in four, as the game has no critical-hit event for this", "d": "Tiid Klo Ul: one power attack in four slows time briefly (every 30 s).", "proc": { "on": "hit", "power": true, "chance": 25, "cast": { "shout": "Slow Time", "level": 1 }, "at": "self", "cd": 30 } },
+        "ranged": { "k": "proc", "approx": "one shot in five", "d": "Tiid Klo Ul: one shot in five slows time briefly (every 30 s).", "proc": { "on": "hit", "chance": 20, "cast": { "shout": "Slow Time", "level": 1 }, "at": "self", "cd": 30 } },
+        "armour": { "k": "proc", "d": "Tiid Klo Ul: hit below 30% health, time slows (every 90 s).", "proc": { "on": "hitBy", "lowHealth": true, "cast": { "shout": "Slow Time", "level": 3 }, "at": "self", "cd": 90 } } } },
+
+    { "shout": "Clear Skies", "words": ["Lok", "Vah", "Koor"],
+      "word": {
+        "Lok": {
+          "melee": { "k": "rec", "d": "In clear weather, strikes deal <mag> extra damage.", "av": "Health", "det": true, "m": [3, 15], "if": [{ "f": "IsPleasant" }] },
+          "ranged": { "k": "stub", "d": "Arrows are untouched by wind: no sway outdoors.", "note": "bow sway is not an actor value; not built yet" },
+          "armour": { "k": "rec", "d": "Resist shock <mag>%.", "av": "ResistShock", "m": [10, 50] } },
+        "Vah": {
+          "melee": { "k": "rec", "d": "Hits restore <mag> stamina.", "a": "Absorb", "av": "Stamina", "det": true, "m": [2, 10] },
+          "ranged": { "k": "rec", "d": "Arrow hits restore <mag> stamina.", "a": "Absorb", "av": "Stamina", "det": true, "m": [2, 10] },
+          "armour": { "k": "rec", "d": "Health regenerates <mag>% faster.", "av": "HealRateMult", "m": [10, 50] } },
+        "Koor": {
+          "melee": { "k": "rec", "d": "In clear weather, strikes burn for <mag> fire damage.", "av": "Health", "det": true, "m": [5, 25], "res": "ResistFire", "mkw": "MagicDamageFire", "if": [{ "f": "IsPleasant" }], "copyMgef": "EnchFireDamageFFContact" },
+          "ranged": { "k": "rec", "d": "In clear weather, arrows burn for <mag> fire damage.", "av": "Health", "det": true, "m": [5, 25], "res": "ResistFire", "mkw": "MagicDamageFire", "if": [{ "f": "IsPleasant" }], "copyMgef": "EnchFireDamageFFContact" },
+          "armour": { "k": "rec", "d": "Resist fire <mag>%.", "av": "ResistFire", "m": [10, 50] } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "d": "Lok Vah Koor: a kill in a storm clears the skies (every 60 s).", "proc": { "on": "kill", "storm": true, "cast": { "shout": "Clear Skies", "level": 3 }, "at": "self", "cd": 60 } },
+        "ranged": { "k": "proc", "approx": "the weather clears around you, not where the arrow lands", "d": "Lok Vah Koor: a shot in a storm clears the skies (every 60 s).", "proc": { "on": "hit", "storm": true, "cast": { "shout": "Clear Skies", "level": 1 }, "at": "self", "cd": 60 } },
+        "armour": { "k": "grant", "d": "Lok Vah Koor: grants Clear Skies as a Shout.", "grant": "Clear Skies", "note": "'weather penalties never apply' is not built (this list has no weather penalties to lift)" } } },
+
+    { "shout": "Dismay", "words": ["Faas", "Ru", "Maar"],
+      "word": {
+        "Faas": {
+          "melee": { "k": "rec", "d": "One hit in ten frightens the target (up to level <mag>).", "a": "Demoralize", "m": [10, 50], "dur": 10, "chance": 10, "copy": "Dismay" },
+          "ranged": { "k": "rec", "d": "One arrow in ten frightens the target (up to level <mag>).", "a": "Demoralize", "m": [10, 50], "dur": 10, "chance": 10, "copy": "Dismay" },
+          "armour": { "k": "stub", "d": "You resist fear.", "note": "fear resistance has no actor value; needs a magic-effect filter" } },
+        "Ru": {
+          "melee": { "k": "rec", "d": "One hit in seven makes the target flee for a moment (up to level <mag>).", "a": "Demoralize", "m": [5, 25], "dur": 3, "chance": 15, "copy": "Dismay" },
+          "ranged": { "k": "rec", "d": "One arrow in seven makes the target run (up to level <mag>).", "a": "Demoralize", "m": [5, 25], "dur": 3, "chance": 15, "copy": "Dismay" },
+          "armour": { "k": "rec", "d": "Below 30% health you move <mag>% faster.", "av": "SpeedMult", "m": [10, 30], "if": [{ "f": "GetHealthPercentage", "op": "<", "v": 0.3 }] } },
+        "Maar": {
+          "melee": { "k": "rec", "d": "Enemies below 30% health flee when hit (up to level <mag>).", "a": "Demoralize", "m": [20, 60], "dur": 10, "if": [{ "f": "GetHealthPercentage", "op": "<", "v": 0.3 }], "copy": "Dismay" },
+          "ranged": { "k": "rec", "d": "Wounded targets flee when shot (up to level <mag>).", "a": "Demoralize", "m": [20, 60], "dur": 10, "if": [{ "f": "GetHealthPercentage", "op": "<", "v": 0.3 }], "copy": "Dismay" },
+          "armour": { "k": "proc", "d": "Attackers who hit you may flee.", "proc": { "on": "hitBy", "chance": 15, "cast": { "shout": "Dismay", "level": 1 }, "at": "attacker", "cd": 10 } } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "d": "Faas Ru Maar: a kill frightens the victim's allies.", "proc": { "on": "kill", "cast": { "shout": "Dismay", "level": 2 }, "at": "nearby", "cd": 10 } },
+        "ranged": { "k": "proc", "d": "Faas Ru Maar: a killing shot scatters the victim's allies.", "proc": { "on": "kill", "cast": { "shout": "Dismay", "level": 2 }, "at": "nearby", "cd": 10 } },
+        "armour": { "k": "proc", "d": "Faas Ru Maar: hit below 30% health, your attackers flee (every 90 s).", "proc": { "on": "hitBy", "lowHealth": true, "cast": { "shout": "Dismay", "level": 3 }, "at": "nearby", "cd": 90 } } } },
+
+    { "shout": "Soul Tear", "words": ["Rii", "Vaaz", "Zol"],
+      "word": {
+        "Rii": {
+          "melee": { "k": "rec", "d": "Strikes absorb <mag> health.", "a": "Absorb", "av": "Health", "det": true, "m": [1, 5] },
+          "ranged": { "k": "rec", "d": "Arrows absorb <mag> health.", "a": "Absorb", "av": "Health", "det": true, "m": [1, 5] },
+          "armour": { "k": "proc", "d": "You absorb health from attackers who hit you.", "proc": { "on": "hitBy", "cast": { "helper": "AbsorbHealth" }, "at": "attacker", "mag": [1, 5], "cd": 1 } } },
+        "Vaaz": {
+          "melee": { "k": "rec", "d": "Strikes absorb <mag> magicka.", "a": "Absorb", "av": "Magicka", "det": true, "m": [2, 10] },
+          "ranged": { "k": "rec", "d": "Arrows absorb <mag> magicka.", "a": "Absorb", "av": "Magicka", "det": true, "m": [2, 10] },
+          "armour": { "k": "rec", "d": "Magicka regenerates <mag>% faster.", "av": "MagickaRateMult", "m": [10, 50] } },
+        "Zol": {
+          "melee": { "k": "proc", "d": "A kill can raise the victim to fight for you.", "proc": { "on": "kill", "chance": 15, "cast": { "edid": "RaiseZombieLeftHand" }, "at": "target", "cd": 30 } },
+          "ranged": { "k": "proc", "d": "A killing shot can raise the victim to fight for you.", "proc": { "on": "kill", "chance": 15, "cast": { "edid": "RaiseZombieLeftHand" }, "at": "target", "cd": 30 } },
+          "armour": { "k": "stub", "d": "The dead near you rise to fight for you once.", "note": "needs a nearby-death watch; not built yet" } }
+      },
+      "phrase": {
+        "melee": { "k": "rec", "d": "Rii Vaaz Zol: struck targets are soul trapped for <dur> seconds.", "a": "SoulTrap", "m": 1, "dur": 3, "copyMgef": "SoulTrapFFActor" },
+        "ranged": { "k": "rec", "d": "Rii Vaaz Zol: shot targets are soul trapped for <dur> seconds.", "a": "SoulTrap", "m": 1, "dur": 3, "copyMgef": "SoulTrapFFActor" },
+        "armour": { "k": "grant", "d": "Rii Vaaz Zol: grants Soul Tear as a Shout.", "grant": "Soul Tear" } } },
+
+    { "shout": "Bend Will", "words": ["Gol", "Hah", "Dov"],
+      "word": {
+        "Gol": {
+          "melee": { "k": "rec", "d": "Hits stagger an already staggered target harder (strength <mag>).", "a": "Stagger", "m": [0.5, 1.0], "if": [{ "f": "IsStaggered" }] },
+          "ranged": { "k": "rec", "d": "Arrows knock down a staggered target (strength <mag>).", "a": "Stagger", "m": [0.5, 1.0], "if": [{ "f": "IsStaggered" }] },
+          "armour": { "k": "perk", "d": "Stagger taken is reduced.", "ep": "ModIncomingStagger", "mult": [0.9, 0.5] } },
+        "Hah": {
+          "melee": { "k": "rec", "d": "One hit in twenty drives the target into a frenzy (up to level <mag>).", "a": "Frenzy", "m": [10, 50], "dur": 5, "chance": 5 },
+          "ranged": { "k": "rec", "d": "One arrow in twenty drives the target into a frenzy (up to level <mag>).", "a": "Frenzy", "m": [10, 50], "dur": 5, "chance": 5 },
+          "armour": { "k": "perk", "d": "Illusion spells are stronger.", "ep": "ModSpellMagnitude", "mult": [1.1, 1.5], "if": [{ "f": "EPMagic_SpellHasSkill", "skill": "Illusion", "tab": 1 }] } },
+        "Dov": {
+          "melee": { "k": "perk", "d": "Extra damage to dragons.", "ep": "ModAttackDamage", "mult": [1.1, 1.5], "if": [{ "f": "HasKeyword", "kw": "ActorTypeDragon", "tab": 2 }] },
+          "ranged": { "k": "perk", "d": "Arrows deal extra damage to dragons.", "ep": "ModAttackDamage", "mult": [1.1, 1.5], "if": [{ "f": "HasKeyword", "kw": "ActorTypeDragon", "tab": 2 }] },
+          "armour": { "k": "perk", "approx": "all spell damage from dragons, breath included", "d": "Dragon breath harms you less.", "ep": "ModIncomingSpellMagnitude", "mult": [0.9, 0.5], "if": [{ "f": "HasKeyword", "kw": "ActorTypeDragon", "tab": 1 }] } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "d": "Gol Hah Dov: a hit on a dragon grounds it sooner.", "proc": { "on": "hit", "targetKeyword": "ActorTypeDragon", "chance": 25, "cast": { "shout": "Dragonrend", "level": 1 }, "at": "target", "cd": 30 } },
+        "ranged": { "k": "proc", "d": "Gol Hah Dov: arrows ground dragons sooner.", "proc": { "on": "hit", "targetKeyword": "ActorTypeDragon", "chance": 25, "cast": { "shout": "Dragonrend", "level": 1 }, "at": "target", "cd": 30 } },
+        "armour": { "k": "grant", "d": "Gol Hah Dov: grants Bend Will as a Shout.", "grant": "Bend Will" } } },
+
+    { "shout": "Dragon Aspect", "words": ["Mul", "Qah", "Diiv"],
+      "word": {
+        "Mul": {
+          "melee": { "k": "perk", "d": "Power attacks deal more damage.", "ep": "ModPowerAttackDamage", "mult": [1.1, 1.5] },
+          "ranged": { "k": "perk", "approx": "every shot, not only fully drawn ones", "d": "Bow damage is increased.", "ep": "ModAttackDamage", "mult": [1.05, 1.25] },
+          "armour": { "k": "rec", "d": "Carry weight +<mag>.", "av": "CarryWeight", "m": [10, 50] } },
+        "Qah": {
+          "melee": { "k": "rec", "d": "Hits chip <mag> from the target's armour for <dur> seconds.", "av": "DamageResist", "det": true, "m": [10, 50], "dur": 10 },
+          "ranged": { "k": "rec", "d": "Arrows chip <mag> from the target's armour for <dur> seconds.", "av": "DamageResist", "det": true, "m": [10, 50], "dur": 10 },
+          "armour": { "k": "rec", "d": "Armour rating +<mag>.", "av": "DamageResist", "m": [10, 50] } },
+        "Diiv": {
+          "melee": { "k": "self", "d": "While the weapon is drawn, Shout cooldowns are <mag> shorter.", "av": "ShoutRecoveryMult", "det": true, "m": [0.05, 0.25], "if": [{ "f": "IsWeaponOut" }] },
+          "ranged": { "k": "self", "d": "While the bow is drawn, Shout cooldowns are <mag> shorter.", "av": "ShoutRecoveryMult", "det": true, "m": [0.05, 0.25], "if": [{ "f": "IsWeaponOut" }] },
+          "armour": { "k": "rec", "d": "Shout cooldowns are <mag> shorter.", "av": "ShoutRecoveryMult", "det": true, "m": [0.05, 0.25] } }
+      },
+      "phrase": {
+        "melee": { "k": "proc", "d": "Mul Qah Diiv: power attacks wreathe the blade in dragon fire.", "proc": { "on": "hit", "power": true, "cast": { "helper": "DragonFire" }, "at": "target", "cd": 1 } },
+        "ranged": { "k": "proc", "approx": "one shot in four, not only a fully drawn one", "d": "Mul Qah Diiv: one shot in four carries dragon fire.", "proc": { "on": "hit", "chance": 25, "cast": { "helper": "DragonFire" }, "at": "target", "cd": 1 } },
+        "armour": { "k": "rec", "approx": "the armour boost only; the power-attack and cooldown boosts ride Mul and Diiv", "d": "Mul Qah Diiv: Dragon Aspect's armour, always on: armour rating +<mag>.", "av": "DamageResist", "m": 100, "copy": "Dragon Aspect" } } },
+
+    { "shout": "Call of Valor", "words": ["Hun", "Kaal", "Zoor"],
+      "word": {
+        "Hun": {
+          "melee": { "k": "stub", "d": "Hits heal your followers a little.", "note": "needs the follower list on each hit; not built yet" },
+          "ranged": { "k": "stub", "d": "Arrow kills heal your followers.", "note": "needs the follower list on each kill; not built yet" },
+          "armour": { "k": "rec", "approx": "in and out of combat", "d": "Health regenerates <mag>% faster.", "av": "HealRateMult", "m": [10, 50] } },
+        "Kaal": {
+          "melee": { "k": "stub", "d": "Followers deal more damage while you fight.", "note": "follower abilities need the follower list; not built yet" },
+          "ranged": { "k": "stub", "d": "Followers deal more ranged damage.", "note": "follower abilities need the follower list; not built yet" },
+          "armour": { "k": "stub", "d": "Followers take less damage.", "note": "follower abilities need the follower list; not built yet" } },
+        "Zoor": {
+          "melee": { "k": "stub", "d": "Kills raise nearby allies' morale.", "note": "needs the follower list on each kill; not built yet" },
+          "ranged": { "k": "stub", "d": "Kill shots rally allies.", "note": "needs the follower list on each kill; not built yet" },
+          "armour": { "k": "rec", "d": "Speech +<mag>.", "av": "Speech", "m": [5, 25] } }
+      },
+      "phrase": {
+        "melee": { "k": "stub", "d": "Hun Kaal Zoor: a killing blow rallies nearby allies.", "note": "needs the follower list on each kill; not built yet" },
+        "ranged": { "k": "stub", "d": "Hun Kaal Zoor: a kill shot rallies nearby allies.", "note": "needs the follower list on each kill; not built yet" },
+        "armour": { "k": "grant", "d": "Hun Kaal Zoor: grants Call of Valor as a Shout.", "grant": "Call of Valor" } } },
+
+    { "shout": "Marked for Death", "words": ["Krii", "Lun", "Aus"],
+      "word": {
+        "Krii": {
+          "melee": { "k": "rec", "d": "Strikes reduce the target's armour by <mag> for <dur> seconds.", "av": "DamageResist", "det": true, "m": [10, 50], "dur": 10, "copy": "Marked for Death" },
+          "ranged": { "k": "rec", "d": "Arrows reduce the target's armour by <mag> for <dur> seconds.", "av": "DamageResist", "det": true, "m": [10, 50], "dur": 10, "copy": "Marked for Death" },
+          "armour": { "k": "stub", "d": "Your armour cannot be reduced.", "note": "needs a magic-effect filter; not built yet" } },
+        "Lun": {
+          "melee": { "k": "rec", "d": "Strikes drain <mag> health per second for <dur> seconds.", "av": "Health", "det": true, "m": [1, 5], "dur": 5, "copy": "Marked for Death" },
+          "ranged": { "k": "rec", "d": "Arrows drain <mag> health per second for <dur> seconds.", "av": "Health", "det": true, "m": [1, 5], "dur": 5, "copy": "Marked for Death" },
+          "armour": { "k": "proc", "d": "Attackers who hit you are drained.", "proc": { "on": "hitBy", "cast": { "helper": "Drain" }, "at": "attacker", "mag": [1, 5], "cd": 2 } } },
+        "Aus": {
+          "melee": { "k": "rec", "d": "Struck targets suffer <mag> damage per second for <dur> seconds.", "av": "Health", "det": true, "m": [2, 6], "dur": 5, "res": "PoisonResist" },
+          "ranged": { "k": "rec", "d": "Arrows poison for <mag> damage per second for <dur> seconds.", "av": "Health", "det": true, "m": [2, 6], "dur": 5, "res": "PoisonResist" },
+          "armour": { "k": "rec", "approx": "poison only; disease resistance rides other gear", "d": "Resist poison <mag>%.", "av": "PoisonResist", "m": [10, 50] } }
+      },
+      "phrase": {
+        "melee": { "k": "rec", "approx": "each hit lowers armour again for 10 seconds", "d": "Krii Lun Aus: each hit lowers the target's armour by another <mag>.", "av": "DamageResist", "det": true, "m": 15, "dur": 10 },
+        "ranged": { "k": "rec", "approx": "each arrow drains for 10 seconds", "d": "Krii Lun Aus: each arrow drains <mag> health per second for <dur> seconds.", "av": "Health", "det": true, "m": 2, "dur": 10 },
+        "armour": { "k": "proc", "d": "Krii Lun Aus: your attacker is marked for death.", "proc": { "on": "hitBy", "cast": { "shout": "Marked for Death", "level": 1 }, "at": "attacker", "cd": 10 } } } }
+  ]
+}

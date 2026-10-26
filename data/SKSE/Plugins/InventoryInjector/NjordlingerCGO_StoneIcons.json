@@ -1,0 +1,65 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Exit-9B/InventoryInjector/main/docs/InventoryInjector.schema.json",
+  "rules": [
+    {
+      "match": {
+        "formType": "Misc",
+        "keywords": [
+          "NJCGO_StoneTier_Petty"
+        ]
+      },
+      "assign": {
+        "iconLabel": "misc_soulgem",
+        "iconColor": "#CFE3F5"
+      }
+    },
+    {
+      "match": {
+        "formType": "Misc",
+        "keywords": [
+          "NJCGO_StoneTier_Lesser"
+        ]
+      },
+      "assign": {
+        "iconLabel": "misc_soulgem",
+        "iconColor": "#4E8CFF"
+      }
+    },
+    {
+      "match": {
+        "formType": "Misc",
+        "keywords": [
+          "NJCGO_StoneTier_Common"
+        ]
+      },
+      "assign": {
+        "iconLabel": "misc_soulgem",
+        "iconColor": "#6A5CFF"
+      }
+    },
+    {
+      "match": {
+        "formType": "Misc",
+        "keywords": [
+          "NJCGO_StoneTier_Greater"
+        ]
+      },
+      "assign": {
+        "iconLabel": "misc_soulgem",
+        "iconColor": "#9B4DFF"
+      }
+    },
+    {
+      "match": {
+        "formType": "Misc",
+        "keywords": [
+          "NJCGO_StoneTier_Grand"
+        ]
+      },
+      "assign": {
+        "iconLabel": "misc_soulgem",
+        "iconColor": "#6B1FB8"
+      }
+    }
+  ]
+}

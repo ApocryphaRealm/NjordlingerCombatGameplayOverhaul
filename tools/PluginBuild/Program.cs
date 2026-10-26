@@ -97,7 +97,13 @@ Condition MakeCondition(JsonNode c, string owner)
         "EPMagic_SpellHasSkill" => new EPMagic_SpellHasSkillConditionData { ActorValue = Enum.Parse<ActorValue>(c["skill"]!.GetValue<string>()) },
         "GetLightLevel" => new GetLightLevelConditionData(),
         "GetIsRace" => SetRace(new GetIsRaceConditionData(), races[c["race"]!.GetValue<string>()]),
-        "GetGlobalValue" => SetGlobal(new GetGlobalValueConditionData(), helperGlobals[c["global"]!.GetValue<string>()]),        _ => throw new InvalidOperationException($"{owner}: condition {f} is not supported by the plugin build")
+        "GetGlobalValue" => SetGlobal(new GetGlobalValueConditionData(), helperGlobals[c["global"]!.GetValue<string>()]),
+        // phase 4 (soul stones)
+        "GetActorValue" => new GetActorValueConditionData { ActorValue = Enum.Parse<ActorValue>(c["av"]!.GetValue<string>()) },
+        "IsRaining" => new IsRainingConditionData(),
+        "IsSnowing" => new IsSnowingConditionData(),
+        "IsPleasant" => new IsPleasantConditionData(),
+        _ => throw new InvalidOperationException($"{owner}: condition {f} is not supported by the plugin build")
     };
     data.RunOnType = Condition.RunOnType.Subject;
     var cond = new ConditionFloat { CompareOperator = Op(c["op"]?.GetValue<string>()), ComparisonValue = v, Data = data };
@@ -556,6 +562,20 @@ if (File.Exists(gearPath))
     File.WriteAllText(Path.Combine(repo, "data", "NjordlingerCGO_Gear_DISTR.ini"), string.Join("\r\n", distr) + "\r\n");
     File.WriteAllText(Path.Combine(repo, "data", "NjordlingerCGO_Uniques_KID.ini"), string.Join("\r\n", kid) + "\r\n");
     Console.WriteLine($"gear: {setForms.Count} sets, {uniqueForms.Count} uniques, {gearEntries} entry points, {gearConstants} constant effects; wrote NjordlingerCGO_Gear_DISTR.ini and NjordlingerCGO_Uniques_KID.ini");
+}
+
+// ---- Phase 4: Soul Stones (PLAN.md D17-D22, config/stones.json, WORD-TABLE.md) ------------------------------------------
+// Built AFTER every phase 2 and 3 record, so no earlier form ID moves. Needs the game's masters to copy Shout visuals,
+// resolve vanilla keywords, spells, soul gems and loot lists: NJCGO_MASTERS = folders holding Skyrim.esm, Dawnguard.esm
+// and Dragonborn.esm (separated by ';'). Writes data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul/stones.json (the SKSE
+// plugin's table), data/SKSE/Plugins/SkyPatcher/leveledList/NjordlingerCGO/SoulStones.ini (loot and merchants) and
+// data/SKSE/Plugins/InventoryInjector/NjordlingerCGO_StoneIcons.json (soul-gem icon in the tier colour).
+var stonesPath = Path.Combine(repo, "config", "stones.json");
+var schemePath = Path.Combine(repo, "data", "SKSE", "Plugins", "NjordlingerCombatGameplayOverhaul", "stone-scheme.json");
+if (File.Exists(stonesPath))
+{
+    StoneBuild.Run(mod, modKey, repo, JsonNode.Parse(File.ReadAllText(stonesPath))!, JsonNode.Parse(File.ReadAllText(schemePath))!,
+        keywords, forms, stubs, approx, dllDone, MakeCondition, TabCount);
 }
 
 forms["dll"] =new JsonArray(dllDone.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
