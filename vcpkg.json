@@ -6,7 +6,8 @@
     "license": "GPL-3.0-or-later",
     "dependencies": [
         "commonlibsse-ng",
-        "spdlog"
+        "spdlog",
+        "nlohmann-json"
     ],
     "builtin-baseline": "8d3649ba34aab36914ddd897958599aa0a91b08e"
 }

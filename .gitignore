@@ -3,3 +3,6 @@ obj/
 __pycache__/
 *.user
 .vs/
+build/
+vcpkg_installed/
+out/
