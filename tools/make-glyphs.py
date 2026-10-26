@@ -1,6 +1,6 @@
 r"""Render the soul-stone glyph atlas from the game's own dragon font (PLAN.md phase 4 step 1, D17; FEASIBILITY 12.2).
 
-  py -3 -I make-glyphs.py <Dragon_script.ttf> <stone-scheme.json> <out folder>
+  py -3 -I make-glyphs.py <Dragon_script.ttf> <stones.json or stone-scheme.json> <out folder>
 
 The font: the vanilla UI font Dragon_script inside Interface\fonts_en.swf (Skyrim - Interface.bsa), mapped to $DragonFont
 by fontconfig.txt. Get it with BSArch (unpack the archive) and FFDec (`ffdec-cli -format font:ttf -export font <out>
@@ -57,8 +57,8 @@ def main(argv):
         return 1
     ttf, scheme_path, out = argv
     words = [w["word"] for w in json.load(open(scheme_path, encoding="utf-8"))["words"]]
-    if len(words) != 60:
-        print("refused: the stone scheme does not hold 60 words")
+    if len(words) < 60 or len(words) > 64:
+        print("refused: 60 to 64 words fit the 8 x 8 atlas")
         return 1
     os.makedirs(out, exist_ok=True)
     atlas = Image.new("RGBA", (CELL * 8, CELL * 8), (0, 0, 0, 0))

@@ -85,12 +85,16 @@ def main(argv):
                "/".join(str(v) for v in cfg["tierValue"]), 100 - cfg["lootChanceNone"], "/".join(str(v) for v in cfg["lootLevels"])),
            ""]
     for ph in cfg["phrases"]:
-        out.append("**%s - %s**" % (" ".join(ph["words"]), ph["shout"]))
+        ext = ph.get("external")
+        out.append("**%s - %s**%s" % (" ".join(ph["words"]), ph["shout"], " (soft link: %s)" % ext["plugin"] if ext else ""))
         out.append("")
         out.append("| Word | Melee | Ranged | Armour |")
         out.append("|---|---|---|---|")
         for w in ph["words"]:
-            c = ph["word"][w]
+            c = ph["word"].get(w)
+            if c is None:
+                out.append("| %s | (its cells are under the phrase that first holds it) | | |" % w)
+                continue
             out.append("| %s | %s | %s | %s |" % (w, cell_text(c["melee"]), cell_text(c["ranged"]), cell_text(c["armour"])))
         p = ph["phrase"]
         out.append("| phrase | %s | %s | %s |" % (cell_text(p["melee"]), cell_text(p["ranged"]), cell_text(p["armour"])))

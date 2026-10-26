@@ -407,12 +407,12 @@
     "loot": "0xBFA",
     "vendor": "0xBFB",
     "counts": {
-      "stones": 300,
-      "recEffects": 102,
-      "markerEffects": 140,
+      "stones": 320,
+      "recEffects": 109,
+      "markerEffects": 154,
       "perks": 34,
       "abilities": 5,
-      "helpers": 12,
+      "helpers": 16,
       "lootLists": 9,
       "vendorLists": 1
     }
@@ -511,7 +511,6 @@
     "NJCGO_StoneFx_FeimZiiGron_melee: Feim Zii Gron: a hit while below 30% health makes you briefly ethereal (every 90 s).",
     "NJCGO_StoneFx_FeimZiiGron_ranged: Feim Zii Gron: a killing shot makes you briefly ethereal (every 60 s).",
     "NJCGO_StoneFx_FeimZiiGron_armour: Feim Zii Gron: hit below 30% health, you become ethereal (every 90 s).",
-    "NJCGO_StoneFx_ZunHaalViik_ranged: Zun Haal Viik: one arrow in ten disarms outright.",
     "NJCGO_StoneFx_ZunHaalViik_armour: Zun Haal Viik: attackers who hit you may drop their weapon.",
     "NJCGO_StoneFx_KaanDremOv_melee: Kaan Drem Ov: a kill calms the animals around you.",
     "NJCGO_StoneFx_KaanDremOv_ranged: Kaan Drem Ov: arrows pacify the animals they strike.",
@@ -552,14 +551,26 @@
     "NJCGO_StoneFx_MulQahDiiv_ranged: Mul Qah Diiv: one shot in four carries dragon fire.",
     "Hun Kaal Zoor armour: the Shout Call of Valor granted as a hidden clone (D21)",
     "NJCGO_StoneFx_Lun_armour: Attackers who hit you are drained.",
-    "NJCGO_StoneFx_KriiLunAus_armour: Krii Lun Aus: your attacker is marked for death."
+    "NJCGO_StoneFx_KriiLunAus_armour: Krii Lun Aus: your attacker is marked for death.",
+    "NJCGO_StoneFx_Gaar_melee: Power attacks release a small burst of lightning.",
+    "NJCGO_StoneFx_Gaar_armour: When you are hit, one time in ten a shock bursts out around you.",
+    "NJCGO_StoneFx_StrunGaarKest_melee: Strun Gaar Kest: power attacks breathe lightning.",
+    "NJCGO_StoneFx_StrunGaarKest_ranged: Strun Gaar Kest: one shot in four chains lightning to a second enemy.",
+    "NJCGO_StoneFx_StrunGaarKest_armour: Strun Gaar Kest: hit below 30% health, lightning lashes your attackers (every 60 s).",
+    "NJCGO_StoneFx_LaasSlenAus_armour: Laas Slen Aus: attackers who hit you are poisoned.",
+    "NJCGO_StoneFx_Fiik_melee: Hits mirror: for 3 seconds the target takes \u003Cmag\u003E% of the damage it deals to you.",
+    "NJCGO_StoneFx_Lo_melee: A hit from sneaking calms the target for 2 seconds.",
+    "NJCGO_StoneFx_Sah_melee: A kill leaves a phantom decoy where the victim fell.",
+    "NJCGO_StoneFx_Sah_ranged: A killing shot leaves a phantom decoy where the victim fell.",
+    "NJCGO_StoneFx_Sah_armour: Hit below 30% health, a phantom decoy appears (every 90 s).",
+    "NJCGO_StoneFx_FiikLoSah_melee: Fiik Lo Sah: a hit while below 30% health makes you a phantom briefly (every 90 s).",
+    "NJCGO_StoneFx_FiikLoSah_ranged: Fiik Lo Sah: a killing shot makes you a phantom briefly (every 60 s)."
   ],
   "stubs": [
     "NJCGO_StoneFx_Shul_armour: an aura needs a cloak spell and its hit spell; not built yet",
     "NJCGO_StoneFx_Krah_armour: no record makes frost slows skip the wearer; needs a magic-effect filter",
     "NJCGO_StoneFx_Feim_ranged: projectile pierce needs a projectile hook",
-    "NJCGO_StoneFx_Zun_armour: no actor value or record blocks disarm; needs a hook",
-    "NJCGO_StoneFx_ZunHaalViik_melee: unequipping an NPC\u0027s shield on disarm needs the disarm event; not built yet",
+    "NJCGO_StoneFx_Zun_armour: no actor value or record keeps the wearer\u0027s weapon damage from being lowered; needs a magic-effect filter",
     "NJCGO_StoneFx_Kaan_armour: needs a cloak spell or a combat hook; not built yet",
     "NJCGO_StoneFx_Drem_armour: the aggression radius is not an actor value; needs a hook",
     "NJCGO_StoneFx_KaanDremOv_armour: needs a combat hook; not built yet",
@@ -593,7 +604,10 @@
     "NJCGO_StoneFx_Zoor_ranged: needs the follower list on each kill; not built yet",
     "NJCGO_StoneFx_HunKaalZoor_melee: needs the follower list on each kill; not built yet",
     "NJCGO_StoneFx_HunKaalZoor_ranged: needs the follower list on each kill; not built yet",
-    "NJCGO_StoneFx_Krii_armour: needs a magic-effect filter; not built yet"
+    "NJCGO_StoneFx_Krii_armour: needs a magic-effect filter; not built yet",
+    "NJCGO_StoneFx_Fiik_ranged: mirroring an attack needs a hit hook; not built yet",
+    "NJCGO_StoneFx_Lo_ranged: keeping stealth after a hit is not expressible in a record or an event",
+    "NJCGO_StoneFx_FiikLoSah_armour: D21\u0027s hidden clone of a Shout needs that Shout\u0027s plugin as a master (Phantom Form is a soft link, no new masters allowed) - DECISION for Fable / the owner: a master on the Wyrmstooth patch, or a Shout made at run time"
   ],
   "approximations": [
     "NJCGO_Ab_archer: a bow drawn = weapon out with a bow equipped",
@@ -613,7 +627,6 @@
     "NJCGO_StoneFx_Feim_melee: a slow with the ethereal shader stands in for \u0027slower to react\u0027",
     "NJCGO_StoneFx_Zii_ranged: extra damage to ghosts stands in for \u0027ignore spirit resistances\u0027",
     "NJCGO_StoneFx_Haal_armour: applies to every weapon, not only unarmed and one-handed",
-    "NJCGO_StoneFx_ZunHaalViik_ranged: one arrow in ten, not a hit on the hand",
     "NJCGO_StoneFx_Ov_melee: lowered confidence stands in for \u0027flee less, surrender sooner\u0027",
     "NJCGO_StoneFx_Ov_ranged: lowered confidence stands in for \u0027yield at low health\u0027",
     "NJCGO_StoneFx_Yah_armour: detect life stands in for detect dead",
@@ -639,6 +652,9 @@
     "NJCGO_StoneFx_Hun_armour: in and out of combat",
     "NJCGO_StoneFx_Aus_armour: poison only; disease resistance rides other gear",
     "NJCGO_StoneFx_KriiLunAus_melee: each hit lowers armour again for 10 seconds",
-    "NJCGO_StoneFx_KriiLunAus_ranged: each arrow drains for 10 seconds"
+    "NJCGO_StoneFx_KriiLunAus_ranged: each arrow drains for 10 seconds",
+    "NJCGO_StoneFx_StrunGaarKest_ranged: one shot in four, not only a fully drawn one",
+    "NJCGO_StoneFx_LaasSlenAus_melee: the same poison at any health (the doubling below half health is not built)",
+    "NJCGO_StoneFx_LaasSlenAus_ranged: the same poison at any health (the doubling below half health is not built)"
   ]
 }

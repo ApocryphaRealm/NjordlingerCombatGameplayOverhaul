@@ -87,7 +87,11 @@
     "Fury": "0x98F",
     "BowHaste": "0x991",
     "Haste": "0x993",
-    "Restore": "0x995"
+    "Restore": "0x995",
+    "Poison": "0xC15",
+    "Disarm": "0xC17",
+    "Mirror": "0xC19",
+    "Hush": "0xC1B"
   },
   "words": [
     {
@@ -238,7 +242,8 @@
             "power": true,
             "at": "target",
             "cd": 2,
-            "spell": "Skyrim.esm|0x13E09"
+            "shoutForm": "Skyrim.esm|0x13E07",
+            "level": 1
           }
         },
         "ranged": {
@@ -269,7 +274,8 @@
             "chance": 25,
             "at": "attacker",
             "cd": 5,
-            "spell": "Skyrim.esm|0x13E09"
+            "shoutForm": "Skyrim.esm|0x13E07",
+            "level": 1
           }
         }
       }
@@ -412,7 +418,7 @@
               6
             ],
             "cd": 2,
-            "spell": "0x97F"
+            "helper": "Burn"
           }
         }
       }
@@ -659,7 +665,7 @@
               40
             ],
             "cd": 3,
-            "spell": "0x981"
+            "helper": "Chill"
           }
         }
       }
@@ -1052,7 +1058,7 @@
               50
             ],
             "cd": 3,
-            "spell": "0x983"
+            "helper": "Snare"
           }
         }
       }
@@ -1073,45 +1079,45 @@
         "melee": {
           "kind": "rec",
           "effect": "0xA2E",
-          "text": "One hit in ten disarms the target (up to level \u003Cmag\u003E).",
+          "text": "Struck targets deal \u003Cmag\u003E% less weapon damage for \u003Cdur\u003E seconds (Subdue).",
           "m": [
-            20,
-            30,
-            40,
-            50,
-            60
+            0.1,
+            0.15,
+            0.2,
+            0.25,
+            0.3
           ],
           "dur": [
-            0,
-            0,
-            0,
-            0,
-            0
+            5,
+            5,
+            5,
+            5,
+            5
           ]
         },
         "ranged": {
           "kind": "rec",
           "effect": "0xA2F",
-          "text": "One arrow in ten knocks the weapon from the hand (up to level \u003Cmag\u003E).",
+          "text": "Arrows weaken the target\u0027s weapon damage by \u003Cmag\u003E% for \u003Cdur\u003E seconds (Subdue).",
           "m": [
-            20,
-            30,
-            40,
-            50,
-            60
+            0.1,
+            0.15,
+            0.2,
+            0.25,
+            0.3
           ],
           "dur": [
-            0,
-            0,
-            0,
-            0,
-            0
+            5,
+            5,
+            5,
+            5,
+            5
           ]
         },
         "armour": {
           "kind": "stub",
           "effect": "0xA30",
-          "text": "You cannot be disarmed. (dormant)"
+          "text": "Your weapon damage cannot be reduced. (dormant)"
         }
       }
     },
@@ -1801,7 +1807,7 @@
               0.5
             ],
             "cd": 0,
-            "spell": "0x98F"
+            "helper": "Fury"
           }
         },
         "ranged": {
@@ -1819,7 +1825,7 @@
               0.3
             ],
             "cd": 0,
-            "spell": "0x991"
+            "helper": "BowHaste"
           }
         },
         "armour": {
@@ -1837,7 +1843,7 @@
               25
             ],
             "cd": 0,
-            "spell": "0x993"
+            "helper": "Haste"
           }
         }
       }
@@ -1924,7 +1930,7 @@
               0.25
             ],
             "cd": 0,
-            "spell": "0x98D"
+            "helper": "Stack"
           }
         },
         "ranged": {
@@ -1944,7 +1950,7 @@
               0.25
             ],
             "cd": 0,
-            "spell": "0x98D"
+            "helper": "Stack"
           }
         },
         "armour": {
@@ -2214,7 +2220,7 @@
               20
             ],
             "cd": 2,
-            "spell": "0x985"
+            "helper": "Shock"
           }
         }
       }
@@ -2248,7 +2254,7 @@
               20
             ],
             "cd": 1,
-            "spell": "0x985"
+            "helper": "Shock"
           }
         },
         "ranged": {
@@ -2267,7 +2273,7 @@
               20
             ],
             "cd": 1,
-            "spell": "0x985"
+            "helper": "Shock"
           }
         },
         "armour": {
@@ -2835,7 +2841,8 @@
             "chance": 15,
             "at": "attacker",
             "cd": 10,
-            "spell": "Skyrim.esm|0x2395B"
+            "shoutForm": "Skyrim.esm|0x2395A",
+            "level": 1
           }
         }
       }
@@ -2906,7 +2913,7 @@
               5
             ],
             "cd": 1,
-            "spell": "0x987"
+            "helper": "AbsorbHealth"
           }
         }
       }
@@ -3647,7 +3654,7 @@
               5
             ],
             "cd": 2,
-            "spell": "0x989"
+            "helper": "Drain"
           }
         }
       }
@@ -3723,6 +3730,239 @@
           ]
         }
       }
+    },
+    {
+      "word": "Gaar",
+      "phrase": -1,
+      "position": 1,
+      "keyword": "0xC1D",
+      "stones": [
+        "0xC1E",
+        "0xC1F",
+        "0xC20",
+        "0xC21",
+        "0xC22"
+      ],
+      "hosts": {
+        "melee": {
+          "kind": "proc",
+          "effect": "0xC23",
+          "text": "Power attacks release a small burst of lightning.",
+          "proc": {
+            "on": "hit",
+            "power": true,
+            "at": "target",
+            "cd": 4,
+            "shoutForm": "Stormcrown.esp|0x82C",
+            "level": 1
+          }
+        },
+        "ranged": {
+          "kind": "rec",
+          "effect": "0xC24",
+          "text": "Arrows discharge \u003Cmag\u003E shock damage.",
+          "m": [
+            5,
+            10,
+            15,
+            20,
+            25
+          ],
+          "dur": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "armour": {
+          "kind": "proc",
+          "effect": "0xC25",
+          "text": "When you are hit, one time in ten a shock bursts out around you.",
+          "proc": {
+            "on": "hitBy",
+            "chance": 10,
+            "at": "nearby",
+            "mag": [
+              10,
+              15,
+              20,
+              25,
+              30
+            ],
+            "cd": 5,
+            "helper": "Shock"
+          }
+        }
+      }
+    },
+    {
+      "word": "Fiik",
+      "phrase": -1,
+      "position": 0,
+      "keyword": "0xC2C",
+      "stones": [
+        "0xC2D",
+        "0xC2E",
+        "0xC2F",
+        "0xC30",
+        "0xC31"
+      ],
+      "hosts": {
+        "melee": {
+          "kind": "proc",
+          "effect": "0xC32",
+          "text": "Hits mirror: for 3 seconds the target takes \u003Cmag\u003E% of the damage it deals to you.",
+          "proc": {
+            "on": "hit",
+            "at": "self",
+            "mag": [
+              10,
+              15,
+              20,
+              25,
+              30
+            ],
+            "cd": 3,
+            "helper": "Mirror"
+          }
+        },
+        "ranged": {
+          "kind": "stub",
+          "effect": "0xC33",
+          "text": "Arrows mark the target: its next attack on you is mirrored back. (dormant)"
+        },
+        "armour": {
+          "kind": "rec",
+          "effect": "0xC34",
+          "text": "The mirror: \u003Cmag\u003E% of melee damage taken is dealt back.",
+          "m": [
+            5,
+            10,
+            15,
+            20,
+            25
+          ],
+          "dur": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "word": "Lo",
+      "phrase": -1,
+      "position": 1,
+      "keyword": "0xC35",
+      "stones": [
+        "0xC36",
+        "0xC37",
+        "0xC38",
+        "0xC39",
+        "0xC3A"
+      ],
+      "hosts": {
+        "melee": {
+          "kind": "proc",
+          "effect": "0xC3B",
+          "text": "A hit from sneaking calms the target for 2 seconds.",
+          "proc": {
+            "on": "hit",
+            "sneak": true,
+            "at": "target",
+            "mag": [
+              10,
+              20,
+              30,
+              40,
+              50
+            ],
+            "cd": 3,
+            "helper": "Hush"
+          }
+        },
+        "ranged": {
+          "kind": "stub",
+          "effect": "0xC3C",
+          "text": "Sneak arrow hits do not break stealth for a moment. (dormant)"
+        },
+        "armour": {
+          "kind": "rec",
+          "effect": "0xC3D",
+          "text": "While sneaking, Sneak \u002B\u003Cmag\u003E.",
+          "m": [
+            10,
+            20,
+            30,
+            40,
+            50
+          ],
+          "dur": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "word": "Sah",
+      "phrase": -1,
+      "position": 2,
+      "keyword": "0xC3E",
+      "stones": [
+        "0xC3F",
+        "0xC40",
+        "0xC41",
+        "0xC42",
+        "0xC43"
+      ],
+      "hosts": {
+        "melee": {
+          "kind": "proc",
+          "effect": "0xC44",
+          "text": "A kill leaves a phantom decoy where the victim fell.",
+          "proc": {
+            "on": "kill",
+            "at": "target",
+            "cd": 10,
+            "shoutForm": "Stormcrown - Wyrmstooth OG Patch.esp|0x800",
+            "level": 1
+          }
+        },
+        "ranged": {
+          "kind": "proc",
+          "effect": "0xC45",
+          "text": "A killing shot leaves a phantom decoy where the victim fell.",
+          "proc": {
+            "on": "kill",
+            "at": "target",
+            "cd": 10,
+            "shoutForm": "Stormcrown - Wyrmstooth OG Patch.esp|0x800",
+            "level": 1
+          }
+        },
+        "armour": {
+          "kind": "proc",
+          "effect": "0xC46",
+          "text": "Hit below 30% health, a phantom decoy appears (every 90 s).",
+          "proc": {
+            "on": "hitBy",
+            "lowHealth": true,
+            "at": "self",
+            "cd": 90,
+            "shoutForm": "Stormcrown - Wyrmstooth OG Patch.esp|0x800",
+            "level": 1
+          }
+        }
+      }
     }
   ],
   "phrases": [
@@ -3754,7 +3994,8 @@
             "power": true,
             "at": "target",
             "cd": 4,
-            "spell": "Skyrim.esm|0x13F3A"
+            "shoutForm": "Skyrim.esm|0x13E07",
+            "level": 3
           }
         },
         "ranged": {
@@ -3766,7 +4007,8 @@
             "chance": 25,
             "at": "target",
             "cd": 4,
-            "spell": "Skyrim.esm|0x13F39"
+            "shoutForm": "Skyrim.esm|0x13E07",
+            "level": 2
           }
         },
         "armour": {
@@ -3778,7 +4020,8 @@
             "lowHealth": true,
             "at": "nearby",
             "cd": 60,
-            "spell": "Skyrim.esm|0x13F3A"
+            "shoutForm": "Skyrim.esm|0x13E07",
+            "level": 3
           }
         }
       }
@@ -3818,7 +4061,7 @@
               8
             ],
             "cd": 2,
-            "spell": "0x97F"
+            "helper": "Burn"
           }
         },
         "ranged": {
@@ -3913,7 +4156,8 @@
             "lowHealth": true,
             "at": "nearby",
             "cd": 60,
-            "spell": "Skyrim.esm|0x9CAF1"
+            "shoutForm": "Skyrim.esm|0x70980",
+            "level": 2
           }
         }
       }
@@ -3946,7 +4190,8 @@
             "power": true,
             "at": "target",
             "cd": 6,
-            "spell": "Skyrim.esm|0x9CAF2"
+            "shoutForm": "Skyrim.esm|0x70980",
+            "level": 3
           }
         },
         "ranged": {
@@ -3958,7 +4203,8 @@
             "chance": 25,
             "at": "target",
             "cd": 6,
-            "spell": "Skyrim.esm|0x9CAF1"
+            "shoutForm": "Skyrim.esm|0x70980",
+            "level": 2
           }
         },
         "armour": {
@@ -3971,7 +4217,8 @@
             "power": true,
             "at": "attacker",
             "cd": 4,
-            "spell": "Skyrim.esm|0x9CAF0"
+            "shoutForm": "Skyrim.esm|0x70980",
+            "level": 1
           }
         }
       }
@@ -4004,7 +4251,8 @@
             "lowHealth": true,
             "at": "self",
             "cd": 90,
-            "spell": "Skyrim.esm|0x5F6EB"
+            "shoutForm": "Skyrim.esm|0x32920",
+            "level": 1
           }
         },
         "ranged": {
@@ -4015,7 +4263,8 @@
             "on": "kill",
             "at": "self",
             "cd": 60,
-            "spell": "Skyrim.esm|0x5F6EB"
+            "shoutForm": "Skyrim.esm|0x32920",
+            "level": 1
           }
         },
         "armour": {
@@ -4027,7 +4276,8 @@
             "lowHealth": true,
             "at": "self",
             "cd": 90,
-            "spell": "Skyrim.esm|0x5F6ED"
+            "shoutForm": "Skyrim.esm|0x32920",
+            "level": 3
           }
         }
       }
@@ -4052,21 +4302,42 @@
       ],
       "hosts": {
         "melee": {
-          "kind": "stub",
+          "kind": "rec",
           "effect": "0xA45",
-          "text": "Zun Haal Viik: disarmed targets drop their shield too. (dormant)"
+          "text": "Zun Haal Viik: a hit on a staggered foe disarms it (up to level \u003Cmag\u003E).",
+          "m": [
+            100,
+            100,
+            100,
+            100,
+            100
+          ],
+          "dur": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
         },
         "ranged": {
-          "kind": "proc",
+          "kind": "rec",
           "effect": "0xA46",
-          "text": "Zun Haal Viik: one arrow in ten disarms outright.",
-          "proc": {
-            "on": "hit",
-            "chance": 10,
-            "at": "target",
-            "cd": 5,
-            "spell": "Skyrim.esm|0x8BB29"
-          }
+          "text": "Zun Haal Viik: one arrow in ten disarms outright (up to level \u003Cmag\u003E).",
+          "m": [
+            100,
+            100,
+            100,
+            100,
+            100
+          ],
+          "dur": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
         },
         "armour": {
           "kind": "proc",
@@ -4077,7 +4348,7 @@
             "chance": 15,
             "at": "attacker",
             "cd": 10,
-            "spell": "Skyrim.esm|0x8BB28"
+            "helper": "Disarm"
           }
         }
       }
@@ -4109,7 +4380,8 @@
             "on": "kill",
             "at": "self",
             "cd": 10,
-            "spell": "Skyrim.esm|0x82A3A"
+            "shoutForm": "Skyrim.esm|0x7097E",
+            "level": 3
           }
         },
         "ranged": {
@@ -4120,7 +4392,8 @@
             "on": "hit",
             "at": "target",
             "cd": 5,
-            "spell": "Skyrim.esm|0x82A34"
+            "shoutForm": "Skyrim.esm|0x7097E",
+            "level": 1
           }
         },
         "armour": {
@@ -4158,7 +4431,8 @@
             "sneak": true,
             "at": "self",
             "cd": 10,
-            "spell": "Skyrim.esm|0x8AFCE"
+            "shoutForm": "Skyrim.esm|0x7097B",
+            "level": 3
           }
         },
         "ranged": {
@@ -4170,7 +4444,8 @@
             "sneak": true,
             "at": "self",
             "cd": 10,
-            "spell": "Skyrim.esm|0x8AFCE"
+            "shoutForm": "Skyrim.esm|0x7097B",
+            "level": 3
           }
         },
         "armour": {
@@ -4229,7 +4504,7 @@
               50
             ],
             "cd": 1,
-            "spell": "0x995"
+            "helper": "Restore"
           }
         },
         "ranged": {
@@ -4426,7 +4701,8 @@
             "chance": 25,
             "at": "self",
             "cd": 30,
-            "spell": "Skyrim.esm|0x48AD0"
+            "shoutForm": "Skyrim.esm|0x48AC9",
+            "level": 1
           }
         },
         "ranged": {
@@ -4438,7 +4714,8 @@
             "chance": 20,
             "at": "self",
             "cd": 30,
-            "spell": "Skyrim.esm|0x48AD0"
+            "shoutForm": "Skyrim.esm|0x48AC9",
+            "level": 1
           }
         },
         "armour": {
@@ -4450,7 +4727,8 @@
             "lowHealth": true,
             "at": "self",
             "cd": 90,
-            "spell": "Skyrim.esm|0x48AD2"
+            "shoutForm": "Skyrim.esm|0x48AC9",
+            "level": 3
           }
         }
       }
@@ -4483,7 +4761,8 @@
             "storm": true,
             "at": "self",
             "cd": 60,
-            "spell": "Skyrim.esm|0x78BA4"
+            "shoutForm": "Skyrim.esm|0x3CD34",
+            "level": 3
           }
         },
         "ranged": {
@@ -4495,7 +4774,8 @@
             "storm": true,
             "at": "self",
             "cd": 60,
-            "spell": "Skyrim.esm|0x78BA2"
+            "shoutForm": "Skyrim.esm|0x3CD34",
+            "level": 1
           }
         },
         "armour": {
@@ -4540,7 +4820,8 @@
             "on": "kill",
             "at": "nearby",
             "cd": 10,
-            "spell": "Skyrim.esm|0x2395E"
+            "shoutForm": "Skyrim.esm|0x2395A",
+            "level": 2
           }
         },
         "ranged": {
@@ -4551,7 +4832,8 @@
             "on": "kill",
             "at": "nearby",
             "cd": 10,
-            "spell": "Skyrim.esm|0x2395E"
+            "shoutForm": "Skyrim.esm|0x2395A",
+            "level": 2
           }
         },
         "armour": {
@@ -4563,7 +4845,8 @@
             "lowHealth": true,
             "at": "nearby",
             "cd": 90,
-            "spell": "Skyrim.esm|0x23967"
+            "shoutForm": "Skyrim.esm|0x2395A",
+            "level": 3
           }
         }
       }
@@ -4669,7 +4952,8 @@
             "chance": 25,
             "at": "target",
             "cd": 30,
-            "spell": "Skyrim.esm|0x44254"
+            "shoutForm": "Skyrim.esm|0x44250",
+            "level": 1
           }
         },
         "ranged": {
@@ -4682,7 +4966,8 @@
             "chance": 25,
             "at": "target",
             "cd": 30,
-            "spell": "Skyrim.esm|0x44254"
+            "shoutForm": "Skyrim.esm|0x44250",
+            "level": 1
           }
         },
         "armour": {
@@ -4728,7 +5013,7 @@
             "power": true,
             "at": "target",
             "cd": 1,
-            "spell": "0x98B"
+            "helper": "DragonFire"
           }
         },
         "ranged": {
@@ -4740,7 +5025,7 @@
             "chance": 25,
             "at": "target",
             "cd": 1,
-            "spell": "0x98B"
+            "helper": "DragonFire"
           }
         },
         "armour": {
@@ -4873,8 +5158,169 @@
             "on": "hitBy",
             "at": "attacker",
             "cd": 10,
-            "spell": "Skyrim.esm|0x1861F"
+            "shoutForm": "Skyrim.esm|0x7097C",
+            "level": 1
           }
+        }
+      }
+    },
+    {
+      "shout": "Lightning Breath",
+      "shoutForm": "Stormcrown.esp|0x82C",
+      "soft": true,
+      "words": [
+        "Strun",
+        "Gaar",
+        "Kest"
+      ],
+      "hosts": {
+        "melee": {
+          "kind": "proc",
+          "effect": "0xC26",
+          "text": "Strun Gaar Kest: power attacks breathe lightning.",
+          "proc": {
+            "on": "hit",
+            "power": true,
+            "at": "target",
+            "cd": 6,
+            "shoutForm": "Stormcrown.esp|0x82C",
+            "level": 3
+          }
+        },
+        "ranged": {
+          "kind": "proc",
+          "effect": "0xC27",
+          "text": "Strun Gaar Kest: one shot in four chains lightning to a second enemy.",
+          "proc": {
+            "on": "hit",
+            "chance": 25,
+            "at": "second",
+            "mag": [
+              20,
+              20,
+              20,
+              20,
+              20
+            ],
+            "cd": 1,
+            "helper": "Shock"
+          }
+        },
+        "armour": {
+          "kind": "proc",
+          "effect": "0xC28",
+          "text": "Strun Gaar Kest: hit below 30% health, lightning lashes your attackers (every 60 s).",
+          "proc": {
+            "on": "hitBy",
+            "lowHealth": true,
+            "at": "nearby",
+            "cd": 60,
+            "shoutForm": "Stormcrown.esp|0x82C",
+            "level": 3
+          }
+        }
+      }
+    },
+    {
+      "shout": "Poison Breath",
+      "shoutForm": "Stormcrown.esp|0x833",
+      "soft": true,
+      "words": [
+        "Laas",
+        "Slen",
+        "Aus"
+      ],
+      "hosts": {
+        "melee": {
+          "kind": "rec",
+          "effect": "0xC29",
+          "text": "Laas Slen Aus: strikes poison for \u003Cmag\u003E per second for \u003Cdur\u003E seconds.",
+          "m": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "dur": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ]
+        },
+        "ranged": {
+          "kind": "rec",
+          "effect": "0xC2A",
+          "text": "Laas Slen Aus: arrows poison for \u003Cmag\u003E per second for \u003Cdur\u003E seconds.",
+          "m": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "dur": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ]
+        },
+        "armour": {
+          "kind": "proc",
+          "effect": "0xC2B",
+          "text": "Laas Slen Aus: attackers who hit you are poisoned.",
+          "proc": {
+            "on": "hitBy",
+            "at": "attacker",
+            "cd": 2,
+            "helper": "Poison"
+          }
+        }
+      }
+    },
+    {
+      "shout": "Phantom Form",
+      "shoutForm": "Stormcrown - Wyrmstooth OG Patch.esp|0x800",
+      "soft": true,
+      "words": [
+        "Fiik",
+        "Lo",
+        "Sah"
+      ],
+      "hosts": {
+        "melee": {
+          "kind": "proc",
+          "effect": "0xC47",
+          "text": "Fiik Lo Sah: a hit while below 30% health makes you a phantom briefly (every 90 s).",
+          "proc": {
+            "on": "hit",
+            "lowHealth": true,
+            "at": "self",
+            "cd": 90,
+            "shoutForm": "Stormcrown - Wyrmstooth OG Patch.esp|0x800",
+            "level": 1
+          }
+        },
+        "ranged": {
+          "kind": "proc",
+          "effect": "0xC48",
+          "text": "Fiik Lo Sah: a killing shot makes you a phantom briefly (every 60 s).",
+          "proc": {
+            "on": "kill",
+            "at": "self",
+            "cd": 60,
+            "shoutForm": "Stormcrown - Wyrmstooth OG Patch.esp|0x800",
+            "level": 1
+          }
+        },
+        "armour": {
+          "kind": "stub",
+          "effect": "0xC49",
+          "text": "Fiik Lo Sah: grants Phantom Form as a Shout. (dormant)"
         }
       }
     }

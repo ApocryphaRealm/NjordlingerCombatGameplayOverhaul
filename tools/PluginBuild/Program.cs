@@ -574,14 +574,12 @@ var stonesPath = Path.Combine(repo, "config", "stones.json");
 var schemePath = Path.Combine(repo, "data", "SKSE", "Plugins", "NjordlingerCombatGameplayOverhaul", "stone-scheme.json");
 if (File.Exists(stonesPath))
 {
-    StoneBuild.Run(mod, modKey, repo, JsonNode.Parse(File.ReadAllText(stonesPath))!, JsonNode.Parse(File.ReadAllText(schemePath))!,
-        keywords, forms, stubs, approx, dllDone, MakeCondition, TabCount);
-    // Phase 4 step 3: the runesmith, his quest and dialogue (config/runesmith.json), after every stone record.
+    // Phase 4 step 3: the runesmith, his quest and dialogue (config/runesmith.json), after every stone record and before
+    // the soft-linked phrases (StoneBuild calls it at that point, so no earlier form ID moves).
     var runesmithPath = Path.Combine(repo, "config", "runesmith.json");
-    if (File.Exists(runesmithPath))
-    {
-        RunesmithBuild.Run(mod, modKey, repo, JsonNode.Parse(File.ReadAllText(runesmithPath))!, forms, keywords);
-    }
+    StoneBuild.Run(mod, modKey, repo, JsonNode.Parse(File.ReadAllText(stonesPath))!, JsonNode.Parse(File.ReadAllText(schemePath))!,
+        keywords, forms, stubs, approx, dllDone, MakeCondition, TabCount,
+        () => { if (File.Exists(runesmithPath)) { RunesmithBuild.Run(mod, modKey, repo, JsonNode.Parse(File.ReadAllText(runesmithPath))!, forms, keywords); } });
 }
 
 forms["dll"] =new JsonArray(dllDone.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());

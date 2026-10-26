@@ -86,6 +86,8 @@ namespace SoulStones
 			std::array<RE::TESWordOfPower*, 3> real{};
 			std::array<Cell, 3> hosts;
 			RE::TESShout* clone = nullptr;
+			RE::TESShout* own = nullptr;   // the phrase's own Shout (its words are the D20 check)
+			bool available = true;         // false: a soft-linked Shout whose plugin is not loaded
 			std::array<RE::TESWordOfPower*, 3> cloneWords{};
 		};
 
@@ -281,6 +283,25 @@ namespace SoulStones
 				c.proc.cooldown = p.value("cd", 0.0F);
 				if (p.contains("targetKeyword")) { c.proc.targetKeyword = Form<RE::BGSKeyword>(p["targetKeyword"], "proc keyword"); }
 				if (p.contains("spell")) { c.proc.spell = Form<RE::SpellItem>(p["spell"], "proc spell"); }
+				if (p.contains("helper"))
+				{
+					const auto it = g_t.helpers.find(p["helper"].get<std::string>());
+					c.proc.spell = it != g_t.helpers.end() ? it->second : nullptr;
+				}
+				if (p.contains("shoutForm"))
+				{
+					// soft: another plugin's Shout resolves only when that plugin is loaded (no warning when it is absent)
+					const auto ref = p["shoutForm"].get<std::string>();
+					const auto bar = ref.find('|');
+					auto* handler = RE::TESDataHandler::GetSingleton();
+					RE::TESShout* sh = nullptr;
+					if (bar != std::string::npos && handler && handler->LookupModByName(ref.substr(0, bar)))
+					{
+						sh = handler->LookupForm<RE::TESShout>(static_cast<RE::FormID>(std::stoul(ref.substr(bar + 1), nullptr, 0)) & 0xFFFFFF, ref.substr(0, bar));
+					}
+					const int lvl = std::clamp(p.value("level", 1), 1, 3);
+					c.proc.spell = sh ? sh->variations[lvl - 1].spell : nullptr;
+				}
 				if (p.contains("mag")) { c.proc.mag = Floats(p["mag"]); c.proc.hasMag = true; }
 				if (p.contains("mult")) { c.proc.mult = Floats(p["mult"]); }
 			}
@@ -377,7 +398,7 @@ namespace SoulStones
 
 		bool PhraseUnlocked(int a_phrase)
 		{
-			if (a_phrase < 0 || a_phrase >= static_cast<int>(g_t.phrases.size())) { return false; }
+			if (a_phrase < 0 || a_phrase >= static_cast<int>(g_t.phrases.size()) || !g_t.phrases[a_phrase].available) { return false; }
 			for (auto* w : g_t.phrases[a_phrase].real)
 			{
 				if (!Unlocked(w)) { return false; }
@@ -403,13 +424,12 @@ namespace SoulStones
 		int SpelledPhrase(const std::array<StoneRef, 3>& a_s)
 		{
 			if (a_s[0].word < 0) { return -1; }
-			const int p = g_t.words[a_s[0].word].phrase;
-			if (p < 0) { return -1; }
-			for (int i = 0; i < 3; ++i)
+			for (int p = 0; p < static_cast<int>(g_t.phrases.size()); ++p)
 			{
-				if (a_s[i].word != g_t.phrases[p].words[i]) { return -1; }
+				const auto& ph = g_t.phrases[p];
+				if (ph.available && a_s[0].word == ph.words[0] && a_s[1].word == ph.words[1] && a_s[2].word == ph.words[2]) { return p; }
 			}
-			return p;
+			return -1;
 		}
 
 		// ---- created enchantments --------------------------------------------------------------------------------------
@@ -876,8 +896,10 @@ namespace SoulStones
 						if (c.ability) { abilities[c.ability] = std::max(abilities[c.ability], s.tier); }
 						if (eq.host == Host::kArmour)
 						{
-							const auto& w = g_t.words[s.word];
-							if (w.phrase >= 0) { worn[w.phrase][w.position] = true; }
+							for (std::size_t p = 0; p < g_t.phrases.size(); ++p)
+							{
+								for (int k = 0; k < 3; ++k) { if (g_t.phrases[p].words[k] == s.word) { worn[p][k] = true; } }
+							}
 						}
 					}
 				}
@@ -1597,7 +1619,27 @@ namespace SoulStones
 					{
 						if (g_t.words[w].name == name) { ph.words[i] = w; }
 					}
-					ph.real[i] = Form<RE::TESWordOfPower>(p["wordForms"][i], "word of power");
+					if (p.contains("wordForms")) { ph.real[i] = Form<RE::TESWordOfPower>(p["wordForms"][i], "word of power"); }
+				}
+				if (p.contains("shoutForm"))
+				{
+					const auto ref = p["shoutForm"].get<std::string>();
+					const auto bar = ref.find('|');
+					auto* handler = RE::TESDataHandler::GetSingleton();
+					if (bar != std::string::npos && handler && handler->LookupModByName(ref.substr(0, bar)))
+					{
+						ph.own = handler->LookupForm<RE::TESShout>(static_cast<RE::FormID>(std::stoul(ref.substr(bar + 1), nullptr, 0)) & 0xFFFFFF, ref.substr(0, bar));
+					}
+					if (ph.own)
+					{
+						// D20 reads THIS Shout's words (Stormcrown gives its new Shouts their own word records)
+						for (int i = 0; i < 3; ++i) { if (ph.own->variations[i].word) { ph.real[i] = ph.own->variations[i].word; } }
+					}
+					else if (p.value("soft", false))
+					{
+						ph.available = false;
+						logger::info("soul stones: phrase {} ({}) unavailable - {} is not loaded; its stones still work one by one", ph.shout, ref, ref.substr(0, bar));
+					}
 				}
 				const char* hosts[] = { "melee", "ranged", "armour" };
 				for (int h = 0; h < 3; ++h)
@@ -1614,7 +1656,7 @@ namespace SoulStones
 			}
 		}
 		catch (const std::exception& e) { fail(std::string("stones.json is not in the expected shape: ") + e.what()); return; }
-		if (g_t.words.size() != 60 || g_t.phrases.size() != 20) { fail(fmt::format("stones.json holds {} words and {} phrases, not 60 and 20", g_t.words.size(), g_t.phrases.size())); return; }
+		if (g_t.words.size() < 60 || g_t.phrases.size() < 20) { fail(fmt::format("stones.json holds {} words and {} phrases, fewer than 60 and 20", g_t.words.size(), g_t.phrases.size())); return; }
 		g_t.loaded = true;
 		logger::info("soul stones: {} words x {} tiers, {} phrases, {} item tiers with slots; {} stone forms", g_t.words.size(), kTiers, g_t.phrases.size(), g_t.itemTierSlots.size(), g_t.stoneForm.size());
 		// rule 30: ask the object - the knowledge flags of the first phrase, once

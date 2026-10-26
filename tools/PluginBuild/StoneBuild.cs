@@ -32,7 +32,7 @@ static class StoneBuild
 
     public static void Run(SkyrimMod mod, ModKey modKey, string repo, JsonNode cfg, JsonNode scheme,
         Dictionary<string, FormKey> keywords, JsonObject forms, List<string> stubs, List<string> approx, List<string> dllDone,
-        Func<JsonNode, string, Condition> makeCondition, Func<APerkEntryPointEffect.EntryType, byte> tabCount)
+        Func<JsonNode, string, Condition> makeCondition, Func<APerkEntryPointEffect.EntryType, byte> tabCount, Action? afterBase = null)
     {
         // ---- the masters ------------------------------------------------------------------------------------------------
         var folders = (Environment.GetEnvironmentVariable("NJCGO_MASTERS") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries);
@@ -46,6 +46,19 @@ static class StoneBuild
             masters.Add(SkyrimMod.CreateFromBinaryOverlay(path ?? Find(m), SkyrimRelease.SkyrimSE));
         }
         var cache = masters.ToImmutableLinkCache();
+        // Q69 (Fable 19:00): build-time copies follow the INSTALLED Stormcrown where the copied effect references no
+        // Stormcrown-owned form; otherwise the vanilla copy. Its plugins are read (never made masters) from NJCGO_SOFT -
+        // folders separated by ';' - when they are there; without them every copy is vanilla.
+        var masterKeys = masters.Select(m => m.ModKey).ToHashSet();
+        var softFolders = (Environment.GetEnvironmentVariable("NJCGO_SOFT") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries);
+        var soft = new List<ISkyrimModGetter>();
+        foreach (var name in new[] { "Stormcrown.esp" })
+        {
+            var path = softFolders.Select(f => Path.Combine(f, name)).FirstOrDefault(File.Exists);
+            if (path != null) { soft.Add(SkyrimMod.CreateFromBinaryOverlay(path, SkyrimRelease.SkyrimSE)); }
+        }
+        var fullCache = masters.Concat(soft).ToImmutableLinkCache();
+        Console.WriteLine($"stones: Shout copies read {(soft.Count > 0 ? string.Join(", ", soft.Select(m => m.ModKey.FileName)) + " where its forms are vanilla" : "the vanilla masters only")}");
         string Ref(IFormKeyGetter fk) => fk.FormKey.ModKey == modKey ? $"0x{fk.FormKey.ID:X3}" : $"{fk.FormKey.ModKey.FileName}|0x{fk.FormKey.ID:X}";
         string Hex(IMajorRecordGetter r) => $"0x{r.FormKey.ID:X3}";
 
@@ -65,13 +78,14 @@ static class StoneBuild
         var shoutEdids = cfg["shoutEdids"]!.AsObject().ToDictionary(kv => kv.Key, kv => kv.Value!.GetValue<string>());
         IShoutGetter ShoutNamed(string name) => shoutEdids.TryGetValue(name, out var e) ? ByEdid<IShoutGetter>(e)
             : throw new InvalidOperationException($"soul stones: '{name}' is not in stones.json's shoutEdids");
-        ISpellGetter ShoutSpell(string name, int level)
+        ISpellGetter ShoutSpell(string name, int level, ILinkCache? c = null)
         {
-            var w = ShoutNamed(name).WordsOfPower[Math.Clamp(level, 1, 3) - 1];
-            return cache.Resolve<ISpellGetter>(w.Spell.FormKey);
+            var sh = (c ?? cache).Resolve<IShoutGetter>(ShoutNamed(name).FormKey);
+            var w = sh.WordsOfPower[Math.Clamp(level, 1, 3) - 1];
+            return (c ?? cache).Resolve<ISpellGetter>(w.Spell.FormKey);
         }
-        IMagicEffectGetter? FirstEffectOf(ISpellGetter s) =>
-            s.Effects.Select(e => e.BaseEffect.TryResolve(cache)).FirstOrDefault(x => x != null);
+        IMagicEffectGetter? FirstEffectOf(ISpellGetter s, ILinkCache? c = null) =>
+            s.Effects.Select(e => e.BaseEffect.TryResolve(c ?? cache)).FirstOrDefault(x => x != null);
 
         foreach (var name in cfg["vanillaKeywords"]!.AsArray().Select(n => n!.GetValue<string>()))
         {
@@ -208,23 +222,30 @@ static class StoneBuild
                 conds.Add(makeCondition(new JsonObject { ["f"] = "GetRandomPercent", ["op"] = "<", ["v"] = ch.GetValue<float>() }, edid));
             }
             foreach (var c in conds) { mg.Conditions.Add(c); }
-            IMagicEffectGetter? src = null;
+            IMagicEffectGetter? src = null, installed = null;
             if (cell["copy"] is JsonNode cp)
             {
-                var sp = ShoutSpell(cp.GetValue<string>(), 3);
-                src = FirstEffectOf(sp);
+                src = FirstEffectOf(ShoutSpell(cp.GetValue<string>(), 3));
+                installed = FirstEffectOf(ShoutSpell(cp.GetValue<string>(), 3, fullCache), fullCache);
             }
-            else if (cell["copyMgef"] is JsonNode cm) { src = TryEdid<IMagicEffectGetter>(cm.GetValue<string>()); }
-            if (src != null) { CopyVisuals(mg, src); }
+            else if (cell["copyMgef"] is JsonNode cm)
+            {
+                src = TryEdid<IMagicEffectGetter>(cm.GetValue<string>());
+                if (src != null) { installed = fullCache.Resolve<IMagicEffectGetter>(src.FormKey); }
+            }
+            if (src != null) { CopyVisuals(mg, src, installed); }
             ++recCount;
             return mg;
         }
 
-        void CopyVisuals(MagicEffect mg, IMagicEffectGetter src)
+        void CopyVisuals(MagicEffect mg, IMagicEffectGetter src, IMagicEffectGetter? installed = null)
         {
-            mg.HitShader.SetTo(src.HitShader.FormKeyNullable);
-            mg.HitEffectArt.SetTo(src.HitEffectArt.FormKeyNullable);
-            mg.ImpactData.SetTo(src.ImpactData.FormKeyNullable);
+            // each link from the installed version when it names a form of our masters, else the vanilla one (Q69)
+            FormKey? Pick(FormKey? inst, FormKey? van) => inst is FormKey k && masterKeys.Contains(k.ModKey) ? inst : van;
+            mg.HitShader.SetTo(Pick(installed?.HitShader.FormKeyNullable, src.HitShader.FormKeyNullable));
+            mg.HitEffectArt.SetTo(Pick(installed?.HitEffectArt.FormKeyNullable, src.HitEffectArt.FormKeyNullable));
+            mg.ImpactData.SetTo(Pick(installed?.ImpactData.FormKeyNullable, src.ImpactData.FormKeyNullable));
+            if (installed?.Sounds != null && installed.Sounds.All(x => masterKeys.Contains(x.Sound.FormKey.ModKey))) { src = installed; }
             if (src.Sounds != null)
             {
                 var hits = src.Sounds.Where(s => s.Type.ToString().Contains("Hit")).Select(s => s.DeepCopy()).ToList();
@@ -294,7 +315,7 @@ static class StoneBuild
 
         // ---- helper spells (cast by the SKSE plugin; magnitude overridden by the tier) -----------------------------------
         var helperForms = new JsonObject();
-        foreach (var (hid, def) in cfg["helpers"]!.AsObject())
+        void MakeHelper(string hid, JsonNode def)
         {
             var target = def!["target"]!.GetValue<bool>();
             var spell = mod.Spells.AddNew("NJCGO_StoneFx_" + hid);
@@ -325,6 +346,10 @@ static class StoneBuild
             }
             helperForms[hid] = Hex(spell);
         }
+        foreach (var (hid, def) in cfg["helpers"]!.AsObject())
+        {
+            if (def!["late"]?.GetValue<bool>() != true) { MakeHelper(hid, def); }
+        }
 
         // A cell's proc, resolved for the SKSE plugin.
         JsonObject? ResolveProc(JsonNode? p, string owner)
@@ -333,13 +358,14 @@ static class StoneBuild
             var o = JsonNode.Parse(p.ToJsonString())!.AsObject();
             if (o["cast"] is JsonObject cast)
             {
-                string spell;
-                if (cast["shout"] is JsonNode sh) { spell = Ref(ShoutSpell(sh.GetValue<string>(), cast["level"]?.GetValue<int>() ?? 1)); }
-                else if (cast["helper"] is JsonNode hp) { spell = helperForms[hp.GetValue<string>()]!.GetValue<string>(); }
+                string spell = "";
+                if (cast["shout"] is JsonNode sh) { o["shoutForm"] = Ref(ShoutNamed(sh.GetValue<string>())); o["level"] = cast["level"]?.GetValue<int>() ?? 1; }
+                else if (cast["external"] is JsonNode ex) { o["shoutForm"] = ex.GetValue<string>(); o["level"] = cast["level"]?.GetValue<int>() ?? 1; }
+                else if (cast["helper"] is JsonNode hp) { o["helper"] = hp.GetValue<string>(); }   // resolved by the SKSE plugin from the table's helpers (a late helper does not exist yet here)
                 else if (cast["edid"] is JsonNode ed) { spell = Ref(ByEdid<ISpellGetter>(ed.GetValue<string>())); }
                 else { throw new InvalidOperationException($"{owner}: a proc cast names no spell"); }
                 o.Remove("cast");
-                o["spell"] = spell;
+                if (spell.Length > 0) { o["spell"] = spell; }
             }
             if (o["mag"] is JsonNode mag) { o["mag"] = ByTier(mag); }
             if (o["mult"] is JsonNode mu) { o["mult"] = ByTier(mu); }
@@ -382,7 +408,8 @@ static class StoneBuild
         var stonesByTier = tiers.Select(_ => new List<MiscItem>()).ToArray();
         var wordOut = new JsonArray();
         var phraseOut = new JsonArray();
-        var phrases = cfg["phrases"]!.AsArray();
+        var phrases = new JsonArray(cfg["phrases"]!.AsArray().Where(x => x!["external"] == null).Select(x => JsonNode.Parse(x!.ToJsonString())).ToArray());
+        var latePhrases = cfg["phrases"]!.AsArray().Where(x => x!["external"] != null).ToList();
         var wordIndex = 0;
         for (var p = 0; p < phrases.Count; ++p)
         {
@@ -527,6 +554,69 @@ static class StoneBuild
         var i4 = new JsonObject { ["$schema"] = "https://raw.githubusercontent.com/Exit-9B/InventoryInjector/main/docs/InventoryInjector.schema.json", ["rules"] = all };
         Directory.CreateDirectory(Path.Combine(repo, "data", "SKSE", "Plugins", "InventoryInjector"));
         File.WriteAllText(Path.Combine(repo, "data", "SKSE", "Plugins", "InventoryInjector", modKey.Name + ".json"), i4.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");
+
+        forms["stones"] = new JsonObject { ["stoneKeyword"] = Hex(stoneKw), ["loot"] = Hex(loot), ["vendor"] = Hex(vendor) };
+        afterBase?.Invoke();
+
+        // ---- the late pass: phrases of Shouts another plugin adds (Stormcrown, its Wyrmstooth patch) ---------------------
+        // A soft link - no master: the Shout is named "plugin|0xID" and the SKSE plugin resolves it at load (the phrase is
+        // unavailable without the plugin). A word may already exist (Strun, Kest, Laas, Slen, Aus); a new word gets its
+        // stones, keyword and cells here. Everything is created after every earlier record, so no earlier form ID moves.
+        foreach (var (hid, def) in cfg["helpers"]!.AsObject())
+        {
+            if (def!["late"]?.GetValue<bool>() == true) { MakeHelper(hid, def); }
+        }
+        var lateWords = 0;
+        foreach (var ph in latePhrases)
+        {
+            var words = ph!["words"]!.AsArray().Select(n => n!.GetValue<string>()).ToArray();
+            for (var i = 0; i < 3; ++i)
+            {
+                var word = words[i];
+                if (wordOut.Any(w => w!["word"]!.GetValue<string>() == word)) { continue; }
+                var def = ph["word"]?[word] ?? throw new InvalidOperationException($"stones.json: the new word {word} has no cells");
+                var kw = mod.Keywords.AddNew("NJCGO_StoneWord_" + new string(word.Where(char.IsLetter).ToArray()));
+                wordKws[word] = kw;
+                var stoneForms = new JsonArray();
+                for (var t = 0; t < tiers.Length; ++t)
+                {
+                    var misc = mod.MiscItems.AddNew($"NJCGO_Stone_{word}_{tiers[t]}");
+                    misc.Name = $"Soul Stone: {word} ({tiers[t]})";
+                    misc.Model = gems[t].Model?.DeepCopy();
+                    misc.PickUpSound.SetTo(gems[t].PickUpSound.FormKeyNullable);
+                    misc.PutDownSound.SetTo(gems[t].PutDownSound.FormKeyNullable);
+                    misc.Value = values[t];
+                    misc.Weight = 0.1f;
+                    misc.Keywords = new ExtendedList<IFormLinkGetter<IKeywordGetter>> { stoneKw.ToLink(), tierKws[t].ToLink(), kw.ToLink(), new FormLink<IKeywordGetter>(vendorSoulGem) };
+                    stonesByTier[t].Add(misc);
+                    tierLists[t].Entries!.Add(new LeveledItemEntry { Data = new LeveledItemEntryData { Level = 1, Count = 1, Reference = misc.ToLink<IItemGetter>() } });
+                    stoneForms.Add(Hex(misc));
+                }
+                var hostsOut = new JsonObject();
+                foreach (var h in Hosts)
+                {
+                    var cell = def[h] ?? throw new InvalidOperationException($"stones.json: {word} has no {h} cell");
+                    hostsOut[h] = BuildCell($"NJCGO_StoneFx_{word}_{h}", word, h, cell, false);
+                }
+                wordOut.Add(new JsonObject { ["word"] = word, ["phrase"] = -1, ["position"] = i, ["keyword"] = Hex(kw), ["stones"] = stoneForms, ["hosts"] = hostsOut });
+                ++lateWords;
+            }
+            var phraseName = string.Join(" ", words);
+            var phHosts = new JsonObject();
+            foreach (var h in Hosts)
+            {
+                var cell = ph["phrase"]![h] ?? throw new InvalidOperationException($"stones.json: {phraseName} has no {h} phrase");
+                if (cell["k"]!.GetValue<string>() == "grant") { throw new InvalidOperationException($"{phraseName}: a soft-linked Shout cannot be granted as a clone (it would need its plugin as a master)"); }
+                phHosts[h] = BuildCell($"NJCGO_StoneFx_{words[0]}{words[1]}{words[2]}_{h}", phraseName, h, cell, true);
+            }
+            var ex = ph["external"]!;
+            phraseOut.Add(new JsonObject
+            {
+                ["shout"] = ph["shout"]!.GetValue<string>(), ["shoutForm"] = $"{ex["plugin"]!.GetValue<string>()}|{ex["id"]!.GetValue<string>()}", ["soft"] = true,
+                ["words"] = new JsonArray(words.Select(w => (JsonNode)JsonValue.Create(w)!).ToArray()), ["hosts"] = phHosts
+            });
+        }
+        Console.WriteLine($"stones (late pass): {latePhrases.Count} soft-linked phrases, {lateWords} new words");
 
         // ---- the SKSE plugin's table ------------------------------------------------------------------------------------
         var tierOut = new JsonArray();

@@ -661,12 +661,13 @@ namespace UI
 			for (const auto& v : s.stones)
 			{
 				// the known-phrase highlight: this stone continues, in this slot, a phrase whose three words you have learned
-				const int ph = ::SoulStones::PhraseOfWord(v.word);
 				bool continues = false;
-				if (ph >= 0 && ph < static_cast<int>(s.phrases.size()) && s.phrases[ph].learned == 3 && s.phrases[ph].words[targetSlot] == v.word)
+				for (const auto& pv : s.phrases)
 				{
-					continues = true;
-					for (int k = 0; k < targetSlot; ++k) { continues &= sel->stones[k].word == s.phrases[ph].words[k]; }
+					if (pv.learned < 3 || pv.words[targetSlot] != v.word) { continue; }
+					bool fits = true;
+					for (int k = 0; k < targetSlot; ++k) { fits &= sel->stones[k].word == pv.words[k]; }
+					continues |= fits;
 				}
 				const std::string b = std::string(strings::TR("NJ_SS_Set", "Set")) + "##set" + std::to_string(v.word) + "_" + std::to_string(v.tier);
 				if (ImGuiMCP::SmallButton(b.c_str())) { ::SoulStones::RequestSocket(sel->key, targetSlot, v.word, v.tier); }
