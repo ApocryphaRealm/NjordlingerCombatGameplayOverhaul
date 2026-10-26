@@ -2,7 +2,30 @@
 
 ## 1.0.0 - 2026-10-26 - untested
 
-### Added
+### Added (phase 2 - progression and classes, the SKSE plugin)
+- **The SKSE plugin**, both build lines (Skyrim SE 1.5.97 / AE 1.6.1170 and Skyrim 1.7.x), installed as a FOMOD, with
+  a settings page in the Apocrypha Menu Framework: Progression, Classes, Quest Rewards.
+- **Progression**, copied from Character Progression Control and trimmed: one perk point per level up (a table by
+  level), no health, magicka or stamina from a level up and no carry weight from it (Adaptive Attributes is the one
+  carry-weight writer); while all three gains are 0 the attribute choice is made for you, so a level up just grants
+  its perk points. Optional skill caps and skill experience rates.
+- **Classes**: Warrior, Mage or Thief, chosen in the race menu's new Class category or on the Classes tab. A class
+  holds a skill group; the other groups' skills stay at their starting values and bank no use, their perks cannot be
+  taken and their entry points do nothing for you (other characters are not affected), and their crafting station
+  refuses you. Class levels come from your class's skills; every 10 class levels (a setting) the class evolves through
+  Novice, Apprentice, Adept, Expert, Master and Legendary, each time one of two options, for good: the Apprentice and
+  Adept classes of the lineage (a hybrid opens its second group), two rank paths at Expert and Master, and at
+  Legendary a title whose questline you have finished (Harbinger, Archmage, Listener, Nightingale, Dragonborn).
+- **Quest rewards**: the main quest's and the Miraak line's quests pay a perk point each, once per character.
+- **NjordlingerCombatGameplayOverhaul.esp** (light): the group and class globals, class keywords and five class
+  abilities (Warrior, Mage, Knight, Sorcerer, Scout).
+- Eleven languages for every string of the pages and notices.
+
+### Not yet in this build
+- The rank perks of the Expert and Master paths, most class abilities, and the stats-menu class line (the class line
+  and the evolution choice are on the Classes tab meanwhile).
+
+### Added (phase 1 - data layer)
 - **Item tiers (phase 1 data layer).** Every playable weapon and armour piece gets one tier keyword from Keyword Item
   Distributor: common, magic, epic, legendary or unique. The tier is the smithing level of the perk its crafting recipe
   asks for in the installed perk overhaul (Basic 20 = magic; Journeyman 40 and Intermediate 60 = epic; Advanced 80 and
