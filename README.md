@@ -34,6 +34,30 @@ set perk's entry points also require them). At the first game load it adds the n
 item KID missed. The content (every number a default to tune) is `config\gear-content.json`; `tools\PluginBuild`
 builds the records, both INIs and the form list, and `tools\build-classes.py` writes `gear.json` and the INI.
 
+## Soul stones (phase 4)
+
+A soul stone is a word of the dragon tongue: the sixty words of the twenty Shouts, each in five soul-gem tiers (petty to
+grand). Gear's tier gives it slots (magic 1, epic 2, legendary and unique 3; staves none). A stone acts for the item it
+sits in - a melee weapon, a bow or crossbow, or armour - and three stones of one Shout in word order add its phrase once
+all three words are unlocked with dragon souls; a Shout-only phrase on armour lets you shout that Shout while it is worn,
+up to the words you have learned at a wall. Stones are set and taken out by the runesmith, Thorvar Stone-Speaker at the
+Sleeping Giant Inn in Riverwood, after his short quest, for one soul gem of the stone's tier each time.
+
+| File | What it does |
+|---|---|
+| `NjordlingerCombatGameplayOverhaul.esp` | The 300 stones (the vanilla soul gem models, referenced), the word and phrase effects, perks, abilities, helper spells, tier glow shaders, the Shout clones, loot lists, the runesmith, his quest, dialogue and shop. |
+| `Scripts\*.pex` (+ `Scripts\Source`) | Three dialogue fragments: the quest's two stages and his barter menu. |
+| `SKSE\Plugins\SkyPatcher\leveledList\NjordlingerCGO\SoulStones.ini` | Stones in boss chests (tier by the place's level) and where soul gems are sold. |
+| `SKSE\Plugins\InventoryInjector\NjordlingerCGO_StoneIcons.json` | A soul-gem icon in the tier colour (I4). |
+| `SKSE\Plugins\NjordlingerCombatGameplayOverhaul\stones.json`, `runesmith.json` | The records' form IDs and the per-tier numbers for the SKSE plugin. |
+
+The SKSE plugin keeps each item's stones in the co-save, composes the item's enchantment (its own enchantment kept),
+applies the effects no enchantment can carry while the item is equipped, names the item after its words and makes a
+drawn weapon glow. Content: `config\stones.json` (every number a default to tune) and `config\runesmith.json`; built by
+`tools\PluginBuild` (needs `NJCGO_MASTERS` = the folders holding Skyrim.esm, Dawnguard.esm and Dragonborn.esm) and
+`tools\build-papyrus.py` (needs the Papyrus compiler and the game's script sources). `tools\make-glyphs.py` renders the
+glyph atlas from the game's own dragon font; `tools\word-numbers.py` writes the numbers into the design's word table.
+
 ## Requirements
 
 - SKSE64 for 1.5.97

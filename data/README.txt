@@ -25,6 +25,11 @@ WHAT IS IN THIS BUILD
   switches sets and unique effects on and off and sets their strength.
 - Item tiers (colours through Inventory Interface Information Injector), unique set keywords and NPC levels by lore
   tier (Keyword Item Distributor, SkyPatcher).
+- Soul stones: 300 stones - the sixty words of the twenty Shouts in five soul-gem tiers - found in boss chests and
+  sold where soul gems are sold. Each acts for the item it sits in (weapon, bow, armour); three stones of one Shout in
+  word order add its phrase once you have unlocked its three words; a Shout-only phrase on armour lets you shout it.
+  Thorvar Stone-Speaker at the Sleeping Giant Inn in Riverwood sets and takes them out after his short quest, for one
+  soul gem of the stone's size each time, and sells stones. The Soul Stones tab shows what your gear carries.
 
 REQUIREMENTS
 SKSE64; Address Library for SKSE Plugins; Apocrypha Menu Framework (the settings pages); Keyword Item Distributor;
@@ -33,7 +38,7 @@ colours. Not with Character Progression Control -
 this mod replaces it (both change the same game code).
 
 SETTINGS
-In the Apocrypha Menu Framework: Njordlinger Combat Gameplay Overhaul - Progression, Classes, Quest Rewards, Gear.
+In the Apocrypha Menu Framework: Njordlinger Combat Gameplay Overhaul - Progression, Classes, Quest Rewards, Gear, Soul Stones.
 File: SKSE\Plugins\NjordlingerCombatGameplayOverhaul.ini. Log: Documents\My Games\Skyrim Special Edition\SKSE\
 NjordlingerCombatGameplayOverhaul.log.
 
