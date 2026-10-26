@@ -36,6 +36,15 @@ foreach (var (name, id) in content["keywords"]!.AsObject())
 }
 
 string Hex(IMajorRecordGetter r) => $"0x{r.FormKey.ID:X3}";
+var helperGlobals = new Dictionary<string, GlobalShort>();
+foreach (var g in content["helpers"]?["globals"]?.AsArray() ?? new JsonArray())
+{
+    var name = g!.GetValue<string>();
+    var glob = new GlobalShort(mod) { EditorID = name, Data = 0 };
+    mod.Globals.Add(glob);
+    helperGlobals[name] = glob;
+}
+var dllDone = new List<string>();
 var stubs = new List<string>();
 var approx = new List<string>();
 int entryPoints = 0, constantEffects = 0;
@@ -80,12 +89,25 @@ Condition MakeCondition(JsonNode c, string owner)
         "HasMagicEffectKeyword" => MakeKeywordData(new HasMagicEffectKeywordConditionData(), Kw()),
         "SpellHasKeyword" => MakeKeywordData(new EPMagic_SpellHasKeywordConditionData(), Kw()),
         "EPMagic_SpellHasSkill" => new EPMagic_SpellHasSkillConditionData { ActorValue = Enum.Parse<ActorValue>(c["skill"]!.GetValue<string>()) },
+        "GetLightLevel" => new GetLightLevelConditionData(),
+        "GetGlobalValue" => SetGlobal(new GetGlobalValueConditionData(), helperGlobals[c["global"]!.GetValue<string>()]),
         _ => throw new InvalidOperationException($"{owner}: condition {f} is not supported by the plugin build")
     };
     data.RunOnType = Condition.RunOnType.Subject;
     var cond = new ConditionFloat { CompareOperator = Op(c["op"]?.GetValue<string>()), ComparisonValue = v, Data = data };
     if (c["or"]?.GetValue<bool>() == true) { cond.Flags |= Condition.Flag.OR; }
     return cond;
+}
+
+// Sets the global parameter of GetGlobalValue, whichever property name this Mutagen version gives it.
+ConditionData SetGlobal(ConditionData d, GlobalShort g)
+{
+    var prop = d.GetType().GetProperties().First(p => p.Name.Contains("Global") && p.CanWrite);
+    var current = prop.GetValue(d);
+    if (current is IFormLinkOrIndex<IGlobalGetter> fli) { fli.Link.SetTo(g.FormKey); }
+    else if (current is IFormLink<IGlobalGetter> fl) { fl.SetTo(g.FormKey); }
+    else { throw new InvalidOperationException("cannot set the global of " + d.GetType().Name); }
+    return d;
 }
 
 // Sets the hand (CastSource) parameter of GetEquippedItemType, whichever property name this Mutagen version gives it.
@@ -119,6 +141,7 @@ BGSPerkBuild_Result BGSPerkBuild(string editorId, string name, string descriptio
     perk.NumRanks = 1;
     if (def["stub"] is JsonNode st) { stubs.Add($"{editorId}: {st.GetValue<string>()}"); }
     if (def["approx"] is JsonNode ap) { approx.Add($"{editorId}: {ap.GetValue<string>()}"); }
+    if (def["dll"] is JsonNode dl) { dllDone.Add($"{editorId}: {dl.GetValue<string>()}"); }
     Spell? spell = null;
     var n = 0;
     foreach (var e in def["effects"]!.AsArray())
@@ -248,6 +271,42 @@ foreach (var t in classes["titles"]!.AsArray())
     }
 }
 forms["titles"] = titleForms;
+
+var helperForms = new JsonObject();
+foreach (var (name, g) in helperGlobals) { helperForms[name] = Hex(g); }
+foreach (var (id, def) in content["helpers"]?["spells"]?.AsObject() ?? new JsonObject())
+{
+    var isAbility = def!["ability"]?.GetValue<bool>() == true;
+    var spell = mod.Spells.AddNew("NJCGO_FxSp_" + id);
+    spell.Name = def["name"]!.GetValue<string>();
+    spell.Type = isAbility ? SpellType.Ability : SpellType.Spell;
+    spell.CastType = isAbility ? CastType.ConstantEffect : CastType.FireAndForget;
+    spell.TargetType = isAbility ? TargetType.Self : TargetType.TargetActor;
+    spell.Description = "";
+    var k = 0;
+    foreach (var e in def["effects"]!.AsArray())
+    {
+        var arch = Enum.Parse<MagicEffectArchetype.TypeEnum>(e!["archetype"]!.GetValue<string>());
+        var mgef = mod.MagicEffects.AddNew($"NJCGO_FxEf_{id}_{k++}");
+        mgef.Name = spell.Name.String;
+        mgef.Archetype = new MagicEffectArchetype(arch);
+        if (e["av"] is JsonNode avn) { mgef.Archetype.ActorValue = Enum.Parse<ActorValue>(avn.GetValue<string>()); }
+        var duration = e["duration"]?.GetValue<int>() ?? 0;
+        mgef.CastType = isAbility ? CastType.ConstantEffect : CastType.FireAndForget;
+        mgef.TargetType = isAbility ? TargetType.Self : TargetType.TargetActor;
+        mgef.Flags = MagicEffect.Flag.NoArea | MagicEffect.Flag.Recover;
+        if (duration == 0 && !isAbility) { mgef.Flags = MagicEffect.Flag.NoArea | MagicEffect.Flag.NoDuration; }
+        if (e["detrimental"]?.GetValue<bool>() == true) { mgef.Flags |= MagicEffect.Flag.Detrimental; }
+        if (e["hostile"]?.GetValue<bool>() == true) { mgef.Flags |= MagicEffect.Flag.Hostile; }
+        mgef.MagicSkill = ActorValue.None;
+        mgef.ResistValue = ActorValue.None;
+        mgef.SecondActorValue = ActorValue.None;
+        spell.Effects.Add(new Effect { BaseEffect = mgef.ToNullableLink(), Data = new EffectData { Magnitude = e["magnitude"]!.GetValue<float>(), Area = 0, Duration = duration } });
+    }
+    helperForms[id] = Hex(spell);
+}
+forms["helpers"] = helperForms;
+forms["dll"] = new JsonArray(dllDone.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
 forms["stubs"] = new JsonArray(stubs.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
 forms["approximations"] = new JsonArray(approx.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
 
@@ -256,6 +315,6 @@ mod.WriteToBinary(esp);
 Directory.CreateDirectory(Path.Combine(repo, "generated"));
 File.WriteAllText(Path.Combine(repo, "generated", "plugin-forms.json"), forms.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");
 Console.WriteLine($"wrote {esp}: {mod.Globals.Count} globals, {mod.Keywords.Count} keywords, {mod.Perks.Count} perks ({entryPoints} entry points), {mod.Spells.Count} ability spells ({constantEffects} constant effects)");
-Console.WriteLine($"{stubs.Count} stubs, {approx.Count} approximations - generated/plugin-forms.json lists them");
+Console.WriteLine($"{stubs.Count} stubs, {approx.Count} approximations, {dllDone.Count} effects done by the SKSE plugin - generated/plugin-forms.json lists them");
 
 record BGSPerkBuild_Result(Perk Perk);

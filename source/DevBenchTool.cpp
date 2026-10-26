@@ -2,6 +2,7 @@
 
 #include "DevBenchTool.h"
 
+#include "ClassEffects.h"
 #include "Classes.h"
 #include "DevBench/DevBenchAPI.h"
 #include "LevelUpGains.h"
@@ -93,6 +94,7 @@ namespace DevBenchTool
 			j["questRewards"] = nlohmann::json::parse(QuestRewards::StatusJson(), nullptr, false);
 			j["raceMenu"] = nlohmann::json::parse(RaceMenuClass::StatusJson(), nullptr, false);
 			j["statsMenu"] = nlohmann::json::parse(StatsMenuClass::StatusJson(), nullptr, false);
+			j["effects"] = nlohmann::json::parse(ClassEffects::StatusJson(), nullptr, false);
 			const auto lug = LevelUpGains::GetState();
 			j["levelUp"] = { { "control", settings::levelup::overrideRewards }, { "perks", settings::levelup::PerksTableText() },
 							 { "gains", { settings::levelup::healthPerLevel, settings::levelup::magickaPerLevel, settings::levelup::staminaPerLevel } },

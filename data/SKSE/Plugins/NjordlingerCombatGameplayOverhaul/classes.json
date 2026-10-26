@@ -58,9 +58,9 @@
         "barbarian"
       ],
       "description": "A fighter of steel and shield. Holds the warrior skills and smithing. Health regenerates 50% faster.",
-      "ability": "0x805",
-      "global": "0x803",
-      "keyword": "0x804"
+      "ability": "0x808",
+      "global": "0x806",
+      "keyword": "0x807"
     },
     {
       "id": "mage",
@@ -75,9 +75,9 @@
         "healer"
       ],
       "description": "A student of the five schools. Holds the magic skills and enchanting. Magicka regenerates 50% faster.",
-      "ability": "0x80A",
-      "global": "0x808",
-      "keyword": "0x809"
+      "ability": "0x80D",
+      "global": "0x80B",
+      "keyword": "0x80C"
     },
     {
       "id": "thief",
@@ -92,9 +92,9 @@
         "archer"
       ],
       "description": "Quick hands and a quiet step. Holds the covert skills and alchemy. You move 20% faster while sneaking.",
-      "ability": "0x80F",
-      "global": "0x80D",
-      "keyword": "0x80E"
+      "ability": "0x812",
+      "global": "0x810",
+      "keyword": "0x811"
     },
     {
       "id": "knight",
@@ -108,9 +108,9 @@
         "spellsword"
       ],
       "description": "Armour and discipline. You take 10% less damage from weapons and spells.",
-      "ability": "0x814",
-      "global": "0x812",
-      "keyword": "0x813"
+      "ability": "0x817",
+      "global": "0x815",
+      "keyword": "0x816"
     },
     {
       "id": "barbarian",
@@ -124,9 +124,9 @@
         "scout"
       ],
       "description": "Raw strength. Power attacks deal 25% more damage to staggered or fleeing enemies.",
-      "ability": "0x819",
-      "global": "0x817",
-      "keyword": "0x818"
+      "ability": "0x81C",
+      "global": "0x81A",
+      "keyword": "0x81B"
     },
     {
       "id": "sorcerer",
@@ -140,9 +140,9 @@
         "nightblade"
       ],
       "description": "Raw arcane power. A 10% chance to absorb the magicka of an incoming spell.",
-      "ability": "0x81C",
-      "global": "0x81A",
-      "keyword": "0x81B"
+      "ability": "0x81F",
+      "global": "0x81D",
+      "keyword": "0x81E"
     },
     {
       "id": "healer",
@@ -156,9 +156,9 @@
         "monk"
       ],
       "description": "The restoring hand. Restoration spells cost 20% less when dual cast.",
-      "ability": "0x821",
-      "global": "0x81F",
-      "keyword": "0x820"
+      "ability": "0x824",
+      "global": "0x822",
+      "keyword": "0x823"
     },
     {
       "id": "assassin",
@@ -172,9 +172,9 @@
         "nightblade"
       ],
       "description": "Death from the shadows. Sneak attacks deal 25% more damage.",
-      "ability": "0x824",
-      "global": "0x822",
-      "keyword": "0x823"
+      "ability": "0x827",
+      "global": "0x825",
+      "keyword": "0x826"
     },
     {
       "id": "archer",
@@ -191,9 +191,9 @@
         "witchhunter"
       ],
       "description": "The patient bow. Keeps Archery. You move 20% faster while a bow is drawn.",
-      "ability": "0x827",
-      "global": "0x825",
-      "keyword": "0x826"
+      "ability": "0x82A",
+      "global": "0x828",
+      "keyword": "0x829"
     },
     {
       "id": "crusader",
@@ -208,37 +208,37 @@
         "A1": {
           "name": "Righteous Blows",
           "description": "Power attacks deal 15% more damage to undead and daedra.",
-          "perk": "0x82D"
+          "perk": "0x830"
         },
         "B1": {
           "name": "Shield Discipline",
           "description": "Shield bashes cost 25% less stamina.",
-          "perk": "0x82E"
+          "perk": "0x831"
         },
         "A2": {
           "name": "Silencing Bash",
           "description": "A shield bash on a spellcaster silences them for 3 seconds.",
-          "perk": "0x82F"
+          "perk": "0x832"
         },
         "B2": {
           "name": "Spell Catcher",
           "description": "Blocking a spell restores 10 magicka.",
-          "perk": "0x830"
+          "perk": "0x833"
         },
         "A3": {
           "name": "Light of the Divines",
           "description": "A killing blow heals nearby allies by 20%.",
-          "perk": "0x831"
+          "perk": "0x834"
         },
         "B3": {
           "name": "Last Bulwark",
           "description": "At 30% health a ward rises for 5 seconds (60 second cooldown).",
-          "perk": "0x832"
+          "perk": "0x835"
         }
       },
-      "ability": "0x82C",
-      "global": "0x82A",
-      "keyword": "0x82B"
+      "ability": "0x82F",
+      "global": "0x82D",
+      "keyword": "0x82E"
     },
     {
       "id": "spellsword",
@@ -253,37 +253,37 @@
         "A1": {
           "name": "Siphoning Blade",
           "description": "Weapon hits restore 5 magicka.",
-          "perk": "0x836"
+          "perk": "0x839"
         },
         "B1": {
           "name": "Drawn Focus",
           "description": "Spells cast with a weapon drawn cost 10% less.",
-          "perk": "0x837"
+          "perk": "0x83A"
         },
         "A2": {
           "name": "Charged Strike",
           "description": "A hit after a spell deals 25% more.",
-          "perk": "0x838"
+          "perk": "0x83B"
         },
         "B2": {
           "name": "Steel Channel",
           "description": "A spell after a hit costs 25% less.",
-          "perk": "0x839"
+          "perk": "0x83C"
         },
         "A3": {
           "name": "Spellstrike",
           "description": "Critical hits trigger the equipped spell's effect on the target.",
-          "perk": "0x83A"
+          "perk": "0x83D"
         },
         "B3": {
           "name": "Blade and Ward",
           "description": "With a spell in one hand and a blade in the other, you take 15% less damage.",
-          "perk": "0x83B"
+          "perk": "0x83E"
         }
       },
-      "ability": "0x835",
-      "global": "0x833",
-      "keyword": "0x834"
+      "ability": "0x838",
+      "global": "0x836",
+      "keyword": "0x837"
     },
     {
       "id": "rogue",
@@ -298,37 +298,37 @@
         "A1": {
           "name": "No Shield, No Mercy",
           "description": "Attacks deal 10% more while you carry no shield.",
-          "perk": "0x83F"
+          "perk": "0x842"
         },
         "B1": {
           "name": "Slippery",
           "description": "A 15% chance that a hit misses you entirely.",
-          "perk": "0x840"
+          "perk": "0x843"
         },
         "A2": {
           "name": "Floor Them",
           "description": "Power attacks on a staggered foe knock them down.",
-          "perk": "0x841"
+          "perk": "0x844"
         },
         "B2": {
           "name": "Second Wind",
           "description": "A dodge restores 15 stamina.",
-          "perk": "0x842"
+          "perk": "0x845"
         },
         "A3": {
           "name": "Kick Them Down",
           "description": "Hits on a knocked-down foe deal double damage.",
-          "perk": "0x843"
+          "perk": "0x846"
         },
         "B3": {
           "name": "Running Start",
           "description": "Sprinting power attacks cost no stamina.",
-          "perk": "0x844"
+          "perk": "0x847"
         }
       },
-      "ability": "0x83E",
-      "global": "0x83C",
-      "keyword": "0x83D"
+      "ability": "0x841",
+      "global": "0x83F",
+      "keyword": "0x840"
     },
     {
       "id": "scout",
@@ -343,37 +343,37 @@
         "A1": {
           "name": "Running Shot",
           "description": "Bows deal 10% more damage.",
-          "perk": "0x84A"
+          "perk": "0x84D"
         },
         "B1": {
           "name": "Long Legs",
           "description": "Sprinting costs 25% less stamina.",
-          "perk": "0x84B"
+          "perk": "0x84E"
         },
         "A2": {
           "name": "Opening Shot",
           "description": "The first arrow at an unaware target deals triple damage.",
-          "perk": "0x84C"
+          "perk": "0x84F"
         },
         "B2": {
           "name": "Beast Wise",
           "description": "Animals and beasts deal 20% less damage to you.",
-          "perk": "0x84D"
+          "perk": "0x850"
         },
         "A3": {
           "name": "Piercing Arrows",
           "description": "Arrows pierce one target.",
-          "perk": "0x84E"
+          "perk": "0x851"
         },
         "B3": {
           "name": "Pathfinder",
           "description": "Detect life while sprinting.",
-          "perk": "0x84F"
+          "perk": "0x852"
         }
       },
-      "ability": "0x847",
-      "global": "0x845",
-      "keyword": "0x846"
+      "ability": "0x84A",
+      "global": "0x848",
+      "keyword": "0x849"
     },
     {
       "id": "battlemage",
@@ -388,37 +388,37 @@
         "A1": {
           "name": "Ward Adept",
           "description": "Wards cost 25% less.",
-          "perk": "0x853"
+          "perk": "0x856"
         },
         "B1": {
           "name": "Plated Caster",
           "description": "Heavy armour gives 10% more armour while a spell is readied.",
-          "perk": "0x854"
+          "perk": "0x857"
         },
         "A2": {
           "name": "Shattering Ward",
           "description": "A ward that breaks explodes for its remaining strength.",
-          "perk": "0x855"
+          "perk": "0x858"
         },
         "B2": {
           "name": "Iron Will",
           "description": "Spells cost 15% less while you wear heavy armour.",
-          "perk": "0x856"
+          "perk": "0x859"
         },
         "A3": {
           "name": "Arcane Strike",
           "description": "A power attack casts the readied spell on hit.",
-          "perk": "0x857"
+          "perk": "0x85A"
         },
         "B3": {
           "name": "Spellbreaker",
           "description": "You take 20% less damage from spells.",
-          "perk": "0x858"
+          "perk": "0x85B"
         }
       },
-      "ability": "0x852",
-      "global": "0x850",
-      "keyword": "0x851"
+      "ability": "0x855",
+      "global": "0x853",
+      "keyword": "0x854"
     },
     {
       "id": "nightblade",
@@ -433,37 +433,37 @@
         "A1": {
           "name": "Lingering Shadows",
           "description": "Illusion spells last 25% longer.",
-          "perk": "0x85C"
+          "perk": "0x85F"
         },
         "B1": {
           "name": "Shadow Spell",
           "description": "Dual-cast spells from the shadows are 50% stronger.",
-          "perk": "0x85D"
+          "perk": "0x860"
         },
         "A2": {
           "name": "Vanish",
           "description": "A kill while undetected makes you invisible for 5 seconds.",
-          "perk": "0x85E"
+          "perk": "0x861"
         },
         "B2": {
           "name": "Hush",
           "description": "Frenzy and Fear also silence for 3 seconds.",
-          "perk": "0x85F"
+          "perk": "0x862"
         },
         "A3": {
           "name": "Ghost Step",
           "description": "Muffled and invisible for 3 seconds after a sneak kill.",
-          "perk": "0x860"
+          "perk": "0x863"
         },
         "B3": {
           "name": "Unseen Mind",
           "description": "Illusion spells cost nothing while you sneak.",
-          "perk": "0x861"
+          "perk": "0x864"
         }
       },
-      "ability": "0x85B",
-      "global": "0x859",
-      "keyword": "0x85A"
+      "ability": "0x85E",
+      "global": "0x85C",
+      "keyword": "0x85D"
     },
     {
       "id": "witchhunter",
@@ -478,37 +478,37 @@
         "A1": {
           "name": "Bane of the Dead",
           "description": "You deal 15% more damage to the undead and vampires.",
-          "perk": "0x865"
+          "perk": "0x868"
         },
         "B1": {
           "name": "Thick Coating",
           "description": "Poisons you apply last 2 extra hits.",
-          "perk": "0x866"
+          "perk": "0x869"
         },
         "A2": {
           "name": "Silver Chill",
           "description": "Silver and poisoned weapons slow the undead by 25%.",
-          "perk": "0x867"
+          "perk": "0x86A"
         },
         "B2": {
           "name": "Purifying Draught",
           "description": "Potions you drink also cure one disease.",
-          "perk": "0x868"
+          "perk": "0x86B"
         },
         "A3": {
           "name": "Hunter's Reward",
           "description": "Killing an undead restores 25 health and stamina.",
-          "perk": "0x869"
+          "perk": "0x86C"
         },
         "B3": {
           "name": "Untainted Blood",
           "description": "You are immune to disease and to vampirism.",
-          "perk": "0x86A"
+          "perk": "0x86D"
         }
       },
-      "ability": "0x864",
-      "global": "0x862",
-      "keyword": "0x863"
+      "ability": "0x867",
+      "global": "0x865",
+      "keyword": "0x866"
     },
     {
       "id": "monk",
@@ -523,37 +523,37 @@
         "A1": {
           "name": "Iron Fist",
           "description": "Unarmed attacks deal 25% more damage.",
-          "perk": "0x872"
+          "perk": "0x875"
         },
         "B1": {
           "name": "Deflecting Palm",
           "description": "Blocking unarmed staggers the attacker.",
-          "perk": "0x873"
+          "perk": "0x876"
         },
         "A2": {
           "name": "Flurry",
           "description": "Three unarmed hits in a row stun.",
-          "perk": "0x874"
+          "perk": "0x877"
         },
         "B2": {
           "name": "Still Mind",
           "description": "While unarmed you resist 20% of magic.",
-          "perk": "0x875"
+          "perk": "0x878"
         },
         "A3": {
           "name": "Mana Strike",
           "description": "Unarmed strikes drain 10 magicka from casters.",
-          "perk": "0x878"
+          "perk": "0x87B"
         },
         "B3": {
           "name": "Feather Fall",
           "description": "Falling never hurts, and +50 armour while unarmed.",
-          "perk": "0x879"
+          "perk": "0x87C"
         }
       },
-      "ability": "0x86F",
-      "global": "0x86D",
-      "keyword": "0x86E"
+      "ability": "0x872",
+      "global": "0x870",
+      "keyword": "0x871"
     },
     {
       "id": "agent",
@@ -568,37 +568,37 @@
         "A1": {
           "name": "Light Fingers",
           "description": "Pickpocketing and lockpicking are 20% easier.",
-          "perk": "0x87F"
+          "perk": "0x882"
         },
         "B1": {
           "name": "Silver Tongue",
           "description": "Bribes cost half.",
-          "perk": "0x880"
+          "perk": "0x883"
         },
         "A2": {
           "name": "Soothing Venom",
           "description": "Poisons also calm the target for 3 seconds.",
-          "perk": "0x881"
+          "perk": "0x884"
         },
         "B2": {
           "name": "Quiet Spells",
           "description": "Illusion spells cost 20% less while you sneak.",
-          "perk": "0x882"
+          "perk": "0x885"
         },
         "A3": {
           "name": "Final Dose",
           "description": "A poisoned sneak attack kills non-boss humans outright (once per combat).",
-          "perk": "0x883"
+          "perk": "0x886"
         },
         "B3": {
           "name": "Friends in Every Hold",
           "description": "Guards forgive bounties under 500.",
-          "perk": "0x884"
+          "perk": "0x887"
         }
       },
-      "ability": "0x87E",
-      "global": "0x87C",
-      "keyword": "0x87D"
+      "ability": "0x881",
+      "global": "0x87F",
+      "keyword": "0x880"
     }
   ],
   "titles": [
@@ -610,7 +610,7 @@
         "warrior"
       ],
       "description": "Leader of the Companions.",
-      "perk": "0x885"
+      "perk": "0x888"
     },
     {
       "id": "archmage",
@@ -620,7 +620,7 @@
         "mage"
       ],
       "description": "Master of the College of Winterhold. All spells are 10% stronger.",
-      "perk": "0x886"
+      "perk": "0x889"
     },
     {
       "id": "listener",
@@ -632,7 +632,7 @@
         "nightblade"
       ],
       "description": "The voice of the Night Mother. Dagger sneak attacks deal 50% more.",
-      "perk": "0x887"
+      "perk": "0x88A"
     },
     {
       "id": "nightingale",
@@ -647,26 +647,46 @@
         "nightblade"
       ],
       "description": "Sworn to Nocturnal. You take 10% less damage while sneaking.",
-      "perk": "0x888"
+      "perk": "0x88B"
     },
     {
       "id": "dragonborn",
       "name": "Dragonborn",
       "quest": "MQ305",
       "description": "The one who ended Alduin. Shouts recover 20% faster and dragons take 10% more damage from you.",
-      "perk": "0x889"
+      "perk": "0x88C"
     },
     {
       "id": "heroofold",
       "name": "Hero of Old",
       "quest": "DLC2EbonyWarriorQuest",
       "description": "The Ebony Warrior is laid to rest. 10% less damage taken below half health, and your power attacks cannot be staggered.",
-      "perk": "0x88C"
+      "perk": "0x88F"
     }
   ],
   "groupGlobals": {
-    "warrior": "0x800",
-    "magic": "0x801",
-    "covert": "0x802"
+    "warrior": "0x803",
+    "magic": "0x804",
+    "covert": "0x805"
+  },
+  "helpers": {
+    "NJCGO_Win_SpellThenHit": "0x800",
+    "NJCGO_Win_HitThenSpell": "0x801",
+    "NJCGO_PlayerUndetected": "0x802",
+    "silence": "0x890",
+    "slow": "0x893",
+    "calm": "0x895",
+    "stun": "0x897",
+    "knockdown": "0x899",
+    "stagger": "0x89B",
+    "invisible": "0x89D",
+    "ghost": "0x89F",
+    "detectlife": "0x8A2",
+    "ward": "0x8A4",
+    "speech": "0x8A7",
+    "manadrain": "0x8A9",
+    "burst": "0x8AB",
+    "pierce": "0x8AD",
+    "followerdamage": "0x8AF"
   }
 }

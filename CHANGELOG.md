@@ -29,10 +29,19 @@
   title abilities and rank perks as perks.
 - Eleven languages for every string of the pages, notices and perks shown on the pages.
 
-### Not yet in this build
-- 33 of the class, title and rank effects need scripts or events this build does not have (procs, cooldowns, kill
-  and hit triggers): those perks exist and are named but do nothing yet; 11 more are close readings of their design
-  line ("undetected" is sneaking). The list is generated/plugin-forms.json.
+- **Every class, title and rank effect works.** The ones a perk cannot carry are done by the SKSE plugin on the game's
+  hit, kill, spell, potion, sleep and menu events: silencing bashes, Last Bulwark (60 s cooldown, kept in the save),
+  Spellsword's 3-second windows, spellstrikes, knock-downs, piercing arrows, Sense Life pulses, Vanish and Ghost Step,
+  Silver Chill, purifying potions that last longer, the Monk's flurry and Mana Strike, Soothing Venom, Final Dose,
+  pardoned small bounties, Silver Tongue in conversations, the Harbinger's followers and beast-blood rest, the
+  Nightingale's unbreakable lockpicks. "Undetected" now means no nearby actor detects you while you sneak; "in shadow"
+  is a light level under 50.
+
+### Close readings (owner may want them tuned)
+- A "critical hit" (Spellsword) is a power-attack hit; a "dodge" (Rogue) is a hit that leaves your health where it
+  was; a "bash" (Crusader B1) is a power attack while blocking with a shield; a poison taking effect (Agent) is a
+  harmful touch effect from you while your weapon is poisoned; Long Legs lowers the game's sprint drain setting, which
+  every runner shares. The full list is generated/plugin-forms.json ("approximations" and "dll").
 
 ### Added (phase 1 - data layer)
 - **Item tiers (phase 1 data layer).** Every playable weapon and armour piece gets one tier keyword from Keyword Item

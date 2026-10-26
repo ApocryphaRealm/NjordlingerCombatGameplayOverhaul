@@ -175,6 +175,19 @@ namespace ClassData
 			return;
 		}
 
+		if (j.contains("helpers") && j["helpers"].is_object())
+		{
+			auto* handler = RE::TESDataHandler::GetSingleton();
+			for (const auto& [name, v] : j["helpers"].items())
+			{
+				const auto local = ParseLocalId(v);
+				auto* form = (handler && local) ? handler->LookupForm(local, kPlugin) : nullptr;
+				if (!form) { logger::warn("class table: helper {} (0x{:X}) not found in {} - the effects that use it do nothing", name, local, kPlugin); continue; }
+				g_table.helpers[name] = form;
+			}
+			logger::info("class table: {} helper records resolved", g_table.helpers.size());
+		}
+
 		// Check the lineage: every option names a class, every title a title.
 		for (const auto& n : g_table.classes)
 		{
@@ -203,6 +216,12 @@ namespace ClassData
 			if (n.id == a_id) { return &n; }
 		}
 		return nullptr;
+	}
+
+	RE::TESForm* Helper(const std::string& a_name)
+	{
+		const auto it = g_table.helpers.find(a_name);
+		return it == g_table.helpers.end() ? nullptr : it->second;
 	}
 
 	const Title* FindTitle(const std::string& a_id)

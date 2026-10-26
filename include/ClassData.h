@@ -7,6 +7,7 @@
 #include "SkillList.h"
 
 #include <array>
+#include <map>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -68,6 +69,7 @@ namespace ClassData
 		std::vector<ClassNode> classes;
 		std::vector<Title> titles;
 		RE::TESGlobal* groupGlobal[kGroupCount]{};   // from the plugin, or created at run time
+		std::map<std::string, RE::TESForm*> helpers;   // globals and spells source/ClassEffects.cpp sets and casts (classes.json "helpers")
 	};
 
 	// Reads the table and resolves its forms (main thread, kDataLoaded).
@@ -76,6 +78,9 @@ namespace ClassData
 	const Table& Get();
 	const ClassNode* Find(const std::string& a_id);
 	const Title* FindTitle(const std::string& a_id);
+
+	// A helper record by its name in classes.json "helpers" (null when the plugin is missing or the name unknown).
+	RE::TESForm* Helper(const std::string& a_name);
 
 	// The group a skill belongs to, -1 if none (every vanilla skill belongs to one).
 	int GroupOfSkill(int a_skillIndex);

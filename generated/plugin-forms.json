@@ -1,216 +1,237 @@
 {
   "groupGlobals": {
-    "warrior": "0x800",
-    "magic": "0x801",
-    "covert": "0x802"
+    "warrior": "0x803",
+    "magic": "0x804",
+    "covert": "0x805"
   },
   "classes": {
     "warrior": {
-      "global": "0x803",
-      "keyword": "0x804",
-      "ability": "0x805"
+      "global": "0x806",
+      "keyword": "0x807",
+      "ability": "0x808"
     },
     "mage": {
-      "global": "0x808",
-      "keyword": "0x809",
-      "ability": "0x80A"
+      "global": "0x80B",
+      "keyword": "0x80C",
+      "ability": "0x80D"
     },
     "thief": {
-      "global": "0x80D",
-      "keyword": "0x80E",
-      "ability": "0x80F"
+      "global": "0x810",
+      "keyword": "0x811",
+      "ability": "0x812"
     },
     "knight": {
-      "global": "0x812",
-      "keyword": "0x813",
-      "ability": "0x814"
+      "global": "0x815",
+      "keyword": "0x816",
+      "ability": "0x817"
     },
     "barbarian": {
-      "global": "0x817",
-      "keyword": "0x818",
-      "ability": "0x819"
-    },
-    "sorcerer": {
       "global": "0x81A",
       "keyword": "0x81B",
       "ability": "0x81C"
     },
-    "healer": {
-      "global": "0x81F",
-      "keyword": "0x820",
-      "ability": "0x821"
+    "sorcerer": {
+      "global": "0x81D",
+      "keyword": "0x81E",
+      "ability": "0x81F"
     },
-    "assassin": {
+    "healer": {
       "global": "0x822",
       "keyword": "0x823",
       "ability": "0x824"
     },
-    "archer": {
+    "assassin": {
       "global": "0x825",
       "keyword": "0x826",
       "ability": "0x827"
     },
+    "archer": {
+      "global": "0x828",
+      "keyword": "0x829",
+      "ability": "0x82A"
+    },
     "crusader": {
-      "global": "0x82A",
-      "keyword": "0x82B",
-      "ability": "0x82C",
+      "global": "0x82D",
+      "keyword": "0x82E",
+      "ability": "0x82F",
       "ranks": {
-        "A1": "0x82D",
-        "B1": "0x82E",
-        "A2": "0x82F",
-        "B2": "0x830",
-        "A3": "0x831",
-        "B3": "0x832"
+        "A1": "0x830",
+        "B1": "0x831",
+        "A2": "0x832",
+        "B2": "0x833",
+        "A3": "0x834",
+        "B3": "0x835"
       }
     },
     "spellsword": {
-      "global": "0x833",
-      "keyword": "0x834",
-      "ability": "0x835",
+      "global": "0x836",
+      "keyword": "0x837",
+      "ability": "0x838",
       "ranks": {
-        "A1": "0x836",
-        "B1": "0x837",
-        "A2": "0x838",
-        "B2": "0x839",
-        "A3": "0x83A",
-        "B3": "0x83B"
+        "A1": "0x839",
+        "B1": "0x83A",
+        "A2": "0x83B",
+        "B2": "0x83C",
+        "A3": "0x83D",
+        "B3": "0x83E"
       }
     },
     "rogue": {
-      "global": "0x83C",
-      "keyword": "0x83D",
-      "ability": "0x83E",
+      "global": "0x83F",
+      "keyword": "0x840",
+      "ability": "0x841",
       "ranks": {
-        "A1": "0x83F",
-        "B1": "0x840",
-        "A2": "0x841",
-        "B2": "0x842",
-        "A3": "0x843",
-        "B3": "0x844"
+        "A1": "0x842",
+        "B1": "0x843",
+        "A2": "0x844",
+        "B2": "0x845",
+        "A3": "0x846",
+        "B3": "0x847"
       }
     },
     "scout": {
-      "global": "0x845",
-      "keyword": "0x846",
-      "ability": "0x847",
+      "global": "0x848",
+      "keyword": "0x849",
+      "ability": "0x84A",
       "ranks": {
-        "A1": "0x84A",
-        "B1": "0x84B",
-        "A2": "0x84C",
-        "B2": "0x84D",
-        "A3": "0x84E",
-        "B3": "0x84F"
+        "A1": "0x84D",
+        "B1": "0x84E",
+        "A2": "0x84F",
+        "B2": "0x850",
+        "A3": "0x851",
+        "B3": "0x852"
       }
     },
     "battlemage": {
-      "global": "0x850",
-      "keyword": "0x851",
-      "ability": "0x852",
+      "global": "0x853",
+      "keyword": "0x854",
+      "ability": "0x855",
       "ranks": {
-        "A1": "0x853",
-        "B1": "0x854",
-        "A2": "0x855",
-        "B2": "0x856",
-        "A3": "0x857",
-        "B3": "0x858"
+        "A1": "0x856",
+        "B1": "0x857",
+        "A2": "0x858",
+        "B2": "0x859",
+        "A3": "0x85A",
+        "B3": "0x85B"
       }
     },
     "nightblade": {
-      "global": "0x859",
-      "keyword": "0x85A",
-      "ability": "0x85B",
+      "global": "0x85C",
+      "keyword": "0x85D",
+      "ability": "0x85E",
       "ranks": {
-        "A1": "0x85C",
-        "B1": "0x85D",
-        "A2": "0x85E",
-        "B2": "0x85F",
-        "A3": "0x860",
-        "B3": "0x861"
+        "A1": "0x85F",
+        "B1": "0x860",
+        "A2": "0x861",
+        "B2": "0x862",
+        "A3": "0x863",
+        "B3": "0x864"
       }
     },
     "witchhunter": {
-      "global": "0x862",
-      "keyword": "0x863",
-      "ability": "0x864",
+      "global": "0x865",
+      "keyword": "0x866",
+      "ability": "0x867",
       "ranks": {
-        "A1": "0x865",
-        "B1": "0x866",
-        "A2": "0x867",
-        "B2": "0x868",
-        "A3": "0x869",
-        "B3": "0x86A"
+        "A1": "0x868",
+        "B1": "0x869",
+        "A2": "0x86A",
+        "B2": "0x86B",
+        "A3": "0x86C",
+        "B3": "0x86D"
       }
     },
     "monk": {
-      "global": "0x86D",
-      "keyword": "0x86E",
-      "ability": "0x86F",
+      "global": "0x870",
+      "keyword": "0x871",
+      "ability": "0x872",
       "ranks": {
-        "A1": "0x872",
-        "B1": "0x873",
-        "A2": "0x874",
-        "B2": "0x875",
-        "A3": "0x878",
-        "B3": "0x879"
+        "A1": "0x875",
+        "B1": "0x876",
+        "A2": "0x877",
+        "B2": "0x878",
+        "A3": "0x87B",
+        "B3": "0x87C"
       }
     },
     "agent": {
-      "global": "0x87C",
-      "keyword": "0x87D",
-      "ability": "0x87E",
+      "global": "0x87F",
+      "keyword": "0x880",
+      "ability": "0x881",
       "ranks": {
-        "A1": "0x87F",
-        "B1": "0x880",
-        "A2": "0x881",
-        "B2": "0x882",
-        "A3": "0x883",
-        "B3": "0x884"
+        "A1": "0x882",
+        "B1": "0x883",
+        "A2": "0x884",
+        "B2": "0x885",
+        "A3": "0x886",
+        "B3": "0x887"
       }
     }
   },
   "titles": {
-    "harbinger": "0x885",
-    "archmage": "0x886",
-    "listener": "0x887",
-    "nightingale": "0x888",
-    "dragonborn": "0x889",
-    "heroofold": "0x88C"
+    "harbinger": "0x888",
+    "archmage": "0x889",
+    "listener": "0x88A",
+    "nightingale": "0x88B",
+    "dragonborn": "0x88C",
+    "heroofold": "0x88F"
   },
-  "stubs": [
-    "NJCGO_Rank_crusader_A2: needs a silence spell applied by the bash",
-    "NJCGO_Rank_crusader_B2: needs a script or a hit event",
-    "NJCGO_Rank_crusader_A3: needs a kill event",
-    "NJCGO_Rank_crusader_B3: needs a cooldown",
-    "NJCGO_Rank_spellsword_A1: needs a combat-hit spell",
-    "NJCGO_Rank_spellsword_A2: needs a 3 second window",
-    "NJCGO_Rank_spellsword_B2: needs a 3 second window",
-    "NJCGO_Rank_spellsword_A3: needs a script",
-    "NJCGO_Rank_rogue_A2: needs a knock-down spell on hit",
-    "NJCGO_Rank_rogue_B2: needs a hit event",
-    "NJCGO_Rank_scout_B1: sprint stamina has no entry point",
-    "NJCGO_Rank_scout_A3: needs a projectile change",
-    "NJCGO_Rank_scout_B3: needs a conditioned detect-life effect",
-    "NJCGO_Rank_battlemage_A2: needs a script",
-    "NJCGO_Rank_battlemage_A3: needs a script",
-    "NJCGO_Rank_nightblade_A2: needs a kill event",
-    "NJCGO_Rank_nightblade_B2: needs a silence effect",
-    "NJCGO_Rank_nightblade_A3: needs a kill event",
-    "NJCGO_Ab_witchhunter: potions lasting 50% longer has no entry point; poisons get 50% more hits instead",
-    "NJCGO_Rank_witchhunter_A2: needs a slow spell on hit",
-    "NJCGO_Rank_witchhunter_B2: needs a script",
-    "NJCGO_Rank_witchhunter_A3: needs a kill event",
-    "NJCGO_Rank_monk_B1: needs a block event",
-    "NJCGO_Rank_monk_A2: needs a hit counter",
-    "NJCGO_Rank_monk_A3: needs a combat-hit spell",
-    "NJCGO_Ab_agent: Speech checks 20% easier has no entry point",
-    "NJCGO_Rank_agent_B1: Speech checks 20% easier has no entry point",
-    "NJCGO_Rank_agent_A2: needs a calm spell on poison",
-    "NJCGO_Rank_agent_A3: needs a script",
-    "NJCGO_Rank_agent_B3: needs a script",
-    "NJCGO_Title_harbinger: follower damage and the beast blood\u0027s sleep penalty need scripts or the followers\u0027 own perks",
-    "NJCGO_Title_listener: detect life while sneaking needs a conditioned detect-life effect",
-    "NJCGO_Title_nightingale: unbreakable lockpicks"
+  "helpers": {
+    "NJCGO_Win_SpellThenHit": "0x800",
+    "NJCGO_Win_HitThenSpell": "0x801",
+    "NJCGO_PlayerUndetected": "0x802",
+    "silence": "0x890",
+    "slow": "0x893",
+    "calm": "0x895",
+    "stun": "0x897",
+    "knockdown": "0x899",
+    "stagger": "0x89B",
+    "invisible": "0x89D",
+    "ghost": "0x89F",
+    "detectlife": "0x8A2",
+    "ward": "0x8A4",
+    "speech": "0x8A7",
+    "manadrain": "0x8A9",
+    "burst": "0x8AB",
+    "pierce": "0x8AD",
+    "followerdamage": "0x8AF"
+  },
+  "dll": [
+    "NJCGO_Rank_crusader_A2: your shield bash on a target with a spell in hand casts Silenced (3 s)",
+    "NJCGO_Rank_crusader_B2: a spell hit you block restores 10 magicka",
+    "NJCGO_Rank_crusader_A3: your kill restores 20% health to followers within 1500 units",
+    "NJCGO_Rank_crusader_B3: a hit that leaves you under 30% health casts Last Bulwark (5 s); 60 s cooldown, kept in the co-save",
+    "NJCGO_Rank_spellsword_A1: your weapon hits restore 5 magicka",
+    "NJCGO_Rank_spellsword_A2: a spell you cast opens a 3 second window (NJCGO_Win_SpellThenHit)",
+    "NJCGO_Rank_spellsword_B2: a weapon hit you land opens a 3 second window (NJCGO_Win_HitThenSpell)",
+    "NJCGO_Rank_spellsword_A3: approx: a power-attack hit (the game has no critical-hit event) casts the spell in your other hand on the target, free",
+    "NJCGO_Rank_rogue_A2: your power attack on a staggered target casts Floored (1 s paralysis)",
+    "NJCGO_Rank_rogue_B2: approx: a hit you take while Slippery\u0027s chance rolled (a hit that does no damage) restores 15 stamina - read from your health before and after the hit",
+    "NJCGO_Rank_scout_B1: fSprintStaminaDrainMult x 0.75 while you hold the perk (a game setting: other runners share it)",
+    "NJCGO_Rank_scout_A3: approx: your arrow hit also casts Piercing Arrow (the bow\u0027s damage) on the nearest hostile within 600 units behind the target",
+    "NJCGO_Rank_scout_B3: Sense Life is cast every second while you sprint",
+    "NJCGO_Rank_battlemage_A2: when a hit breaks your ward (ward strength 0 while a ward is held) Shattering Ward hits hostiles within 400 units",
+    "NJCGO_Rank_battlemage_A3: your power-attack hit casts the spell in your other hand on the target, free",
+    "NJCGO_Rank_nightblade_A2: your kill while undetected casts Vanish (5 s invisibility)",
+    "NJCGO_Rank_nightblade_B2: your Frenzy or Fear effect on a target also casts Silenced",
+    "NJCGO_Rank_nightblade_A3: your sneak kill casts Ghost Step (3 s invisible and muffled)",
+    "NJCGO_Ab_witchhunter: potions you drink last 50% longer (their active effects are lengthened as they start); poisons get 50% more hits",
+    "NJCGO_Rank_witchhunter_A2: your silver or poisoned weapon hit on an undead target casts Silver Chill (25% slower, 5 s)",
+    "NJCGO_Rank_witchhunter_B2: a potion you drink also removes one disease",
+    "NJCGO_Rank_witchhunter_A3: your kill of an undead restores 25 health and 25 stamina",
+    "NJCGO_Rank_monk_B1: a hit you block unarmed casts Deflected (a stagger) on the attacker",
+    "NJCGO_Rank_monk_A2: three unarmed hits on one target within 3 s cast Stunned (2 s)",
+    "NJCGO_Rank_monk_A3: your unarmed hit on a target with a spell in hand casts Mana Strike (10 magicka)",
+    "NJCGO_Ab_agent: Silver Tongue (\u002B20% Speech) is cast on you when a conversation opens; poisons get 50% more hits",
+    "NJCGO_Rank_agent_B1: Silver Tongue (\u002B20% Speech) is cast on you when a conversation opens; bribes cost half",
+    "NJCGO_Rank_agent_A2: your poison taking effect on a target also casts Soothing Venom (calm, 3 s)",
+    "NJCGO_Rank_agent_A3: your poisoned sneak-attack hit kills a non-unique human outright, once per combat",
+    "NJCGO_Rank_agent_B3: a bounty under 500 is cleared after 30 s out of combat",
+    "NJCGO_Title_harbinger: your followers get Harbinger\u0027s Shield-Brothers (\u002B20% attack damage) while they follow; after sleeping with beast blood you get Rested",
+    "NJCGO_Title_listener: Sense Life is cast every second while you sneak; dagger sneak attacks \u002B50%",
+    "NJCGO_Title_nightingale: lockpicks you break are given back when the lock menu closes"
   ],
+  "stubs": [],
   "approximations": [
     "NJCGO_Ab_archer: a bow drawn = weapon out with a bow equipped",
     "NJCGO_Rank_crusader_B1: a bash = a power attack while blocking with a shield",
@@ -218,10 +239,7 @@
     "NJCGO_Rank_scout_A1: the \u0027while moving\u0027 half is not built",
     "NJCGO_Rank_scout_A2: a bow sneak attack (x2) is raised to x3",
     "NJCGO_Rank_battlemage_B3: also lowers beneficial spells cast on you by others",
-    "NJCGO_Ab_nightblade: undetected = sneaking",
-    "NJCGO_Rank_nightblade_B1: sneak attacks with spells = dual casting while sneaking",
-    "NJCGO_Rank_nightblade_B3: undetected = sneaking",
-    "NJCGO_Rank_agent_B2: undetected = sneaking",
-    "NJCGO_Title_nightingale: in shadow = sneaking"
+    "NJCGO_Rank_nightblade_B1: a spell sneak attack = a dual-cast spell while undetected",
+    "NJCGO_Title_nightingale: in shadow = sneaking where the light level is under 50"
   ]
 }

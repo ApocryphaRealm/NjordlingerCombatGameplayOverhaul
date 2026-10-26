@@ -116,6 +116,8 @@ def write_classes(forms_path):
                 t["perk"] = fid
         if forms.get("groupGlobals"):
             cfg["groupGlobals"] = forms["groupGlobals"]
+        if forms.get("helpers"):
+            cfg["helpers"] = forms["helpers"]   # globals and spells source/ClassEffects.cpp sets and casts
     folder = os.path.join(OUT, "NjordlingerCombatGameplayOverhaul")
     os.makedirs(folder, exist_ok=True)
     path = os.path.join(folder, "classes.json")

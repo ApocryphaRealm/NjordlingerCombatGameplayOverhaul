@@ -3,6 +3,7 @@
 // the Classes module, the class lock-outs, quest rewards, the race-menu class category and the settings page.
 #include "PCH.h"
 
+#include "ClassEffects.h"
 #include "Classes.h"
 #include "Compat.h"
 #include "DevBenchTool.h"
@@ -43,6 +44,7 @@ namespace
 			Patches::InstallAll();
 			Classes::Install();
 			Lockouts::Install();
+			ClassEffects::Install();
 			QuestRewards::Install();
 			RaceMenuClass::Install();
 			StatsMenuClass::Install();
@@ -61,6 +63,7 @@ namespace
 	void SaveCallback(SKSE::SerializationInterface* a_intfc)
 	{
 		Classes::OnSave(a_intfc);
+		ClassEffects::OnSave(a_intfc);
 		QuestRewards::OnSave(a_intfc);
 	}
 
@@ -73,6 +76,7 @@ namespace
 			{
 			case Classes::kRecord: Classes::ReadRecord(a_intfc, version, length); break;
 			case QuestRewards::kRecord: QuestRewards::ReadRecord(a_intfc, version, length); break;
+			case ClassEffects::kRecord: ClassEffects::ReadRecord(a_intfc, version, length); break;
 			default: logger::warn("co-save: unknown record {:08X} (version {}, {} bytes) skipped", type, version, length); break;
 			}
 		}
@@ -81,6 +85,7 @@ namespace
 	void RevertCallback(SKSE::SerializationInterface*)
 	{
 		Classes::OnRevert();
+		ClassEffects::OnRevert();
 		QuestRewards::OnRevert();
 	}
 }
