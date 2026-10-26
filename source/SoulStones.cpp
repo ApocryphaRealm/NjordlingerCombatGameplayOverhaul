@@ -21,6 +21,7 @@
 #include <random>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace SoulStones
 {
@@ -427,6 +428,8 @@ namespace SoulStones
 			}
 		}
 
+		std::unordered_set<RE::EffectSetting*> g_glowEffects;   // the five tier glow effects (filled at Install)
+
 		struct Want
 		{
 			RE::EffectSetting* effect = nullptr;
@@ -507,7 +510,8 @@ namespace SoulStones
 			{
 				auto* fx = a_ench->effects[static_cast<std::uint32_t>(i)];
 				if (!fx || fx->baseEffect != a_want[i].effect || std::fabs(fx->effectItem.magnitude - a_want[i].magnitude) > 0.001F ||
-					fx->effectItem.duration != a_want[i].duration || fx->effectItem.area != a_want[i].area)
+					fx->effectItem.duration != a_want[i].duration || fx->effectItem.area != a_want[i].area ||
+					(g_glowEffects.contains(fx->baseEffect) && fx->cost < 999.0F))   // a glow made before 86db carries no cost: re-make it
 				{
 					return false;
 				}
@@ -527,10 +531,20 @@ namespace SoulStones
 				fx.effectItem.magnitude = w.magnitude;
 				fx.effectItem.area = w.area;
 				fx.effectItem.duration = w.duration;
-				fx.cost = 0.0F;
+				fx.cost = (g_glowEffects.contains(w.effect)) ? 1000.0F : 0.0F;
 				arr.push_back(fx);
 			}
-			return a_weapon ? m->AddWeaponEnchantment(arr) : m->AddArmorEnchantment(arr);
+			auto* ench = a_weapon ? m->AddWeaponEnchantment(arr) : m->AddArmorEnchantment(arr);
+			// the manager may hand back an existing enchantment made before the glow carried a cost: give it the cost here
+			// (only our own glow lines are touched), so the glow is the costliest effect and the comparison settles
+			if (ench)
+			{
+				for (auto* fx : ench->effects)
+				{
+					if (fx && g_glowEffects.contains(fx->baseEffect)) { fx->cost = 1000.0F; }
+				}
+			}
+			return ench;
 		}
 
 		void Reequip(RE::TESBoundObject* a_obj, RE::ExtraDataList* a_x)
@@ -1439,6 +1453,7 @@ namespace SoulStones
 						if (p && ref && (ref->GetParentCell() != p->GetParentCell() || ref->GetPosition().GetDistance(p->GetPosition()) > g_rs.radius)) { CloseService("you walked away"); }
 					});
 				}
+				if (ticks % 4 == 0 && g_t.loaded) { g_knowledgeDirty = true; }
 				const bool dirty = g_dirty.exchange(false);
 				const bool knowledge = g_knowledgeDirty.exchange(false);
 				if (!dirty && !knowledge) { continue; }
@@ -1482,7 +1497,7 @@ namespace SoulStones
 				g_t.tiers[t].name = tiers[t].value("name", std::string());
 				g_t.tierNames.push_back(g_t.tiers[t].name);
 				g_t.tiers[t].glow = Form<RE::EffectSetting>(tiers[t].value("glow", nlohmann::json()), "glow");
-				if (g_t.tiers[t].glow) { g_t.glowTier[g_t.tiers[t].glow] = t; }
+				if (g_t.tiers[t].glow) { g_t.glowTier[g_t.tiers[t].glow] = t; g_glowEffects.insert(g_t.tiers[t].glow); }
 				for (const auto& g : tiers[t]["feeGems"])
 				{
 					if (auto* gem = Form<RE::TESBoundObject>(g, "fee gem")) { g_t.tiers[t].feeGems.push_back(gem); }
@@ -1556,7 +1571,13 @@ namespace SoulStones
 			{
 				const auto r = nlohmann::json::parse(rin);
 				auto* ref = Form<RE::TESObjectREFR>(r.value("npcRef", nlohmann::json()), "runesmith reference");
-				auto* info = Form<RE::TESForm>(r.value("socketInfo", nlohmann::json()), "runesmith line");
+				RE::FormID infoId = 0;
+				if (auto* file = handler->LookupModByName(kPlugin); file && r.contains("socketInfo"))
+				{
+					const auto local = static_cast<std::uint32_t>(std::stoul(r["socketInfo"].get<std::string>(), nullptr, 0));
+					infoId = file->IsLight() ? (0xFE000000u | (static_cast<std::uint32_t>(file->GetSmallFileCompileIndex()) << 12) | (local & 0xFFFu))
+					                         : ((static_cast<std::uint32_t>(file->GetCompileIndex()) << 24) | (local & 0xFFFFFFu));
+				}
 				g_rs.learned = Form<RE::TESGlobal>(r.value("learnedGlobal", nlohmann::json()), "runesmith global");
 				g_rs.radius = r.value("serviceRadius", 1500.0F);
 				if (auto* cell = Form<RE::TESForm>(r.value("homeCell", nlohmann::json()), "runesmith's inn")) { g_rs.homeCell = cell->GetFormID(); }
@@ -1566,8 +1587,11 @@ namespace SoulStones
 				}
 				g_rs.homeAngleZ = r.value("homeAngleZ", 0.0F);
 				g_rs.npcRef = ref ? ref->GetFormID() : 0;
-				g_rs.socketInfo = info ? info->GetFormID() : 0;
-				g_rs.loaded = ref && info && g_rs.learned;
+				g_rs.socketInfo = infoId;
+				// one missing part never disables the rest: the quest's global, the move into the inn and the line each
+				// work on their own (logged above when a form does not resolve)
+				g_rs.loaded = ref != nullptr;
+				if (!infoId) { logger::warn("soul stones: the runesmith's socketing line has no form ID - his window will not open from dialogue"); }
 			}
 		}
 		catch (const std::exception& e) { logger::warn("soul stones: runesmith.json is not valid ({}) - no runesmith", e.what()); }
