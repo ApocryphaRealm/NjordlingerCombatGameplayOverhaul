@@ -1,0 +1,430 @@
+{
+  "_comment": [
+    "PLAN.md D1-D4, D8 and CLASS-MAP.md sections 1, 5 and 6 (first draft, TUNE). The source of truth for the class",
+    "table and the lineage: tools/build-classes.py copies it into data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul/",
+    "and the plugin build fills each class's form IDs (ability, global, keyword) from NjordlingerCombatGameplayOverhaul.esp.",
+    "Names and descriptions here are the English text; the page shows the translated NJ_ClassName_<id> /",
+    "NJ_ClassDesc_<id> strings from Interface/Translations when they exist.",
+    "tier: 0 Novice (the three starts), 1 Apprentice, 2 Adept. Expert and Master are two rank paths each (rank perks,",
+    "authored later); Legendary is a title reached by finishing its questline (titles below).",
+    "groups: the skill groups the class holds; a hybrid's second group opens when it is chosen and never closes again.",
+    "extraSkills: single skills held outside the groups (the Archer line keeps Archery while Q21 puts Archery in warrior).",
+    "next: the two options offered at the next upgrade. reachable=false: defined but on no lineage in this draft."
+  ],
+  "version": 1,
+  "groups": {
+    "warrior": [
+      "OneHanded",
+      "TwoHanded",
+      "Block",
+      "HeavyArmor",
+      "Smithing",
+      "Archery"
+    ],
+    "magic": [
+      "Alteration",
+      "Conjuration",
+      "Destruction",
+      "Illusion",
+      "Restoration",
+      "Enchanting"
+    ],
+    "covert": [
+      "Sneak",
+      "Lockpicking",
+      "Pickpocket",
+      "Speech",
+      "LightArmor",
+      "Alchemy"
+    ]
+  },
+  "crafts": {
+    "warrior": "Smithing",
+    "magic": "Enchanting",
+    "covert": "Alchemy"
+  },
+  "classes": [
+    {
+      "id": "warrior",
+      "name": "Warrior",
+      "tier": 0,
+      "start": true,
+      "groups": [
+        "warrior"
+      ],
+      "next": [
+        "knight",
+        "barbarian"
+      ],
+      "titles": [
+        "harbinger",
+        "dragonborn"
+      ],
+      "description": "A fighter of steel and shield. Holds the warrior skills and smithing. Health regenerates faster."
+    },
+    {
+      "id": "mage",
+      "name": "Mage",
+      "tier": 0,
+      "start": true,
+      "groups": [
+        "magic"
+      ],
+      "next": [
+        "sorcerer",
+        "healer"
+      ],
+      "titles": [
+        "archmage",
+        "dragonborn"
+      ],
+      "description": "A student of the five schools. Holds the magic skills and enchanting. Magicka regenerates faster."
+    },
+    {
+      "id": "thief",
+      "name": "Thief",
+      "tier": 0,
+      "start": true,
+      "groups": [
+        "covert"
+      ],
+      "next": [
+        "assassin",
+        "archer"
+      ],
+      "titles": [
+        "nightingale",
+        "dragonborn"
+      ],
+      "description": "Quick hands and a quiet step. Holds the covert skills and alchemy. Moves faster while sneaking."
+    },
+    {
+      "id": "knight",
+      "name": "Knight",
+      "tier": 1,
+      "groups": [
+        "warrior"
+      ],
+      "next": [
+        "crusader",
+        "blademaster"
+      ],
+      "description": "Armour and discipline. Resists a little of every weapon and spell."
+    },
+    {
+      "id": "barbarian",
+      "name": "Barbarian",
+      "tier": 1,
+      "groups": [
+        "warrior"
+      ],
+      "next": [
+        "berserker",
+        "rogue"
+      ],
+      "description": "Raw strength. Power attacks hit harder."
+    },
+    {
+      "id": "sorcerer",
+      "name": "Sorcerer",
+      "tier": 1,
+      "groups": [
+        "magic"
+      ],
+      "next": [
+        "battlemage",
+        "occultist"
+      ],
+      "description": "Raw arcane power. A chance to absorb hostile spells."
+    },
+    {
+      "id": "healer",
+      "name": "Healer",
+      "tier": 1,
+      "groups": [
+        "magic"
+      ],
+      "next": [
+        "cleric",
+        "nightblade"
+      ],
+      "description": "The restoring hand. Dual-cast Restoration costs less."
+    },
+    {
+      "id": "assassin",
+      "name": "Assassin",
+      "tier": 1,
+      "groups": [
+        "covert"
+      ],
+      "next": [
+        "nightblade",
+        "burglar"
+      ],
+      "description": "Death from the shadows. Sneak attacks deal more damage."
+    },
+    {
+      "id": "archer",
+      "name": "Archer",
+      "tier": 1,
+      "groups": [
+        "covert"
+      ],
+      "extraSkills": [
+        "Archery"
+      ],
+      "next": [
+        "scout",
+        "hunter"
+      ],
+      "description": "The patient bow. Moves faster while drawing a bow, and keeps Archery."
+    },
+    {
+      "id": "crusader",
+      "name": "Crusader",
+      "tier": 2,
+      "groups": [
+        "warrior",
+        "magic"
+      ],
+      "titles": [
+        "harbinger",
+        "dragonborn"
+      ],
+      "description": "Steel and faith. Opens the magic skills. Blocking resists arrows and spells."
+    },
+    {
+      "id": "blademaster",
+      "name": "Blademaster",
+      "tier": 2,
+      "groups": [
+        "warrior"
+      ],
+      "titles": [
+        "harbinger",
+        "dragonborn"
+      ],
+      "description": "Mastery of the blade. Weapon attacks cost less stamina."
+    },
+    {
+      "id": "berserker",
+      "name": "Berserker",
+      "tier": 2,
+      "groups": [
+        "warrior"
+      ],
+      "titles": [
+        "harbinger",
+        "dragonborn"
+      ],
+      "description": "Rage made flesh. Deals more damage while badly hurt."
+    },
+    {
+      "id": "rogue",
+      "name": "Rogue",
+      "tier": 2,
+      "groups": [
+        "warrior",
+        "covert"
+      ],
+      "titles": [
+        "nightingale",
+        "dragonborn"
+      ],
+      "description": "A blade with no code. Opens the covert skills. Power attacks hit harder with an empty off hand."
+    },
+    {
+      "id": "battlemage",
+      "name": "Battlemage",
+      "tier": 2,
+      "groups": [
+        "magic",
+        "warrior"
+      ],
+      "titles": [
+        "archmage",
+        "dragonborn"
+      ],
+      "description": "Spell and steel together. Opens the warrior skills. Wards resist weapon damage."
+    },
+    {
+      "id": "occultist",
+      "name": "Occultist",
+      "tier": 2,
+      "groups": [
+        "magic"
+      ],
+      "titles": [
+        "archmage",
+        "dragonborn"
+      ],
+      "description": "Forbidden lore. Summoned and raised servants last longer."
+    },
+    {
+      "id": "cleric",
+      "name": "Cleric",
+      "tier": 2,
+      "groups": [
+        "magic"
+      ],
+      "titles": [
+        "archmage",
+        "dragonborn"
+      ],
+      "description": "Sworn to the Divines. Restoration spells are stronger against the undead."
+    },
+    {
+      "id": "nightblade",
+      "name": "Nightblade",
+      "tier": 2,
+      "groups": [
+        "magic",
+        "covert"
+      ],
+      "titles": [
+        "listener",
+        "dragonborn"
+      ],
+      "description": "Shadow and spell. Holds both the magic and the covert skills. Illusion is stronger while undetected."
+    },
+    {
+      "id": "burglar",
+      "name": "Burglar",
+      "tier": 2,
+      "groups": [
+        "covert"
+      ],
+      "titles": [
+        "nightingale",
+        "dragonborn"
+      ],
+      "description": "No lock holds. Lockpicking and pickpocketing are easier."
+    },
+    {
+      "id": "scout",
+      "name": "Scout",
+      "tier": 2,
+      "groups": [
+        "covert",
+        "warrior"
+      ],
+      "titles": [
+        "harbinger",
+        "dragonborn"
+      ],
+      "description": "Far ahead of the column. Opens the warrior skills. Stamina regenerates faster."
+    },
+    {
+      "id": "hunter",
+      "name": "Hunter",
+      "tier": 2,
+      "groups": [
+        "covert"
+      ],
+      "extraSkills": [
+        "Archery"
+      ],
+      "titles": [
+        "nightingale",
+        "dragonborn"
+      ],
+      "description": "Tracker and trapper. Keeps Archery; arrows hit harder against animals."
+    },
+    {
+      "id": "spellsword",
+      "name": "Spellsword",
+      "tier": 2,
+      "reachable": false,
+      "groups": [
+        "magic",
+        "warrior"
+      ],
+      "titles": [
+        "archmage",
+        "dragonborn"
+      ],
+      "description": "Destruction costs less with a weapon drawn."
+    },
+    {
+      "id": "witchhunter",
+      "name": "Witchhunter",
+      "tier": 2,
+      "reachable": false,
+      "groups": [
+        "magic",
+        "covert"
+      ],
+      "titles": [
+        "listener",
+        "dragonborn"
+      ],
+      "description": "Potions last longer."
+    },
+    {
+      "id": "agent",
+      "name": "Agent",
+      "tier": 2,
+      "reachable": false,
+      "groups": [
+        "covert",
+        "magic"
+      ],
+      "titles": [
+        "nightingale",
+        "dragonborn"
+      ],
+      "description": "Poisons last for more hits."
+    },
+    {
+      "id": "monk",
+      "name": "Monk",
+      "tier": 2,
+      "reachable": false,
+      "groups": [
+        "covert",
+        "magic"
+      ],
+      "titles": [
+        "listener",
+        "dragonborn"
+      ],
+      "description": "Fights unarmed and unarmoured with extra armour."
+    }
+  ],
+  "ranks": {
+    "_comment": "Expert (tier 3) and Master (tier 4): two rank paths each, chosen once. Each path grants the rank perk listed by class later (rankPerks); none is authored yet.",
+    "paths": 2
+  },
+  "titles": [
+    {
+      "id": "harbinger",
+      "name": "Harbinger",
+      "quest": "C06",
+      "description": "Leader of the Companions."
+    },
+    {
+      "id": "archmage",
+      "name": "Archmage",
+      "quest": "MG08",
+      "description": "Master of the College of Winterhold."
+    },
+    {
+      "id": "listener",
+      "name": "Listener",
+      "quest": "DB11",
+      "description": "The voice of the Night Mother."
+    },
+    {
+      "id": "nightingale",
+      "name": "Nightingale",
+      "quest": "TG08B",
+      "description": "Sworn to Nocturnal."
+    },
+    {
+      "id": "dragonborn",
+      "name": "Dragonborn",
+      "quest": "MQ305",
+      "description": "The one who ended Alduin."
+    }
+  ]
+}

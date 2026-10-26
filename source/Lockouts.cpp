@@ -1,0 +1,196 @@
+#include "PCH.h"
+
+#include "Lockouts.h"
+
+#include "ClassData.h"
+#include "Classes.h"
+#include "Settings.h"
+
+#include "utils/Logger.h"
+#include "utils/Notify.h"
+#include "utils/Strings.h"
+
+#include <atomic>
+#include <mutex>
+#include <unordered_set>
+
+namespace Lockouts
+{
+	namespace
+	{
+		std::atomic<std::uint32_t> g_perks{ 0 };
+		std::atomic<std::uint32_t> g_entries{ 0 };
+		std::atomic<std::uint32_t> g_abilities{ 0 };
+		std::atomic<std::uint32_t> g_refusals{ 0 };
+		std::mutex g_lock;
+		std::string g_lastRefusal;
+
+		// Puts (GetIsReference(Player) == 0 OR GetGlobalValue(a_global) == 1) in front of a condition list. The game reads
+		// a list as OR-runs joined by AND, so the pair is one OR-run ANDed with whatever the list already held.
+		bool Prepend(RE::TESCondition& a_cond, RE::TESGlobal* a_global, RE::PlayerCharacter* a_player)
+		{
+			auto* notPlayer = new RE::TESConditionItem();
+			auto* open = new RE::TESConditionItem();
+			if (!notPlayer || !open) { return false; }
+
+			notPlayer->data.object = RE::CONDITIONITEMOBJECT::kSelf;
+			notPlayer->data.functionData.function = RE::FUNCTION_DATA::FunctionID::kGetIsReference;
+			notPlayer->data.functionData.params[0] = a_player;
+			notPlayer->data.comparisonValue.f = 0.0F;
+			notPlayer->data.flags.opCode = RE::CONDITION_ITEM_DATA::OpCode::kEqualTo;
+			notPlayer->data.flags.isOR = true;
+
+			open->data.object = RE::CONDITIONITEMOBJECT::kSelf;
+			open->data.functionData.function = RE::FUNCTION_DATA::FunctionID::kGetGlobalValue;
+			open->data.functionData.params[0] = a_global;
+			open->data.comparisonValue.f = 1.0F;
+			open->data.flags.opCode = RE::CONDITION_ITEM_DATA::OpCode::kEqualTo;
+			open->data.flags.isOR = false;
+
+			open->next = a_cond.head;
+			notPlayer->next = open;
+			a_cond.head = notPlayer;
+			return true;
+		}
+
+		void ConditionPerk(RE::BGSPerk* a_perk, RE::TESGlobal* a_global, RE::PlayerCharacter* a_player)
+		{
+			if (Prepend(a_perk->perkConditions, a_global, a_player)) { ++g_perks; }
+			for (auto* entry : a_perk->perkEntries)
+			{
+				if (!entry) { continue; }
+				const auto type = entry->GetType();
+				if (type == RE::PERK_ENTRY_TYPE::kEntryPoint)
+				{
+					auto* ep = static_cast<RE::BGSEntryPointPerkEntry*>(entry);
+					if (ep->conditions.size() > 0 && Prepend(ep->conditions[0], a_global, a_player)) { ++g_entries; }
+				}
+				else if (type == RE::PERK_ENTRY_TYPE::kAbility)
+				{
+					++g_abilities;
+				}
+			}
+		}
+
+		void PerkPass()
+		{
+			const auto& table = ClassData::Get();
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!table.loaded || !player) { logger::error("perk lock: no class table or no player object - perks are not locked"); return; }
+			std::unordered_set<RE::BGSPerk*> seen;
+			for (int i = 0; i < skilllist::kCount; ++i)
+			{
+				const int group = ClassData::GroupOfSkill(i);
+				RE::TESGlobal* global = group >= 0 ? table.groupGlobal[group] : nullptr;
+				if (!global) { logger::warn("perk lock: {} has no group global - its perks are not locked", skilllist::kDisplayName[i]); continue; }
+				const auto av = static_cast<RE::ActorValue>(i + 6);
+#if RUNTIME_LINE == 17
+				auto* info = RE::ActorValueList::GetActorValueInfo(av);
+#else
+				auto* list = RE::ActorValueList::GetSingleton();
+				auto* info = list ? list->GetActorValue(av) : nullptr;
+#endif
+				if (!info || !info->perkTree) { logger::warn("perk lock: {} has no perk tree", skilllist::kDisplayName[i]); continue; }
+				std::uint32_t before = g_perks.load();
+				std::vector<RE::BGSSkillPerkTreeNode*> stack{ info->perkTree };
+				std::unordered_set<RE::BGSSkillPerkTreeNode*> visited;
+				while (!stack.empty())
+				{
+					auto* node = stack.back();
+					stack.pop_back();
+					if (!node || !visited.insert(node).second) { continue; }
+					// Every rank of the perk: the tree names the first, the ranks chain through nextPerk.
+					for (auto* perk = node->perk; perk && seen.insert(perk).second; perk = perk->nextPerk) { ConditionPerk(perk, global, player); }
+					for (auto* child : node->children) { stack.push_back(child); }
+				}
+				logger::debug("perk lock: {} - {} perks conditioned on the {} group", skilllist::kDisplayName[i], g_perks.load() - before, ClassData::kGroupId[group]);
+			}
+			logger::info("perk lock: {} perks and {} entry points conditioned on their group's global; {} ability entries left as they are",
+						 g_perks.load(), g_entries.load(), g_abilities.load());
+		}
+
+		// The group a crafting station belongs to, -1 for one that stays open.
+		int StationGroup(RE::TESFurniture* a_furniture)
+		{
+			using B = RE::TESFurniture::WorkBenchData::BenchType;
+			const auto bench = a_furniture->workBenchData.benchType.get();
+			switch (bench)
+			{
+			case B::kSmithingWeapon:
+			case B::kSmithingArmor:
+				return ClassData::kWarrior;
+			case B::kEnchanting:
+			case B::kEnchantingExperiment:
+				return ClassData::kMagic;
+			case B::kAlchemy:
+			case B::kAlchemyExperiment:
+				return ClassData::kCovert;
+			case B::kCreateObject:
+				// the forge and the Skyforge; smelters, tanning racks and cooking pots share the bench type and stay open
+				return (a_furniture->HasKeywordString("CraftingSmithingForge") || a_furniture->HasKeywordString("CraftingSmithingSkyforge")) ? ClassData::kWarrior : -1;
+			default:
+				return -1;
+			}
+		}
+
+		class CraftingSink : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
+		{
+		public:
+			RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override
+			{
+				if (!a_event || !a_event->opening || a_event->menuName != RE::CraftingMenu::MENU_NAME) { return RE::BSEventNotifyControl::kContinue; }
+				if (!settings::classes::enabled || !settings::classes::craftingGate) { return RE::BSEventNotifyControl::kContinue; }
+				auto* player = RE::PlayerCharacter::GetSingleton();
+				if (!player) { return RE::BSEventNotifyControl::kContinue; }
+				const auto handle = player->GetOccupiedFurniture();
+				const auto ref = handle.get();
+				auto* base = ref ? ref->GetBaseObject() : nullptr;
+				auto* furniture = base ? base->As<RE::TESFurniture>() : nullptr;
+				if (!furniture) { logger::debug("crafting gate: the crafting menu opened with no furniture in use - left open"); return RE::BSEventNotifyControl::kContinue; }
+				const int group = StationGroup(furniture);
+				if (group < 0 || Classes::HoldsGroup(group))
+				{
+					logger::debug("crafting gate: station {:08X} (group {}) - open", furniture->GetFormID(), group);
+					return RE::BSEventNotifyControl::kContinue;
+				}
+				++g_refusals;
+				const auto& table = ClassData::Get();
+				const int craft = table.craftSkill[group];
+				const char* craftName = craft >= 0 ? skilllist::kDisplayName[craft] : ClassData::kGroupId[group];
+				{
+					std::scoped_lock l(g_lock);
+					g_lastRefusal = std::format("{:08X} ({})", furniture->GetFormID(), craftName);
+				}
+				logger::info("crafting gate: refused station {:08X} - the class does not hold the {} group ({})", furniture->GetFormID(), ClassData::kGroupId[group], craftName);
+				if (auto* queue = RE::UIMessageQueue::GetSingleton()) { queue->AddMessage(RE::CraftingMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr); }
+				static constexpr const char* kKeys[3] = { "NJ_NoticeNoSmithing", "NJ_NoticeNoEnchanting", "NJ_NoticeNoAlchemy" };
+				static constexpr const char* kText[3] = { "Your class does not know the smith's craft.", "Your class does not know the enchanter's craft.", "Your class does not know the alchemist's craft." };
+				notify::Show(strings::TR(kKeys[group], kText[group]));
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+		CraftingSink g_crafting;
+	}
+
+	void Install()
+	{
+		PerkPass();
+		if (auto* ui = RE::UI::GetSingleton())
+		{
+			ui->AddEventSink<RE::MenuOpenCloseEvent>(&g_crafting);
+			logger::info("crafting gate: menu sink registered");
+		}
+	}
+
+	State GetState()
+	{
+		State s;
+		s.perksConditioned = g_perks.load();
+		s.entriesConditioned = g_entries.load();
+		s.abilityEntriesSkipped = g_abilities.load();
+		s.craftingRefusals = g_refusals.load();
+		std::scoped_lock l(g_lock);
+		s.lastRefusal = g_lastRefusal;
+		return s;
+	}
+}
