@@ -17,6 +17,11 @@
 //   - the unique tier refuses enchanting (D15): KID gives every NJCGO_Tier_Unique item NJCGO_NoEnchant and the game's own
 //     MagicDisallowEnchanting; at the first game load of a session this module walks every weapon and armour and adds
 //     whichever of the two is missing (KID's keyword-filtered lines depend on its own ordering), and counts them.
+// The player's perks: SPID did not reach the player on an existing save (combined run 2fb7), so this module gives the
+// player every gear perk it lacks at each game load (Actor::AddPerk works on the player only; NPCs keep SPID's).
+// Three unique effects no record can carry are done here too (Fable review): Savior's Hide and Shield of Ysgramor scale
+// the sprint-drain and block-stamina game settings while the player wears them (GameSettingFactors.h), and Spellbreaker's
+// shield bash on a casting actor interrupts the cast and silences 2 s.
 // Threading: event sinks only record which actor changed; a small pacer thread queues the recount to the main thread
 // (SKSE AddTask - no Scaleform anywhere in this module). Snapshots for the page and DevBench are mutex-guarded copies.
 
@@ -63,6 +68,8 @@ namespace Gear
 		std::vector<SetState> sets;
 		std::vector<UniqueState> uniques;
 		std::uint32_t recounts = 0;            // actor recounts this session
+		std::uint32_t playerPerksHeld = 0;     // gear perks the player holds after the load-time check
+		std::uint32_t playerPerksGiven = 0;    // of those, given by this module (SPID had not) this session
 		std::uint32_t abilitiesAdded = 0;
 		std::uint32_t abilitiesRemoved = 0;
 		std::uint32_t uniqueTierItems = 0;     // weapons and armour carrying NJCGO_Tier_Unique (after the pass)

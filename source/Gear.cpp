@@ -395,6 +395,32 @@ namespace Gear
 			g_snapshot.noEnchantPassDone = true;
 		}
 
+		// Combined run 2fb7 (2026-10-26): on a save that already existed, SPID gave the gear perks to every NPC that loaded but
+		// NOT to the player (its log has no distribution entry for the player that session; HasPerk false for the unique and
+		// set perks), so no unique effect and no set entry point applied to the player. The player is the one actor this
+		// module can always reach, and Actor::AddPerk works on the player (not on NPCs - SPID keeps those): give the player
+		// every gear perk it does not hold, at each game load. Idempotent; the switches and the worn keywords still decide
+		// whether a perk does anything.
+		void EnsurePlayerPerks()
+		{
+			auto* player = Player();
+			if (!player) { return; }
+			std::uint32_t added = 0, held = 0;
+			auto ensure = [&](RE::BGSPerk* a_perk) {
+				if (!a_perk) { return; }
+				if (player->HasPerk(a_perk)) { ++held; return; }
+				player->AddPerk(a_perk);
+				++added;
+				logger::debug("gear: gave the player {:08X} ({})", a_perk->GetFormID(), a_perk->GetName());
+			};
+			for (const auto& st : g_sets) { ensure(st.perk); }
+			for (const auto& u : g_uniques) { ensure(u.perk); }
+			logger::info("gear: player gear perks - {} already held, {} given now", held, added);
+			std::scoped_lock l(g_lock);
+			g_snapshot.playerPerksGiven += added;
+			g_snapshot.playerPerksHeld = held + added;
+		}
+
 		// Re-applies a spell the player holds, so its effects take the magnitudes now in the record.
 		void Reapply(RE::PlayerCharacter* a_player, RE::SpellItem* a_spell)
 		{
@@ -516,6 +542,7 @@ namespace Gear
 	void OnGameLoaded()
 	{
 		RunNoEnchantPass();
+		EnsurePlayerPerks();
 		Apply();
 	}
 
@@ -557,6 +584,7 @@ namespace Gear
 		j["uniquesResolved"] = resolved;
 		j["uniquesDefined"] = s.uniques.size();
 		j["recounts"] = s.recounts;
+		j["playerPerks"] = { { "held", s.playerPerksHeld }, { "givenThisSession", s.playerPerksGiven } };
 		j["spellbreakerSilences"] = g_spellbreakerSilences.load();
 		j["abilitiesAdded"] = s.abilitiesAdded;
 		j["abilitiesRemoved"] = s.abilitiesRemoved;
