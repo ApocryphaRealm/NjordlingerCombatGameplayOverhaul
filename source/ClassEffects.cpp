@@ -665,7 +665,7 @@ namespace ClassEffects
 				const bool want = OwnsRank("scout", 0, 1);
 				if (want != g_sprintApplied)
 				{
-					GameSettingFactors::Set("fSprintStaminaDrainMult", "Long Legs", want ? 0.75F : 1.0F);
+					GameSettingFactors::SetSprintCost("Long Legs", want ? 0.75F : 1.0F);
 					g_sprintApplied = want;
 				}
 			}

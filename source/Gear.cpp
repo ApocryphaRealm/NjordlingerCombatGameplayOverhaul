@@ -199,37 +199,47 @@ namespace Gear
 					states.push_back(std::move(st));
 				}
 			}
-			std::vector<UniqueState> uniques;
-			if (isPlayer)
+			// Unique abilities (retest 70e6, 2026-10-26): kept in step by THIS count, for any actor, like the set abilities -
+			// no longer a perk ability entry gated on WornHasKeyword. The Gauldur Amulet's ability never became active on
+			// the player while the perk was held, the keyword on the worn item and the module on (cause not observed);
+			// counting the equipped items here takes the perk entry and the worn-keyword condition out of the path.
+			std::vector<RE::TESForm*> equipped(worn.begin(), worn.end());
+			for (bool left : { false, true })
 			{
-				// the two unique effects no record can carry: game settings scaled while the player wears the item
-				// (Fable review 2026-10-26; every actor's sprint / block cost while it holds - an approximation)
-				auto wears = [&](const UniqueDef* u) {
-					if (!u || !u->keyword || !settings::gear::uniques) { return false; }
-					for (auto* a : worn) { if (a->HasKeyword(u->keyword)) { return true; } }
-					return false;
-				};
-				const float cut = std::max(0.0F, 1.0F - 0.25F * settings::gear::uniqueStrength);
-				GameSettingFactors::Set("fSprintStaminaDrainMult", "Savior's Hide", wears(g_saviorsHide) ? cut : 1.0F);
-				GameSettingFactors::Set("fStaminaBlockDmgMult", "Shield of Ysgramor", wears(g_shieldOfYsgramor) ? cut : 1.0F);
-				std::vector<RE::TESForm*> equipped(worn.begin(), worn.end());
-				for (bool left : { false, true })
+				if (auto* f = a_actor->GetEquippedObject(left)) { equipped.push_back(f); }
+			}
+			auto wornUnique = [&](const UniqueDef& u) {
+				if (!u.keyword) { return false; }
+				for (auto* f : equipped)
 				{
-					if (auto* f = a_actor->GetEquippedObject(left)) { equipped.push_back(f); }
+					auto* kf = f ? f->As<RE::BGSKeywordForm>() : nullptr;
+					if (kf && kf->HasKeyword(u.keyword)) { return true; }
 				}
-				for (const auto& u : g_uniques)
+				return false;
+			};
+			std::vector<UniqueState> uniques;
+			for (const auto& u : g_uniques)
+			{
+				const bool w = wornUnique(u);
+				SetSpell(a_actor, u.ability, settings::gear::uniques && w, counts);
+				if (isPlayer)
 				{
 					UniqueState us;
 					us.id = u.id;
 					us.name = u.name;
 					us.resolved = u.keyword && u.perk && u.ability;
-					for (auto* f : equipped)
-					{
-						auto* kf = f ? f->As<RE::BGSKeywordForm>() : nullptr;
-						if (kf && u.keyword && kf->HasKeyword(u.keyword)) { us.worn = true; break; }
-					}
+					us.worn = w;
 					uniques.push_back(std::move(us));
 				}
+			}
+			if (isPlayer)
+			{
+				// the two unique effects no record can carry (Fable review 2026-10-26): sprint cost and block stamina cost
+				// while the player wears the item (for every actor while it holds - an approximation)
+				auto wears = [&](const UniqueDef* u) { return u && settings::gear::uniques && wornUnique(*u); };
+				const float cut = std::max(0.0F, 1.0F - 0.25F * settings::gear::uniqueStrength);
+				GameSettingFactors::SetSprintCost("Savior's Hide", wears(g_saviorsHide) ? cut : 1.0F);
+				GameSettingFactors::Set("fStaminaBlockDmgMult", "Shield of Ysgramor", wears(g_shieldOfYsgramor) ? cut : 1.0F);
 			}
 			std::scoped_lock l(g_lock);
 			++g_snapshot.recounts;
@@ -564,6 +574,42 @@ namespace Gear
 		return g_snapshot;
 	}
 
+	// For DevBench op=gear (main-thread state read from DevBench's thread is avoided: this runs as a task and the
+	// result is kept in the snapshot). Per worn unique: does the player hold its ability, and how do that ability's
+	// active effects stand (magnitude, inactive / dispelled flags) - the evidence the 70e6 Gauldur fault lacked.
+	void RequestDiagnose()
+	{
+		if (auto* tasks = SKSE::GetTaskInterface())
+		{
+			tasks->AddTask([]() {
+				auto* p = Player();
+				nlohmann::json out = nlohmann::json::array();
+				auto* mt = p ? p->AsMagicTarget() : nullptr;
+				auto* list = mt ? mt->GetActiveEffectList() : nullptr;
+				for (const auto& u : g_uniques)
+				{
+					if (!p || !u.ability) { continue; }
+					nlohmann::json row{ { "id", u.id }, { "hasAbility", p->HasSpell(u.ability) }, { "hasPerk", u.perk && p->HasPerk(u.perk) } };
+					auto& effects = row["activeEffects"] = nlohmann::json::array();
+					if (list)
+					{
+						for (auto* ae : *list)
+						{
+							if (!ae || ae->spell != u.ability) { continue; }
+							const auto flags = static_cast<std::uint32_t>(ae->flags.underlying());
+							effects.push_back({ { "magnitude", ae->magnitude }, { "inactive", (flags & (1u << 15)) != 0 }, { "dispelled", (flags & (1u << 18)) != 0 },
+												{ "conditionStatus", static_cast<std::uint32_t>(ae->conditionStatus.underlying()) } });
+						}
+					}
+					if (row["hasAbility"].get<bool>() || !effects.empty()) { out.push_back(std::move(row)); }
+				}
+				logger::info("gear: diagnose - {}", out.dump());
+				std::scoped_lock l(g_lock);
+				g_snapshot.diagnose = out.dump();
+			});
+		}
+	}
+
 	std::string StatusJson()
 	{
 		const auto s = GetSnapshot();
@@ -584,6 +630,7 @@ namespace Gear
 		j["uniquesResolved"] = resolved;
 		j["uniquesDefined"] = s.uniques.size();
 		j["recounts"] = s.recounts;
+		j["diagnose"] = nlohmann::json::parse(s.diagnose.empty() ? std::string("null") : s.diagnose, nullptr, false);
 		j["playerPerks"] = { { "held", s.playerPerksHeld }, { "givenThisSession", s.playerPerksGiven } };
 		j["spellbreakerSilences"] = g_spellbreakerSilences.load();
 		j["abilitiesAdded"] = s.abilitiesAdded;

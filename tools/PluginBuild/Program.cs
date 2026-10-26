@@ -504,10 +504,12 @@ if (File.Exists(gearPath))
         var kw = mod.Keywords.AddNew("NJCGO_Unique_" + uid);
         ownKeywords[kw.EditorID!] = kw.FormKey;
         currentUniqueKeyword = kw.EditorID;
-        var ab = GearAbility("NJCGO_UniAb_" + uid, uname, udesc, u["effects"]!.AsArray(), () => new() { GlobalOn(uniquesOn), Worn(kw.FormKey) });
+        // 2026-10-26 (retest 70e6): the SKSE plugin adds and removes a unique's ability by what the actor has equipped, like
+        // the set abilities, so the ability carries only the module switch (the perk keeps its worn-keyword entry points).
+        var ab = GearAbility("NJCGO_UniAb_" + uid, uname, udesc, u["effects"]!.AsArray(), () => new() { GlobalOn(uniquesOn) });
         var perk = GearPerk("NJCGO_UniPerk_" + uid, uname, udesc);
         GearEntries(perk, u["effects"]!.AsArray(), () => new() { GlobalOn(uniquesOn), Worn(kw.FormKey) }, "NJCGO_UniPerk_" + uid);
-        perk.Effects.Add(new PerkAbilityEffect { Ability = ab.ToLink() });
+        if (perk.Effects.Count == 0) { perk.Description = udesc; }   // a unique with no entry point keeps an empty perk (SPID line stays harmless)
         currentUniqueKeyword = null;
         if (u["dll"] is JsonNode udll) { dllDone.Add($"NJCGO_UniPerk_{uid}: {udll.GetValue<string>()}"); }
         var refs = u["forms"]!.AsArray().Select(f =>

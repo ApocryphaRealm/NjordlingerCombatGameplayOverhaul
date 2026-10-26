@@ -69,7 +69,8 @@ namespace Gear
 		std::vector<UniqueState> uniques;
 		std::uint32_t recounts = 0;            // actor recounts this session
 		std::uint32_t playerPerksHeld = 0;     // gear perks the player holds after the load-time check
-		std::uint32_t playerPerksGiven = 0;    // of those, given by this module (SPID had not) this session
+		std::uint32_t playerPerksGiven = 0;
+		std::string diagnose;                  // the last op=geardiag result (JSON)    // of those, given by this module (SPID had not) this session
 		std::uint32_t abilitiesAdded = 0;
 		std::uint32_t abilitiesRemoved = 0;
 		std::uint32_t uniqueTierItems = 0;     // weapons and armour carrying NJCGO_Tier_Unique (after the pass)
@@ -81,5 +82,8 @@ namespace Gear
 	};
 
 	Snapshot GetSnapshot();
+
+	// Queues a main-thread read of the player's unique abilities and their active effects into the snapshot (op=geardiag).
+	void RequestDiagnose();
 	std::string StatusJson();
 }

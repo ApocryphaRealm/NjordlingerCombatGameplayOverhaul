@@ -89,6 +89,12 @@ namespace DevBenchTool
 				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "gear", nlohmann::json::parse(Gear::StatusJson(), nullptr, false) } });
 				return;
 			}
+			if (op == "geardiag")
+			{
+				Gear::RequestDiagnose();
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true }, { "note", "read the result with op=gear (gear.diagnose) a moment later" } });
+				return;
+			}
 			if (op == "gearrecount")
 			{
 				Gear::RequestRecountPlayer();
@@ -152,7 +158,7 @@ namespace DevBenchTool
 			"quest-reward rows, the race-menu class category, level-up gains and the attribute-pick skip, the perk lock and crafting gate counts, the engine patches. "
 			"op=choose class=<id> picks the starting class; op=upgrade index=<n> takes option n of the upgrade on offer; op=evolvebox index=<n> presses button n of the Stats Menu evolution box (the last is Later); op=xp amount=<n> adds class experience; "
 			"op=quest quest=<editorID> pays that quest's row as if it had completed; op=reload re-reads the INI; op=strings reports the active language; "
-			"op=gear reports the Gear module (the player's pieces per set, the 2- and 4-piece abilities held, uniques worn, the no-enchant pass); op=gearrecount recounts the player's pieces; op=gearset sets=<bool> uniques=<bool> setStrength=<0.25-2> uniqueStrength=<0.25-2> sets the Gear tab's switches and strengths.\","
+			"op=gear reports the Gear module (the player's pieces per set, the 2- and 4-piece abilities held, uniques worn, the no-enchant pass); op=gearrecount recounts the player's pieces; op=geardiag reads the player's unique abilities and their active effects into gear.diagnose; op=gearset sets=<bool> uniques=<bool> setStrength=<0.25-2> uniqueStrength=<0.25-2> sets the Gear tab's switches and strengths.\","
 			"\"inputSchema\":{\"type\":\"object\",\"properties\":{\"op\":{\"type\":\"string\"},\"class\":{\"type\":\"string\"},\"index\":{\"type\":\"integer\"},"
 			"\"amount\":{\"type\":\"number\"},\"quest\":{\"type\":\"string\"},"
 			"\"sets\":{\"type\":\"boolean\"},\"uniques\":{\"type\":\"boolean\"},\"setStrength\":{\"type\":\"number\"},\"uniqueStrength\":{\"type\":\"number\"}}},"
