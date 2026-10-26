@@ -1,0 +1,37 @@
+{
+  // PLAN.md D11 / phase 1 step 5: NPC levels by faction and race tier, with Arena (zones, Q8 default "Arena as is")
+  // and Open World Loot in place. The first matching tier wins, so the narrow groups come first.
+  // Bands: FEASIBILITY.md 8.4 where it gives numbers (bandits 5-20, draugr by rank 10-40, Falmer/Dwemer 30-45,
+  // giants fixed high); the rest are first numbers for the balance pass (TUNE). What the build does with a band:
+  //   PC-level-mult NPC -> calcLevelMin/calcLevelMax = the band (it scales with the zone, inside the band);
+  //   fixed-level NPC above the band's top -> level = the top (the rank variants below it are left as they are).
+  "outputSubfolder": "NjordlingerCGO",
+  "tiers": [
+    { "name": "Dragon priests",  "factions": [ "DragonPriestFaction" ], "races": [ "DragonPriestRace" ], "min": 40, "max": 60, "note": "TUNE" },
+    { "name": "Dragons",         "factions": [ "DragonFaction" ], "races": [ "DragonRace", "UndeadDragonRace" ], "min": 10, "max": 60, "note": "variants 10-50 kept" },
+    { "name": "Giants",          "factions": [ "GiantFaction" ], "races": [ "GiantRace" ], "min": 30, "max": 35, "note": "study: fixed high" },
+    { "name": "Dwemer automatons", "factions": [ "DwarvenAutomatonFaction" ], "races": [], "min": 6, "max": 45, "note": "study: Dwemer 35-45 at the top" },
+    { "name": "Falmer",          "factions": [ "FalmerFaction" ], "races": [ "FalmerRace" ], "min": 15, "max": 45, "note": "study: 30-45 ruins" },
+    { "name": "Draugr",          "factions": [ "DraugrFaction" ], "races": [ "DraugrRace", "DraugrMagicRace" ], "min": 1, "max": 45, "note": "study: restless 10-20, deathlords 30-40" },
+    { "name": "Vampires",        "factions": [ "VampireFaction", "DLC1VampireFaction" ], "races": [], "min": 6, "max": 40, "note": "TUNE" },
+    { "name": "Mages (warlocks, necromancers)", "factions": [ "WarlockFaction", "NecromancerFaction" ], "races": [], "min": 1, "max": 40, "note": "TUNE" },
+    { "name": "Forsworn",        "factions": [ "ForswornFaction" ], "races": [], "min": 1, "max": 30, "note": "TUNE" },
+    { "name": "Bandits",         "factions": [ "BanditFaction", "DLC2BanditDialogueFaction", "ccBGSSSE025_SaintsSeducersBanditFaction" ], "races": [], "min": 1, "max": 20, "note": "study: bandits 5-20 - 'bandits shouldn't be crazy strong'" },
+    { "name": "Silver Hand",     "factions": [ "SilverHandFaction" ], "races": [], "min": 1, "max": 25, "note": "TUNE" },
+    { "name": "Thalmor",         "factions": [ "ThalmorFaction" ], "races": [], "min": 10, "max": 40, "note": "TUNE" },
+    { "name": "Werewolves",      "factions": [ "WerewolfFaction" ], "races": [ "WerewolfBeastRace" ], "min": 1, "max": 35, "note": "TUNE" },
+    { "name": "Trolls",          "factions": [ "TrollFaction" ], "races": [ "TrollRace", "TrollFrostRace" ], "min": 14, "max": 25, "note": "TUNE" },
+    { "name": "Hagravens",       "factions": [ "HagravenFaction" ], "races": [ "HagravenRace" ], "min": 10, "max": 25, "note": "TUNE" },
+    { "name": "Spriggans",       "factions": [ "SprigganFaction" ], "races": [ "SprigganRace" ], "min": 5, "max": 25, "note": "TUNE" },
+    { "name": "Chaurus",         "factions": [ "ChaurusFaction" ], "races": [ "ChaurusRace", "ChaurusReaperRace" ], "min": 5, "max": 25, "note": "TUNE" },
+    { "name": "Ice wraiths",     "factions": [ "IceWraithFaction" ], "races": [ "IceWraithRace" ], "min": 5, "max": 25, "note": "TUNE" },
+    { "name": "Mammoths",        "factions": [ "MammothFaction" ], "races": [ "MammothRace" ], "min": 15, "max": 25, "note": "TUNE" },
+    { "name": "Bears",           "factions": [ "BearFaction" ], "races": [ "BearBlackRace", "BearBrownRace", "BearSnowRace" ], "min": 5, "max": 15, "note": "TUNE" },
+    { "name": "Sabre cats",      "factions": [ "SabreCatFaction" ], "races": [ "SabreCatRace", "SabreCatSnowyRace" ], "min": 5, "max": 15, "note": "TUNE" },
+    { "name": "Frostbite spiders", "races": [ "FrostbiteSpiderRace", "FrostbiteSpiderRaceGiant", "FrostbiteSpiderRaceLarge" ], "min": 1, "max": 15, "note": "TUNE" },
+    { "name": "Wolves",          "factions": [ "WolfFaction" ], "races": [ "WolfRace" ], "min": 1, "max": 10, "note": "TUNE" },
+    { "name": "Horkers",         "factions": [ "HorkerFaction" ], "races": [ "HorkerRace" ], "min": 1, "max": 12, "note": "TUNE" },
+    { "name": "Mudcrabs",        "races": [ "MudcrabRace" ], "min": 1, "max": 8, "note": "TUNE" },
+    { "name": "Skeevers",        "factions": [ "SkeeverFaction" ], "races": [ "SkeeverRace", "SkeeverWhiteRace" ], "min": 1, "max": 5, "note": "TUNE" }
+  ]
+}

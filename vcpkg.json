@@ -1,0 +1,12 @@
+{
+    "name": "njordlingercombatgameplayoverhaul",
+    "version-string": "1.0.0",
+    "description": "Njordlinger Combat Gameplay Overhaul - progression, classes, gear tiers and soul stones.",
+    "homepage": "https://github.com/ApocryphaRealm/NjordlingerCombatGameplayOverhaul",
+    "license": "GPL-3.0-or-later",
+    "dependencies": [
+        "commonlibsse-ng",
+        "spdlog"
+    ],
+    "builtin-baseline": "8d3649ba34aab36914ddd897958599aa0a91b08e"
+}

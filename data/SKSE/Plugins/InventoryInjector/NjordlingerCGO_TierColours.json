@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Exit-9B/InventoryInjector/main/docs/InventoryInjector.schema.json",
+  "rules": [
+    { "match": { "formType": "Weapon", "keywords": [ "NJCGO_Tier_Common" ] },    "assign": { "iconColor": "#9D9D9D" } },
+    { "match": { "formType": "Armor",  "keywords": [ "NJCGO_Tier_Common" ] },    "assign": { "iconColor": "#9D9D9D" } },
+    { "match": { "formType": "Weapon", "keywords": [ "NJCGO_Tier_Magic" ] },     "assign": { "iconColor": "#3A8EF0" } },
+    { "match": { "formType": "Armor",  "keywords": [ "NJCGO_Tier_Magic" ] },     "assign": { "iconColor": "#3A8EF0" } },
+    { "match": { "formType": "Weapon", "keywords": [ "NJCGO_Tier_Epic" ] },      "assign": { "iconColor": "#A335EE" } },
+    { "match": { "formType": "Armor",  "keywords": [ "NJCGO_Tier_Epic" ] },      "assign": { "iconColor": "#A335EE" } },
+    { "match": { "formType": "Weapon", "keywords": [ "NJCGO_Tier_Legendary" ] }, "assign": { "iconColor": "#FF8000" } },
+    { "match": { "formType": "Armor",  "keywords": [ "NJCGO_Tier_Legendary" ] }, "assign": { "iconColor": "#FF8000" } },
+    { "match": { "formType": "Weapon", "keywords": [ "NJCGO_Tier_Unique" ] },    "assign": { "iconColor": "#E6312B" } },
+    { "match": { "formType": "Armor",  "keywords": [ "NJCGO_Tier_Unique" ] },    "assign": { "iconColor": "#E6312B" } }
+  ]
+}

@@ -1,0 +1,50 @@
+# Njordlinger Combat Gameplay Overhaul - phase 1 build report (2026-10-26 08:14)
+load order: 1788 plugins
+
+## Tiers
+smithing perks with a level: 22 (APO_Smithing_Craftsman00=10, MAG_Craftsman00=10, APO_Smithing_BasicSmithing20=20, APO_Smithing_Blacksmith30=30, MAG_Blacksmith=30, APO_Smithing_DwarvenSmithing=40, APO_Smithing_JourneymanSmithing40=40, MAG_DLC2Smithing=40, APO_Smithing_Craftsman50=50, MAG_Craftsman25=50, APO_Smithing_ElvenSmithing=60, APO_Smithing_OrcishSmithing=60, APO_Smithing_IntermediateSmithing60=60, MAG_IntermediateSmithing=60, APO_Smithing_Armorer70=70, MAG_Armorer=70, APO_Smithing_GlassSmithing=80, APO_Smithing_AdvancedSmithing=80, APO_Smithing_Forgemaster90=90, MAG_Forgemaster=90, APO_Smithing_DragonSmithing=100, APO_Smithing_MythicSmithing100=100)
+craft recipes give a level to 1148 items (conversion recipes only where nothing else does: 641), temper recipes to 1981
+playable weapons and wearable armour: 16899
+material fallback table: ArmorMaterialBearStormcloak=Epic, ArmorMaterialBlades=Epic, ArmorMaterialDaedric=Legendary, ArmorMaterialDragonplate=Legendary, ArmorMaterialDragonscale=Legendary, ArmorMaterialDwarven=Epic, ArmorMaterialEbony=Legendary, ArmorMaterialElven=Epic, ArmorMaterialElvenGilded=Epic, ArmorMaterialGlass=Legendary, ArmorMaterialHide=Common, ArmorMaterialImperialHeavy=Magic, ArmorMaterialImperialLight=Magic, ArmorMaterialIron=Common, ArmorMaterialIronBanded=Common, ArmorMaterialLeather=Common, ArmorMaterialOrcish=Epic, ArmorMaterialScaled=Epic, ArmorMaterialSteel=Magic, ArmorMaterialSteelPlate=Epic, ArmorMaterialStormcloak=Epic, ArmorMaterialStudded=Common, ArmorMaterialThievesGuildLeader=Epic, WeapMaterialDaedric=Legendary, WeapMaterialDraugr=Magic, WeapMaterialDraugrHoned=Epic, WeapMaterialDwarven=Epic, WeapMaterialEbony=Legendary, WeapMaterialElven=Epic, WeapMaterialGlass=Legendary, WeapMaterialImperial=Magic, WeapMaterialIron=Common, WeapMaterialOrcish=Epic, WeapMaterialSilver=Magic, WeapMaterialSteel=Magic, WeapMaterialWood=Common
+material fallback 1072, no recipe and no material 938, template variants 13280, excluded 440
+  Common       4173
+  Magic        2367
+  Epic         4532
+  Legendary    5098
+  Unique        289
+uniques: 289 (listed in tier-audit.tsv with reason 'unique: ...')
+
+## Sets
+Nightingale (NJCGO_Set_Nightingale, proposed): 12 pieces -  [ArmorNightingaleBootsPlayer02];  [ArmorNightingaleCuirassPlayer01];  [ArmorNightingaleGauntletsPlayer01];  [ArmorNightingaleHelmetPlayer01];  [ArmorNightingaleBootsPlayer01];  [ArmorNightingaleBootsPlayer03];  [ArmorNightingaleCuirassPlayer02];  [ArmorNightingaleCuirassPlayer03];  [ArmorNightingaleGauntletsPlayer02];  [ArmorNightingaleGauntletsPlayer03];  [ArmorNightingaleHelmetPlayer03];  [ArmorNightingaleHelmetPlayer02]
+Ancient Shrouded (NJCGO_Set_AncientShrouded, proposed): 4 pieces -  [DBArmorBootsSP];  [DBArmorSP];  [DBArmorGlovesSP]; Ancient Shrouded Cowl [DBArmorHelmetSP]
+Guild Master's (NJCGO_Set_GuildMaster, proposed): 4 pieces - Guild Master's Boots [ArmorThievesGuildLeaderBoots];  [ArmorThievesGuildLeaderCuirass];  [ArmorThievesGuildLeaderGauntlets];  [ArmorThievesGuildLeaderHelmet]
+Deathbrand (NJCGO_Set_Deathbrand, proposed): 4 pieces -  [DLC2dunHaknirArmorBoots];  [DLC2dunHaknirArmorCuirass];  [DLC2dunHaknirArmorGauntlets];  [DLC2dunHaknirArmorHelm]
+Linwe's (NJCGO_Set_Linwe, proposed): 4 pieces - Linwe's Boots [ArmorLinweBoots]; Linwe's Armor [ArmorLinweCuirass]; Linwe's Gloves [ArmorLinweGauntlets]; Linwe's Hood [ArmorLinweHelmet]
+
+## NPC levels by lore tier
+Dragon priests         band  40-60  clamped    3  capped    0  left as they are     4   TUNE
+Dragons                band  10-60  clamped    5  capped    3  left as they are    22   variants 10-50 kept
+Giants                 band  30-35  clamped    3  capped    2  left as they are     5   study: fixed high
+Dwemer automatons      band   6-45  clamped    4  capped    2  left as they are    36   study: Dwemer 35-45 at the top
+Falmer                 band  15-45  clamped    4  capped    4  left as they are    32   study: 30-45 ruins
+Draugr                 band   1-45  clamped    3  capped    0  left as they are    50   study: restless 10-20, deathlords 30-40
+Vampires               band   6-40  clamped    3  capped    5  left as they are     9   TUNE
+Mages (warlocks, necromancers) band   1-40  clamped    4  capped   18  left as they are   109   TUNE
+Forsworn               band   1-30  clamped    0  capped   10  left as they are    19   TUNE
+Bandits                band   1-20  clamped    9  capped  367  left as they are   310   study: bandits 5-20 - 'bandits shouldn't be crazy strong'
+Silver Hand            band   1-25  clamped    0  capped    1  left as they are     2   TUNE
+Thalmor                band  10-40  clamped    0  capped    4  left as they are    30   TUNE
+Werewolves             band   1-35  clamped    0  capped    7  left as they are    30   TUNE
+Trolls                 band  14-25  clamped    0  capped    0  left as they are    12   TUNE
+Hagravens              band  10-25  clamped    1  capped    0  left as they are    11   TUNE
+Spriggans              band   5-25  clamped    0  capped    2  left as they are     8   TUNE
+Chaurus                band   5-25  clamped    0  capped    4  left as they are     6   TUNE
+Ice wraiths            band   5-25  clamped    2  capped    0  left as they are     2   TUNE
+Mammoths               band  15-25  clamped    0  capped    1  left as they are     6   TUNE
+Bears                  band   5-15  clamped    1  capped   11  left as they are    11   TUNE
+Sabre cats             band   5-15  clamped    0  capped    6  left as they are     9   TUNE
+Frostbite spiders      band   1-15  clamped    2  capped    1  left as they are     8   TUNE
+Wolves                 band   1-10  clamped    4  capped    8  left as they are    23   TUNE
+Horkers                band   1-12  clamped    1  capped    3  left as they are     6   TUNE
+Mudcrabs               band   1-8   clamped    1  capped    0  left as they are     6   TUNE
+Skeevers               band   1-5   clamped    0  capped    1  left as they are    11   TUNE

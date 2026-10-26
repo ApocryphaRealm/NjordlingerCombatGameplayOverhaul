@@ -1,0 +1,66 @@
+{
+  // Build input for the tier build step (tools\TierBuild). PLAN.md D13: five tiers by crafting requirement;
+  // colour only, no tier word in the item name (Q2, plan default "colour only").
+  "tiers": [ "Common", "Magic", "Epic", "Legendary", "Unique" ],
+  "keywordPrefix": "NJCGO_Tier_",
+
+  // A recipe's requirement is the SMITHING LEVEL of the perk it asks for: the perk's own GetBaseActorValue(Smithing)
+  // condition in the installed load order (Adamant's crafting line: Basic 20, Journeyman 40, Intermediate 60,
+  // Advanced 80, Mythic 100). D13 says magic = the first perk, epic = the second, legendary = the deepest; the bands
+  // below read that as: Basic -> magic; Journeyman and Intermediate -> epic; Advanced and Mythic -> legendary.
+  // (Build-session interpretation, 2026-10-26 - the plan names three ranks for a five-perk line.)
+  "bands": [
+    { "maxLevel": 30,  "tier": "Magic" },
+    { "maxLevel": 60,  "tier": "Epic" },
+    { "maxLevel": 100, "tier": "Legendary" }
+  ],
+
+  // Adamant keeps the vanilla material perks as HIDDEN perks granted by its visible ones; the recipes still ask for
+  // them. Their level is the level of the visible perk whose description names the material (Adamant / Paragon text).
+  "perkLevelAliases": {
+    "APO_Smithing_DwarvenSmithing": 40,
+    "APO_Smithing_ElvenSmithing": 60,
+    "APO_Smithing_OrcishSmithing": 60,
+    "APO_Smithing_GlassSmithing": 80,
+    "APO_Smithing_DragonSmithing": 100,
+    "MAG_DLC2Smithing": 40
+  },
+  // Perks that sit on recipes but say nothing about the item's material tier.
+  "ignorePerks": [ "APO_VALOR_ArcaneBlacksmithController", "APO_Smithing_Sculptor40", "APO_Smithing_Runecarver70" ],
+
+  "craftBenches": [ "CraftingSmithingForge", "CraftingSmithingSkyforge", "DLC1LD_CraftingForgeAetherium",
+                    "PI_CraftingSmithingLunarforge", "CraftingIsilForge", "DLC1CraftingDawnguard", "CraftingTanningRack" ],
+  "temperBenches": [ "CraftingSmithingArmorTable", "CraftingSmithingSharpeningWheel" ],
+
+  // D13 "unique (red, the named uniques)": an item carrying one of these keywords, an item listed here, or an
+  // enchanted item that no levelled list hands out and no recipe makes (a named, placed or quest-given item).
+  "uniqueKeywords": [ "DaedricArtifact" ],
+  // ArteFakes - Unique Artifacts Replacer stays on the list (D9): every weapon and armour it adds or overrides is an
+  // artefact (its clothes overrides are taken back out by the exclude rule below).
+  "uniqueSourcePlugins": [ "ArteFake.esp" ],
+  // Named uniques that a levelled list hands out (so the rule above misses them), matched by EditorID:
+  "uniqueIncludeRegex": "^(NightingaleBlade|TG07Chillrend|DLC2MKMiraakSword|Dragonbane|Windshear|DLC2BloodskalBlade|DLC2MiraakSword|DLC2MiraakStaff|MGRKeening|C06BladeOfYsgramor|ArmorShieldofYsgramor|DLC1HarkonsSword|dunGauldurBlackblade|dunGauldurBlackbow|DBBladeOfWoe)",
+  // ...and generic enchanted items the rule catches by mistake: backpacks, default-enchanted robes, party clothes.
+  "uniqueExcludeRegex": "^(_WetRaisedKnapsack|MAG_.*Default$|MQ201Party|EnchClothes|ClothesThalmorRobes|ClothesMythicDawnRobes|MAG_Ench|RimRing|Clothes[A-Za-z]*Fine|ClothesRadiant)",
+
+  // D24 / Q47: new standalone equipment (EQUIPMENT-AUDIT.md section 0) waits on the owner's keep-or-remove mark;
+  // records ADDED by these plugins get no tier until phase 5. Overrides of vanilla items in them are not affected.
+  "excludedPlugins": [
+    "Anathros.esp", "AtmoranSword_by_Flarescale.esp", "FGCBanneredge.esp", "Clanbringer.esp", "Eimar's Edge.esp",
+    "Elexorien.esp", "Lion's Mane.esp", "ISD_LongclawCrafting.esp", "art_Ritevice.esp", "Sir Rumple Dawnbreaker.esp",
+    "FGCVolkiharRelicSword.esp", "RTRWolfnir.esp", "Aerondight.esp", "FGCUlfsvar.esp", "FGCSilverguard.esp",
+    "Inquisition.esp", "Dovah Nord Weapons.esp", "Legendary Alpha Shields.esp",
+    "1Markynaz.esl", "Dwarf Knight Armor.esl", "DwarvenFateArmor.esp", "DIS_Nord_Heavy.esp", "Wolfcry Armor by Xtudo.esp",
+    "1YsmirArmorSE.esl", "StendarrPaladinArmor.esp", "Realistic Armor - Vigilants.esp", "OH - ColdWelcome.esp",
+    "LegendsOfAetherium.esp", "Settlements Expanded SE.esp", "Undriel_QuaintRavenRock.esp", "JKs Skyrim.esp",
+    "Armor of Solitude.esp", "Civil War Final Battle Equipment.esl", "Civil War Final Battle Equipment.esp", "ElrianSaddles.esp",
+    "icebladeofthemonarch.esp", "culturedakaviri_BeyondSkyrimBruma.esp", "Inner Sanctum.esp",
+    "Unmarked Locations Pack - All In One.esp", "Winterhold Restored.esp", "ccBGSSSE037-Curios.esl",
+    // Not equipment at all although the plugin has armour records (EQUIPMENT-AUDIT.md section 0, last paragraph):
+    // bodies, hair, piercings, whiskers, effect helpers.
+    "TheNewGentleman.esp", "3BBB.esp", "_Fuse00HairPack01.esp", "_Fuse00HairPack02_ESL.esp", "NosPiercedEarsAll.esp",
+    "[Orimagen]GoamEarrings.esp", "RVX Argonian Koi Whiskers.esp", "[Witchy] The Horniest Mod Ever.esp", "MagicTweaks.esl",
+    "talkToSummons.esp", "ReadTheRoom.esp", "FEC.esp", "Immersive Death Cycle.esp", "COR_AllRace.esp", "Byzantium Serana.esp"
+  ],
+  "itemsPerLine": 60
+}
