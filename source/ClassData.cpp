@@ -6,6 +6,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 
@@ -130,19 +131,23 @@ namespace ClassData
 					if (idx >= 0) { n.extraSkills[idx] = true; }
 				}
 				for (const auto& s : c.value("next", nlohmann::json::array())) { n.next.push_back(s.get<std::string>()); }
-				for (const auto& s : c.value("titles", nlohmann::json::array())) { n.titles.push_back(s.get<std::string>()); }
-				n.ability = Resolve<RE::SpellItem>(c, "ability", n.id);
+				n.ability = Resolve<RE::BGSPerk>(c, "ability", n.id);
 				n.global = Resolve<RE::TESGlobal>(c, "global", n.id);
 				n.keyword = Resolve<RE::BGSKeyword>(c, "keyword", n.id);
-				if (c.contains("rankPerks"))
+				if (c.contains("ranks") && c["ranks"].is_object())
 				{
-					for (int p = 0; p < 2 && p < static_cast<int>(c["rankPerks"].size()); ++p)
+					static constexpr const char* kSlot[3][2] = { { "A1", "B1" }, { "A2", "B2" }, { "A3", "B3" } };
+					for (int step = 0; step < 3; ++step)
 					{
-						for (const auto& v : c["rankPerks"][p])
+						for (int ab = 0; ab < 2; ++ab)
 						{
-							auto* handler = RE::TESDataHandler::GetSingleton();
-							const auto local = ParseLocalId(v);
-							if (auto* perk = (handler && local) ? handler->LookupForm<RE::BGSPerk>(local, kPlugin) : nullptr) { n.rankPerks[p].push_back(perk); }
+							if (!c["ranks"].contains(kSlot[step][ab])) { continue; }
+							const auto& r = c["ranks"][kSlot[step][ab]];
+							auto& rank = n.ranks[step][ab];
+							rank.name = r.value("name", std::string(kSlot[step][ab]));
+							rank.description = r.value("description", std::string());
+							rank.perk = Resolve<RE::BGSPerk>(r, "perk", n.id + " rank " + kSlot[step][ab]);
+							n.hasRanks = true;
 						}
 					}
 				}
@@ -156,9 +161,11 @@ namespace ClassData
 				ti.description = t.value("description", std::string());
 				ti.quest = t.value("quest", std::string());
 				ti.perk = Resolve<RE::BGSPerk>(t, "perk", ti.id);
+				for (const auto& s : t.value("starts", nlohmann::json::array())) { ti.starts.push_back(s.get<std::string>()); }
+				for (const auto& s : t.value("classes", nlohmann::json::array())) { ti.classes.push_back(s.get<std::string>()); }
+				for (const auto& s : t.value("excludeClasses", nlohmann::json::array())) { ti.excludeClasses.push_back(s.get<std::string>()); }
 				g_table.titles.push_back(std::move(ti));
 			}
-			if (j.contains("ranks")) { g_table.rankPaths = std::clamp(j["ranks"].value("paths", 2), 1, 2); }
 		}
 		catch (const std::exception& e)
 		{
@@ -175,10 +182,7 @@ namespace ClassData
 			{
 				if (!Find(o)) { logger::warn("class table: {} offers \"{}\", which is not a class", n.id, o); }
 			}
-			for (const auto& t : n.titles)
-			{
-				if (!FindTitle(t)) { logger::warn("class table: {} offers the title \"{}\", which is not a title", n.id, t); }
-			}
+			if (n.tier == 2 && !n.hasRanks) { logger::warn("class table: the Adept class {} has no rank perks - its Expert and Master upgrades offer nothing", n.id); }
 		}
 		for (int g = 0; g < kGroupCount; ++g)
 		{
@@ -187,7 +191,7 @@ namespace ClassData
 		g_table.loaded = true;
 		int starts = 0;
 		for (const auto& n : g_table.classes) { starts += n.start ? 1 : 0; }
-		logger::info("class table: {} classes ({} starting), {} titles, {} rank paths read from {}", g_table.classes.size(), starts, g_table.titles.size(), g_table.rankPaths, path.string());
+		logger::info("class table: {} classes ({} starting), {} titles read from {}", g_table.classes.size(), starts, g_table.titles.size(), path.string());
 	}
 
 	const Table& Get() { return g_table; }
@@ -208,5 +212,14 @@ namespace ClassData
 			if (t.id == a_id) { return &t; }
 		}
 		return nullptr;
+	}
+
+	bool Title::Fits(const std::string& a_start, const std::string& a_class) const
+	{
+		const auto in = [](const std::vector<std::string>& a_list, const std::string& a_v) { return std::find(a_list.begin(), a_list.end(), a_v) != a_list.end(); };
+		if (in(excludeClasses, a_class)) { return false; }
+		if (!starts.empty() && !in(starts, a_start)) { return false; }
+		if (!classes.empty() && !in(classes, a_class)) { return false; }
+		return true;
 	}
 }

@@ -93,14 +93,27 @@ def write_ini():
 
 def write_classes(forms_path):
     cfg = json.load(open(os.path.join(REPO, "config", "classes.json"), encoding="utf-8"))
+    content = json.load(open(os.path.join(REPO, "config", "class-content.json"), encoding="utf-8"))
+    # the rank perks' names and descriptions travel with the class (the page shows them; NJ_RankName_/NJ_RankDesc_ keys
+    # translate them)
+    for c in cfg["classes"]:
+        ranks = content.get("ranks", {}).get(c["id"])
+        if ranks:
+            c["ranks"] = {slot: {"name": r["name"], "description": r["description"]} for slot, r in ranks.items()}
     forms = {}
     if forms_path and os.path.exists(forms_path):
         forms = json.load(open(forms_path, encoding="utf-8"))
         for c in cfg["classes"]:
+            entry = forms.get("classes", {}).get(c["id"], {})
             for kind in ("ability", "global", "keyword"):
-                fid = forms.get("classes", {}).get(c["id"], {}).get(kind)
-                if fid:
-                    c[kind] = fid
+                if entry.get(kind):
+                    c[kind] = entry[kind]
+            for slot, fid in entry.get("ranks", {}).items():
+                c.setdefault("ranks", {}).setdefault(slot, {})["perk"] = fid
+        for t in cfg.get("titles", []):
+            fid = forms.get("titles", {}).get(t["id"])
+            if fid:
+                t["perk"] = fid
         if forms.get("groupGlobals"):
             cfg["groupGlobals"] = forms["groupGlobals"]
     folder = os.path.join(OUT, "NjordlingerCombatGameplayOverhaul")

@@ -1,0 +1,128 @@
+{
+  "_comment": [
+    "CLASS-CONTENT.md sections 2 and 3 (defaults set 2026-10-26 09:20; owner questions Q54, Q55; every number TUNE), built",
+    "into NjordlingerCombatGameplayOverhaul.esp by tools/PluginBuild as PERK records: a class's ability, a title's",
+    "ability and each rank perk. No scripts. Effect kinds:",
+    "  {av, add, if}  a constant self ability (Value Modifier on actor value av, +add) carried by the perk; 'if' = conditions",
+    "                 on the effect (run on the player).",
+    "  {ep, mult|add, if}  a perk entry point (Mutagen's EntryType name) that multiplies or adds; 'if' conditions name",
+    "                 their tab: 0 the perk owner (default), 1 and 2 the entry point's other tabs in the game's order",
+    "                 (ModAttackDamage / ModPowerAttackDamage / ModSneakAttackMult: 1 weapon, 2 target;",
+    "                 ModIncomingDamage: 1 attacker, 2 attacker weapon; ModSpellCost / Magnitude / Duration: 1 spell;",
+    "                 ModIncomingSpellMagnitude: 1 caster, 2 spell; ModArmorRating: 1 armour; ModPickpocketChance: 1 target).",
+    "Conditions: {f, op ('==' default), v (1 default), tab, kw (a Skyrim.esm keyword editor ID), skill, hand ('right'/'left'),",
+    "or (true = OR with the next)}. 'approx' says where the effect is a near reading of the design line; 'stub' says what",
+    "is NOT built (the perk exists, named, and does only what its effects list) - listed in the report and PLAN.md."
+  ],
+  "keywords": {
+    "ActorTypeUndead": "0x013796", "ActorTypeDaedra": "0x013797", "ActorTypeAnimal": "0x013798", "ActorTypeDragon": "0x035D59",
+    "Vampire": "0x0A82BB", "WeapTypeDagger": "0x01E713", "WeapTypeBow": "0x01E715", "ArmorShield": "0x0965B2",
+    "ArmorHeavy": "0x06BBD2", "MagicWard": "0x01EA69"
+  },
+  "abilities": {
+    "warrior":     { "name": "Warrior's Vigour", "effects": [ { "av": "HealRateMult", "add": 50 } ] },
+    "mage":        { "name": "Mage's Focus", "effects": [ { "av": "MagickaRateMult", "add": 50 } ] },
+    "thief":       { "name": "Thief's Step", "effects": [ { "av": "SpeedMult", "add": 20, "if": [ { "f": "IsSneaking" } ] } ] },
+    "knight":      { "name": "Knight's Bearing", "effects": [ { "ep": "ModIncomingDamage", "mult": 0.9 }, { "av": "ResistMagic", "add": 10 } ] },
+    "barbarian":   { "name": "Barbarian's Fury", "effects": [ { "ep": "ModPowerAttackDamage", "mult": 1.25, "if": [ { "f": "IsStaggered", "tab": 2, "or": true }, { "f": "IsFleeing", "tab": 2 } ] } ] },
+    "sorcerer":    { "name": "Sorcerer's Draw", "effects": [ { "av": "AbsorbChance", "add": 10 } ] },
+    "healer":      { "name": "Healer's Hand", "effects": [ { "ep": "ModSpellCost", "mult": 0.8, "if": [ { "f": "IsDualCasting" }, { "f": "EPMagic_SpellHasSkill", "skill": "Restoration", "tab": 1 } ] } ] },
+    "assassin":    { "name": "Assassin's Edge", "effects": [ { "ep": "ModSneakAttackMult", "mult": 1.25 } ] },
+    "archer":      { "name": "Archer's Draw", "effects": [ { "av": "SpeedMult", "add": 20, "if": [ { "f": "IsWeaponOut" }, { "f": "GetEquippedItemType", "hand": "right", "v": 7 } ] } ], "approx": "a bow drawn = weapon out with a bow equipped" },
+    "crusader":    { "name": "Crusader's Shield", "effects": [
+                       { "ep": "ModIncomingDamage", "mult": 0.5, "if": [ { "f": "IsBlocking" }, { "f": "GetEquippedItemType", "hand": "left", "v": 10 }, { "f": "HasKeyword", "kw": "WeapTypeBow", "tab": 2 } ] },
+                       { "ep": "ModIncomingSpellMagnitude", "mult": 0.5, "if": [ { "f": "IsBlocking" }, { "f": "GetEquippedItemType", "hand": "left", "v": 10 } ] } ] },
+    "spellsword":  { "name": "Spellsword's Edge", "effects": [ { "ep": "ModSpellCost", "mult": 0.8, "if": [ { "f": "GetEquippedItemType", "hand": "right", "op": ">=", "v": 1 }, { "f": "GetEquippedItemType", "hand": "right", "op": "<=", "v": 6 }, { "f": "EPMagic_SpellHasSkill", "skill": "Destruction", "tab": 1 } ] } ] },
+    "rogue":       { "name": "Rogue's Swagger", "effects": [
+                       { "ep": "ModPowerAttackDamage", "mult": 1.25, "if": [ { "f": "GetEquippedItemType", "hand": "left", "v": 0 } ] },
+                       { "ep": "ModPowerAttackStamina", "mult": 0.8, "if": [ { "f": "GetEquippedItemType", "hand": "left", "op": ">=", "v": 1 }, { "f": "GetEquippedItemType", "hand": "left", "op": "<=", "v": 4 } ] } ] },
+    "scout":       { "name": "Scout's Wind", "effects": [ { "av": "StaminaRateMult", "add": 50 } ] },
+    "battlemage":  { "name": "Battlemage's Ward", "effects": [ { "ep": "ModIncomingDamage", "mult": 0.5, "if": [ { "f": "HasMagicEffectKeyword", "kw": "MagicWard" } ] } ] },
+    "nightblade":  { "name": "Nightblade's Shadow", "effects": [ { "ep": "ModSpellMagnitude", "mult": 2.0, "if": [ { "f": "IsSneaking" }, { "f": "EPMagic_SpellHasSkill", "skill": "Illusion", "tab": 1 } ] } ], "approx": "undetected = sneaking" },
+    "witchhunter": { "name": "Witchhunter's Brew", "effects": [ { "ep": "ModPoisonDoseCount", "mult": 1.5 } ], "stub": "potions lasting 50% longer has no entry point; poisons get 50% more hits instead" },
+    "monk":        { "name": "Monk's Open Hand", "effects": [
+                       { "av": "DamageResist", "add": 100, "if": [ { "f": "GetEquippedItemType", "hand": "right", "v": 0 }, { "f": "GetEquippedItemType", "hand": "left", "v": 0 } ] },
+                       { "ep": "ModTargetStagger", "add": 0.5, "if": [ { "f": "GetEquippedItemType", "hand": "right", "v": 0 } ] } ] },
+    "agent":       { "name": "Agent's Tongue", "effects": [ { "ep": "ModPoisonDoseCount", "mult": 1.5 } ], "stub": "Speech checks 20% easier has no entry point" },
+    "harbinger":   { "name": "Harbinger", "effects": [], "stub": "follower damage and the beast blood's sleep penalty need scripts or the followers' own perks" },
+    "archmage":    { "name": "Archmage", "effects": [ { "ep": "ModSpellMagnitude", "mult": 1.1 } ] },
+    "listener":    { "name": "Listener", "effects": [ { "ep": "ModSneakAttackMult", "mult": 1.5, "if": [ { "f": "HasKeyword", "kw": "WeapTypeDagger", "tab": 1 } ] } ], "stub": "detect life while sneaking needs a conditioned detect-life effect" },
+    "nightingale": { "name": "Nightingale", "effects": [ { "ep": "ModIncomingDamage", "mult": 0.9, "if": [ { "f": "IsSneaking" } ] } ], "approx": "in shadow = sneaking", "stub": "unbreakable lockpicks" },
+    "dragonborn":  { "name": "Dragonborn", "effects": [ { "av": "ShoutRecoveryMult", "add": -0.2 }, { "ep": "ModAttackDamage", "mult": 1.1, "if": [ { "f": "HasKeyword", "kw": "ActorTypeDragon", "tab": 2 } ] } ] },
+    "heroofold":   { "name": "Hero of Old", "effects": [ { "ep": "ModIncomingDamage", "mult": 0.9, "if": [ { "f": "GetHealthPercentage", "op": "<", "v": 0.5 } ] }, { "ep": "ModIncomingStagger", "mult": 0.0, "if": [ { "f": "IsPowerAttacking" } ] } ] }
+  },
+  "ranks": {
+    "crusader": {
+      "A1": { "name": "Righteous Blows", "description": "Power attacks deal 15% more damage to undead and daedra.", "effects": [ { "ep": "ModPowerAttackDamage", "mult": 1.15, "if": [ { "f": "HasKeyword", "kw": "ActorTypeUndead", "tab": 2, "or": true }, { "f": "HasKeyword", "kw": "ActorTypeDaedra", "tab": 2 } ] } ] },
+      "B1": { "name": "Shield Discipline", "description": "Shield bashes cost 25% less stamina.", "effects": [ { "ep": "ModPowerAttackStamina", "mult": 0.75, "if": [ { "f": "IsBlocking" }, { "f": "GetEquippedItemType", "hand": "left", "v": 10 } ] } ], "approx": "a bash = a power attack while blocking with a shield" },
+      "A2": { "name": "Silencing Bash", "description": "A shield bash on a spellcaster silences them for 3 seconds.", "effects": [], "stub": "needs a silence spell applied by the bash" },
+      "B2": { "name": "Spell Catcher", "description": "Blocking a spell restores 10 magicka.", "effects": [], "stub": "needs a script or a hit event" },
+      "A3": { "name": "Light of the Divines", "description": "A killing blow heals nearby allies by 20%.", "effects": [], "stub": "needs a kill event" },
+      "B3": { "name": "Last Bulwark", "description": "At 30% health a ward rises for 5 seconds (60 second cooldown).", "effects": [], "stub": "needs a cooldown" }
+    },
+    "spellsword": {
+      "A1": { "name": "Siphoning Blade", "description": "Weapon hits restore 5 magicka.", "effects": [], "stub": "needs a combat-hit spell" },
+      "B1": { "name": "Drawn Focus", "description": "Spells cast with a weapon drawn cost 10% less.", "effects": [ { "ep": "ModSpellCost", "mult": 0.9, "if": [ { "f": "GetEquippedItemType", "hand": "right", "op": ">=", "v": 1 }, { "f": "GetEquippedItemType", "hand": "right", "op": "<=", "v": 6 } ] } ] },
+      "A2": { "name": "Charged Strike", "description": "A hit after a spell deals 25% more.", "effects": [], "stub": "needs a 3 second window" },
+      "B2": { "name": "Steel Channel", "description": "A spell after a hit costs 25% less.", "effects": [], "stub": "needs a 3 second window" },
+      "A3": { "name": "Spellstrike", "description": "Critical hits trigger the equipped spell's effect on the target.", "effects": [], "stub": "needs a script" },
+      "B3": { "name": "Blade and Ward", "description": "With a spell in one hand and a blade in the other, you take 15% less damage.", "effects": [ { "ep": "ModIncomingDamage", "mult": 0.85, "if": [ { "f": "GetEquippedItemType", "hand": "left", "v": 9 }, { "f": "GetEquippedItemType", "hand": "right", "op": ">=", "v": 1 }, { "f": "GetEquippedItemType", "hand": "right", "op": "<=", "v": 6 } ] } ] }
+    },
+    "rogue": {
+      "A1": { "name": "No Shield, No Mercy", "description": "Attacks deal 10% more while you carry no shield.", "effects": [ { "ep": "ModAttackDamage", "mult": 1.1, "if": [ { "f": "GetEquippedItemType", "hand": "left", "op": "!=", "v": 10 } ] } ] },
+      "B1": { "name": "Slippery", "description": "A 15% chance that a hit misses you entirely.", "effects": [ { "ep": "ModIncomingDamage", "mult": 0.0, "if": [ { "f": "GetRandomPercent", "op": "<", "v": 15 } ] } ], "approx": "the dodge is the hit doing no damage" },
+      "A2": { "name": "Floor Them", "description": "Power attacks on a staggered foe knock them down.", "effects": [], "stub": "needs a knock-down spell on hit" },
+      "B2": { "name": "Second Wind", "description": "A dodge restores 15 stamina.", "effects": [], "stub": "needs a hit event" },
+      "A3": { "name": "Kick Them Down", "description": "Hits on a knocked-down foe deal double damage.", "effects": [ { "ep": "ModAttackDamage", "mult": 2.0, "if": [ { "f": "GetKnockedState", "tab": 2, "op": "!=", "v": 0 } ] } ] },
+      "B3": { "name": "Running Start", "description": "Sprinting power attacks cost no stamina.", "effects": [ { "ep": "ModPowerAttackStamina", "mult": 0.0, "if": [ { "f": "IsSprinting" } ] } ] }
+    },
+    "scout": {
+      "A1": { "name": "Running Shot", "description": "Bows deal 10% more damage.", "effects": [ { "ep": "ModAttackDamage", "mult": 1.1, "if": [ { "f": "HasKeyword", "kw": "WeapTypeBow", "tab": 1 } ] } ], "approx": "the 'while moving' half is not built" },
+      "B1": { "name": "Long Legs", "description": "Sprinting costs 25% less stamina.", "effects": [], "stub": "sprint stamina has no entry point" },
+      "A2": { "name": "Opening Shot", "description": "The first arrow at an unaware target deals triple damage.", "effects": [ { "ep": "ModSneakAttackMult", "mult": 1.5, "if": [ { "f": "HasKeyword", "kw": "WeapTypeBow", "tab": 1 } ] } ], "approx": "a bow sneak attack (x2) is raised to x3" },
+      "B2": { "name": "Beast Wise", "description": "Animals and beasts deal 20% less damage to you.", "effects": [ { "ep": "ModIncomingDamage", "mult": 0.8, "if": [ { "f": "HasKeyword", "kw": "ActorTypeAnimal", "tab": 1 } ] } ] },
+      "A3": { "name": "Piercing Arrows", "description": "Arrows pierce one target.", "effects": [], "stub": "needs a projectile change" },
+      "B3": { "name": "Pathfinder", "description": "Detect life while sprinting.", "effects": [], "stub": "needs a conditioned detect-life effect" }
+    },
+    "battlemage": {
+      "A1": { "name": "Ward Adept", "description": "Wards cost 25% less.", "effects": [ { "ep": "ModSpellCost", "mult": 0.75, "if": [ { "f": "SpellHasKeyword", "kw": "MagicWard", "tab": 1 } ] } ] },
+      "B1": { "name": "Plated Caster", "description": "Heavy armour gives 10% more armour while a spell is readied.", "effects": [ { "ep": "ModArmorRating", "mult": 1.1, "if": [ { "f": "GetEquippedItemType", "hand": "left", "v": 9, "or": true }, { "f": "GetEquippedItemType", "hand": "right", "v": 9 }, { "f": "HasKeyword", "kw": "ArmorHeavy", "tab": 1 } ] } ] },
+      "A2": { "name": "Shattering Ward", "description": "A ward that breaks explodes for its remaining strength.", "effects": [], "stub": "needs a script" },
+      "B2": { "name": "Iron Will", "description": "Spells cost 15% less while you wear heavy armour.", "effects": [ { "ep": "ModSpellCost", "mult": 0.85, "if": [ { "f": "WornHasKeyword", "kw": "ArmorHeavy" } ] } ] },
+      "A3": { "name": "Arcane Strike", "description": "A power attack casts the readied spell on hit.", "effects": [], "stub": "needs a script" },
+      "B3": { "name": "Spellbreaker", "description": "You take 20% less damage from spells.", "effects": [ { "ep": "ModIncomingSpellMagnitude", "mult": 0.8 } ], "approx": "also lowers beneficial spells cast on you by others" }
+    },
+    "nightblade": {
+      "A1": { "name": "Lingering Shadows", "description": "Illusion spells last 25% longer.", "effects": [ { "ep": "ModSpellDuration", "mult": 1.25, "if": [ { "f": "EPMagic_SpellHasSkill", "skill": "Illusion", "tab": 1 } ] } ] },
+      "B1": { "name": "Shadow Spell", "description": "Dual-cast spells from the shadows are 50% stronger.", "effects": [ { "ep": "ModSpellMagnitude", "mult": 1.5, "if": [ { "f": "IsSneaking" }, { "f": "IsDualCasting" } ] } ], "approx": "sneak attacks with spells = dual casting while sneaking" },
+      "A2": { "name": "Vanish", "description": "A kill while undetected makes you invisible for 5 seconds.", "effects": [], "stub": "needs a kill event" },
+      "B2": { "name": "Hush", "description": "Frenzy and Fear also silence for 3 seconds.", "effects": [], "stub": "needs a silence effect" },
+      "A3": { "name": "Ghost Step", "description": "Muffled and invisible for 3 seconds after a sneak kill.", "effects": [], "stub": "needs a kill event" },
+      "B3": { "name": "Unseen Mind", "description": "Illusion spells cost nothing while you sneak.", "effects": [ { "ep": "ModSpellCost", "mult": 0.0, "if": [ { "f": "IsSneaking" }, { "f": "EPMagic_SpellHasSkill", "skill": "Illusion", "tab": 1 } ] } ], "approx": "undetected = sneaking" }
+    },
+    "witchhunter": {
+      "A1": { "name": "Bane of the Dead", "description": "You deal 15% more damage to the undead and vampires.", "effects": [ { "ep": "ModAttackDamage", "mult": 1.15, "if": [ { "f": "HasKeyword", "kw": "ActorTypeUndead", "tab": 2, "or": true }, { "f": "HasKeyword", "kw": "Vampire", "tab": 2 } ] } ] },
+      "B1": { "name": "Thick Coating", "description": "Poisons you apply last 2 extra hits.", "effects": [ { "ep": "ModPoisonDoseCount", "add": 2 } ] },
+      "A2": { "name": "Silver Chill", "description": "Silver and poisoned weapons slow the undead by 25%.", "effects": [], "stub": "needs a slow spell on hit" },
+      "B2": { "name": "Purifying Draught", "description": "Potions you drink also cure one disease.", "effects": [], "stub": "needs a script" },
+      "A3": { "name": "Hunter's Reward", "description": "Killing an undead restores 25 health and stamina.", "effects": [], "stub": "needs a kill event" },
+      "B3": { "name": "Untainted Blood", "description": "You are immune to disease and to vampirism.", "effects": [ { "av": "ResistDisease", "add": 100 } ] }
+    },
+    "monk": {
+      "A1": { "name": "Iron Fist", "description": "Unarmed attacks deal 25% more damage.", "effects": [ { "ep": "ModAttackDamage", "mult": 1.25, "if": [ { "f": "GetEquippedItemType", "hand": "right", "v": 0 } ] } ] },
+      "B1": { "name": "Deflecting Palm", "description": "Blocking unarmed staggers the attacker.", "effects": [], "stub": "needs a block event" },
+      "A2": { "name": "Flurry", "description": "Three unarmed hits in a row stun.", "effects": [], "stub": "needs a hit counter" },
+      "B2": { "name": "Still Mind", "description": "While unarmed you resist 20% of magic.", "effects": [ { "av": "ResistMagic", "add": 20, "if": [ { "f": "GetEquippedItemType", "hand": "right", "v": 0 }, { "f": "GetEquippedItemType", "hand": "left", "v": 0 } ] } ] },
+      "A3": { "name": "Mana Strike", "description": "Unarmed strikes drain 10 magicka from casters.", "effects": [], "stub": "needs a combat-hit spell" },
+      "B3": { "name": "Feather Fall", "description": "Falling never hurts, and +50 armour while unarmed.", "effects": [ { "ep": "ModFallingDamage", "mult": 0.0 }, { "av": "DamageResist", "add": 50, "if": [ { "f": "GetEquippedItemType", "hand": "right", "v": 0 }, { "f": "GetEquippedItemType", "hand": "left", "v": 0 } ] } ] }
+    },
+    "agent": {
+      "A1": { "name": "Light Fingers", "description": "Pickpocketing and lockpicking are 20% easier.", "effects": [ { "ep": "ModPickpocketChance", "mult": 1.2 }, { "ep": "ModLockpickSweetSpot", "mult": 1.2 } ] },
+      "B1": { "name": "Silver Tongue", "description": "Bribes cost half.", "effects": [ { "ep": "ModBribeAmount", "mult": 0.5 } ], "stub": "Speech checks 20% easier has no entry point" },
+      "A2": { "name": "Soothing Venom", "description": "Poisons also calm the target for 3 seconds.", "effects": [], "stub": "needs a calm spell on poison" },
+      "B2": { "name": "Quiet Spells", "description": "Illusion spells cost 20% less while you sneak.", "effects": [ { "ep": "ModSpellCost", "mult": 0.8, "if": [ { "f": "IsSneaking" }, { "f": "EPMagic_SpellHasSkill", "skill": "Illusion", "tab": 1 } ] } ], "approx": "undetected = sneaking" },
+      "A3": { "name": "Final Dose", "description": "A poisoned sneak attack kills non-boss humans outright (once per combat).", "effects": [], "stub": "needs a script" },
+      "B3": { "name": "Friends in Every Hold", "description": "Guards forgive bounties under 500.", "effects": [], "stub": "needs a script" }
+    }
+  }
+}

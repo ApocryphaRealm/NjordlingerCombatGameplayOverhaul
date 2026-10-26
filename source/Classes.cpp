@@ -32,7 +32,7 @@ namespace Classes
 			float xp = 0.0F;                              // progress toward the next class level
 			std::array<float, skilllist::kCount> startSkill{};
 			std::vector<std::string> history;             // class ids in the order they were taken
-			int rankPath[2]{ -1, -1 };                    // Expert, Master
+			int rankPath[3]{ -1, -1, -1 };                // Expert, Master, Legendary perk: 0 = A, 1 = B, -1 = not taken
 			std::string title;
 			std::uint32_t increases = 0;                  // skill increases counted toward class experience
 		};
@@ -97,6 +97,33 @@ namespace Classes
 			return it != g_quests.end() && it->second && it->second->IsCompleted();
 		}
 
+		std::string RankName(const ClassData::ClassNode& a_n, int a_step, int a_ab)
+		{
+			static constexpr const char* kSlot[3][2] = { { "A1", "B1" }, { "A2", "B2" }, { "A3", "B3" } };
+			const auto key = "NJ_RankName_" + a_n.id + "_" + kSlot[a_step][a_ab];
+			return TrS(key.c_str(), a_n.ranks[a_step][a_ab].name.c_str());
+		}
+
+		std::string RankDesc(const ClassData::ClassNode& a_n, int a_step, int a_ab)
+		{
+			static constexpr const char* kSlot[3][2] = { { "A1", "B1" }, { "A2", "B2" }, { "A3", "B3" } };
+			const auto key = "NJ_RankDesc_" + a_n.id + "_" + kSlot[a_step][a_ab];
+			return TrS(key.c_str(), a_n.ranks[a_step][a_ab].description.c_str());
+		}
+
+		// The titles this character has earned that fit its lineage: the questline is finished and the title's rule
+		// (the lineage's start, the current class) matches.
+		std::vector<const ClassData::Title*> EarnedTitlesLocked(const Record& a_r)
+		{
+			std::vector<const ClassData::Title*> out;
+			if (a_r.classId.empty() || a_r.history.empty()) { return out; }
+			for (const auto& ti : ClassData::Get().titles)
+			{
+				if (ti.Fits(a_r.history.front(), a_r.classId) && QuestDone(ti.quest)) { out.push_back(&ti); }
+			}
+			return out;
+		}
+
 		// Whether the record (locked by the caller) holds a skill.
 		bool HoldsLocked(const Record& a_r, int a_skill)
 		{
@@ -104,7 +131,12 @@ namespace Classes
 			const auto* n = ClassData::Find(a_r.classId);
 			if (!n) { return true; }
 			if (a_skill < 0 || a_skill >= skilllist::kCount) { return true; }
-			if (n->extraSkills[a_skill]) { return true; }
+			// Extra skills are inherited along the lineage (CLASS-CONTENT.md 1: the Archer's Archery stays with the Scout or
+			// Witchhunter it becomes).
+			for (const auto& id : a_r.history)
+			{
+				if (const auto* h = ClassData::Find(id); h && h->extraSkills[a_skill]) { return true; }
+			}
 			const int g = ClassData::GroupOfSkill(a_skill);
 			return g < 0 || n->groups[g];
 		}
@@ -137,26 +169,31 @@ namespace Classes
 					out.push_back(std::move(op));
 				}
 			}
-			else if (a_r.tier <= 3)
+			else if (a_r.tier <= 3 || EarnedTitlesLocked(a_r).empty())
 			{
-				const int paths = ClassData::Get().rankPaths;
-				for (int p = 0; p < paths; ++p)
+				// Expert (tier 2 -> 3) and Master (3 -> 4): the class's A/B rank perks of that step; Legendary (4 -> 5) with no
+				// earned title that fits the lineage: the A3/B3 pair.
+				const int step = a_r.tier - 2;
+				for (int ab = 0; ab < 2; ++ab)
 				{
+					const auto& rank = n->ranks[step][ab];
 					Option op;
-					op.id = std::format("path:{}", p);
-					op.label = p == 0 ? TrS("NJ_RankPath1", "First rank path") : TrS("NJ_RankPath2", "Second rank path");
-					op.description = TrS("NJ_RankPathDesc", "The rank perks of this path are not authored yet; the choice is kept and they arrive with a later version.");
+					op.id = ab == 0 ? "rank:A" : "rank:B";
+					op.label = RankName(*n, step, ab);
+					op.description = RankDesc(*n, step, ab);
+					op.available = n->hasRanks;
+					if (!op.available) { op.why = TrS("NJ_NoRanks", "This class has no rank perks."); }
 					out.push_back(std::move(op));
+					(void)rank;
 				}
 			}
 			else
 			{
-				for (const auto& id : n->titles)
+				// Legendary with a title earned: each earned title that fits the lineage is an option; the one chosen is
+				// shown on the class line, and every earned title applies (CLASS-CONTENT.md 1).
+				for (const auto* ti : EarnedTitlesLocked(a_r))
 				{
-					const auto* t = ClassData::FindTitle(id);
-					if (!t) { continue; }
-					Option op{ t->id, TitleName(*t), TitleDesc(*t), QuestDone(t->quest), {} };
-					if (!op.available) { op.why = TrS("NJ_TitleNeedsQuest", "Finish this questline first."); }
+					Option op{ ti->id, TitleName(*ti), TitleDesc(*ti), true, {} };
 					out.push_back(std::move(op));
 				}
 			}
@@ -220,30 +257,30 @@ namespace Classes
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			if (player && settings::classes::enabled)
 			{
+				const auto give = [player](RE::BGSPerk* a_perk, const std::string& a_what) {
+					if (a_perk && !player->HasPerk(a_perk))
+					{
+						player->AddPerk(a_perk);
+						logger::info("classes: {} added ({:08X})", a_what, a_perk->GetFormID());
+					}
+				};
 				for (const auto& id : r.history)
 				{
-					const auto* n = ClassData::Find(id);
-					if (n && n->ability && !player->HasSpell(n->ability))
-					{
-						player->AddSpell(n->ability);
-						logger::info("classes: ability of {} added ({:08X})", n->id, n->ability->GetFormID());
-					}
+					if (const auto* n = ClassData::Find(id)) { give(n->ability, "ability of " + n->id); }
 				}
 				if (const auto* cur = ClassData::Find(r.classId))
 				{
-					for (int t = 0; t < 2; ++t)
+					for (int step = 0; step < 3; ++step)
 					{
-						if (r.rankPath[t] < 0) { continue; }
-						for (auto* perk : cur->rankPerks[r.rankPath[t]])
-						{
-							if (perk && !player->HasPerk(perk)) { player->AddPerk(perk); logger::info("classes: rank perk {:08X} added", perk->GetFormID()); }
-						}
+						if (r.rankPath[step] < 0 || r.rankPath[step] > 1) { continue; }
+						give(cur->ranks[step][r.rankPath[step]].perk, std::format("rank perk {} step {} path {}", cur->id, step, r.rankPath[step] ? "B" : "A"));
 					}
 				}
-				if (const auto* t = ClassData::FindTitle(r.title); t && t->perk && !player->HasPerk(t->perk))
+				if (!r.title.empty())
 				{
-					player->AddPerk(t->perk);
-					logger::info("classes: title perk of {} added", t->id);
+					// every earned title applies once the character holds one (CLASS-CONTENT.md 1)
+					for (const auto* ti : EarnedTitlesLocked(r)) { give(ti->perk, "title " + ti->id); }
+					if (const auto* ti = ClassData::FindTitle(r.title)) { give(ti->perk, "title " + ti->id); }
 				}
 			}
 			logger::debug("classes: applied - class \"{}\" tier {} level {} xp {:.2f}", r.classId, r.tier, r.level, r.xp);
@@ -320,7 +357,29 @@ namespace Classes
 			}
 		};
 
+		class QuestSink : public RE::BSTEventSink<RE::QuestStatus::Event>
+		{
+		public:
+			RE::BSEventNotifyControl ProcessEvent(const RE::QuestStatus::Event* a_event, RE::BSTEventSource<RE::QuestStatus::Event>*) override
+			{
+				if (!a_event || !a_event->quest || a_event->status != RE::QuestStatus::kCompleted) { return RE::BSEventNotifyControl::kContinue; }
+				const char* edid = a_event->quest->GetFormEditorID();
+				if (!edid || !*edid) { return RE::BSEventNotifyControl::kContinue; }
+				for (const auto& ti : ClassData::Get().titles)
+				{
+					if (_stricmp(ti.quest.c_str(), edid) == 0)
+					{
+						logger::info("classes: {} completed - the title {} can now be earned by a class it fits", edid, ti.id);
+						CheckDue();
+						RequestApply();
+					}
+				}
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+
 		SkillSink g_skillSink;
+		QuestSink g_questSink;
 		MenuSink g_menuSink;
 
 		void ChooseStartNow(const std::string& a_id)
@@ -356,9 +415,9 @@ namespace Classes
 					g_rec.classId = op.id;
 					g_rec.history.push_back(op.id);
 				}
-				else if (from <= 3)
+				else if (op.id.rfind("rank:", 0) == 0)
 				{
-					g_rec.rankPath[from - 2] = a_index;
+					g_rec.rankPath[from - 2] = op.id == "rank:B" ? 1 : 0;
 				}
 				else
 				{
@@ -395,6 +454,7 @@ namespace Classes
 		if (auto* src = RE::SkillIncrease::GetEventSource()) { src->AddEventSink(&g_skillSink); logger::info("classes: skill-increase sink registered"); }
 		else { logger::error("classes: no skill-increase event source - class experience cannot be earned"); }
 		if (auto* ui = RE::UI::GetSingleton()) { ui->AddEventSink<RE::MenuOpenCloseEvent>(&g_menuSink); }
+		if (auto* qs = RE::QuestStatus::GetEventSource()) { qs->AddEventSink(&g_questSink); }
 	}
 
 	void OnGameLoaded()
@@ -481,6 +541,8 @@ namespace Classes
 		s.history = g_rec.history;
 		s.rankPath[0] = g_rec.rankPath[0];
 		s.rankPath[1] = g_rec.rankPath[1];
+		s.rankPath[2] = g_rec.rankPath[2];
+		for (const auto* ti : EarnedTitlesLocked(g_rec)) { s.titlesEarned.push_back(ti->id); }
 		s.title = g_rec.title;
 		s.increasesCounted = g_rec.increases;
 		return s;
@@ -508,7 +570,8 @@ namespace Classes
 		for (int i = 0; i < skilllist::kCount; ++i) { skills[skilllist::kIniName[i]] = { { "held", s.held[i] }, { "lockedCap", s.lockedCap[i] }, { "cap", Skills::EffectiveCap(i) } }; }
 		j["groupsHeld"] = { { "warrior", s.groupsHeld[0] }, { "magic", s.groupsHeld[1] }, { "covert", s.groupsHeld[2] } };
 		j["history"] = s.history;
-		j["rankPath"] = { s.rankPath[0], s.rankPath[1] };
+		j["rankPath"] = { s.rankPath[0], s.rankPath[1], s.rankPath[2] };
+		j["titlesEarned"] = s.titlesEarned;
 		j["title"] = s.title;
 		j["increasesCounted"] = s.increasesCounted;
 		return j.dump();
@@ -548,7 +611,7 @@ namespace Classes
 			j["xp"] = g_rec.xp;
 			j["startSkill"] = g_rec.startSkill;
 			j["history"] = g_rec.history;
-			j["rankPath"] = { g_rec.rankPath[0], g_rec.rankPath[1] };
+			j["rankPath"] = { g_rec.rankPath[0], g_rec.rankPath[1], g_rec.rankPath[2] };
 			j["title"] = g_rec.title;
 			j["increases"] = g_rec.increases;
 		}
@@ -584,7 +647,10 @@ namespace Classes
 				for (int i = 0; i < skilllist::kCount && i < static_cast<int>(j["startSkill"].size()); ++i) { r.startSkill[i] = j["startSkill"][i].get<float>(); }
 			}
 			r.history = j.value("history", std::vector<std::string>{});
-			if (j.contains("rankPath") && j["rankPath"].size() == 2) { r.rankPath[0] = j["rankPath"][0].get<int>(); r.rankPath[1] = j["rankPath"][1].get<int>(); }
+			if (j.contains("rankPath") && j["rankPath"].is_array())
+			{
+				for (std::size_t k = 0; k < 3 && k < j["rankPath"].size(); ++k) { r.rankPath[k] = j["rankPath"][k].get<int>(); }
+			}
 			r.title = j.value("title", std::string());
 			r.increases = j.value("increases", 0u);
 			if (!r.classId.empty() && !ClassData::Find(r.classId)) { logger::warn("classes: the saved class \"{}\" is not in the class table any more - the record is kept, locks are off until it returns", r.classId); }

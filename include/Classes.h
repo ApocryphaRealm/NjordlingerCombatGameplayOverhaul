@@ -6,9 +6,9 @@
 // SkillIncrease event - present on every build line); a class level costs base + perLevel x level; after N class levels
 // per tier the character is offered ONE OF TWO options and the choice is permanent:
 //   Novice -> Apprentice -> Adept   a new class from the lineage (a hybrid opens its second group);
-//   Adept -> Expert -> Master       one of two rank paths (the rank perks are authored later);
-//   Master -> Legendary             a title whose questline is finished (Harbinger, Archmage, Listener, Nightingale,
-//                                   Dragonborn).
+//   Adept -> Expert -> Master       one of the class's two rank perks of that step (A or B, CLASS-CONTENT.md 3);
+//   Master -> Legendary             an earned title that fits the lineage (its questline finished: Harbinger,
+//                                   Archmage, Listener, Nightingale, Dragonborn, Hero of Old), else the A3/B3 pair.
 // The class decides which skills are locked: a locked skill is capped at its starting value and banks no use
 // (Skills / SkillExperience), its perks are refused and give nothing (Lockouts), and its craft's menu refuses (Lockouts).
 // Locks follow the current class and never loosen, except that a hybrid opens its second group.
@@ -38,7 +38,7 @@ namespace Classes
 
 	struct Option
 	{
-		std::string id;          // class id, "path:0" / "path:1", or title id
+		std::string id;          // class id, "rank:A" / "rank:B", or title id
 		std::string label;       // what the page shows
 		std::string description;
 		bool available = true;
@@ -71,7 +71,8 @@ namespace Classes
 		std::array<float, skilllist::kCount> lockedCap{};
 		std::array<bool, 3> groupsHeld{};
 		std::vector<std::string> history;
-		int rankPath[2]{ -1, -1 };
+		int rankPath[3]{ -1, -1, -1 };   // Expert, Master, Legendary perk: 0 A, 1 B
+		std::vector<std::string> titlesEarned;
 		std::string title;
 		std::uint32_t increasesCounted = 0;
 	};

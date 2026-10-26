@@ -30,12 +30,19 @@ namespace ClassData
 		std::array<bool, kGroupCount> groups{};
 		std::array<bool, skilllist::kCount> extraSkills{};
 		std::vector<std::string> next;     // the two options at the next upgrade (Novice and Apprentice)
-		std::vector<std::string> titles;   // the Legendary options (title ids)
 		// Forms from NjordlingerCombatGameplayOverhaul.esp (null when the plugin or the record is missing).
-		RE::SpellItem* ability = nullptr;
+		RE::BGSPerk* ability = nullptr;    // the class ability (a perk: constant effects ride its ability spell)
 		RE::TESGlobal* global = nullptr;
 		RE::BGSKeyword* keyword = nullptr;
-		std::vector<RE::BGSPerk*> rankPerks[2];   // [path] Expert then Master perks (authored later)
+		// Rank perks of an Adept class (CLASS-CONTENT.md section 3): [step 0 Expert, 1 Master, 2 Legendary][0 A, 1 B].
+		struct Rank
+		{
+			RE::BGSPerk* perk = nullptr;
+			std::string name;
+			std::string description;
+		};
+		Rank ranks[3][2];
+		bool hasRanks = false;
 	};
 
 	struct Title
@@ -43,8 +50,13 @@ namespace ClassData
 		std::string id;
 		std::string name;
 		std::string description;
-		std::string quest;   // the questline's completing quest, by editor ID
+		std::string quest;                        // the questline's completing quest, by editor ID
+		std::vector<std::string> starts;          // fits a lineage that began with one of these (empty = any)
+		std::vector<std::string> classes;         // fits these current classes (empty = any)
+		std::vector<std::string> excludeClasses;  // never these
 		RE::BGSPerk* perk = nullptr;
+
+		bool Fits(const std::string& a_start, const std::string& a_class) const;
 	};
 
 	struct Table
@@ -55,7 +67,6 @@ namespace ClassData
 		std::array<int, kGroupCount> craftSkill{ -1, -1, -1 };   // skill index of each group's craft
 		std::vector<ClassNode> classes;
 		std::vector<Title> titles;
-		int rankPaths = 2;
 		RE::TESGlobal* groupGlobal[kGroupCount]{};   // from the plugin, or created at run time
 	};
 

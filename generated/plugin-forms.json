@@ -11,121 +11,217 @@
       "ability": "0x805"
     },
     "mage": {
-      "global": "0x807",
-      "keyword": "0x808",
-      "ability": "0x809"
+      "global": "0x808",
+      "keyword": "0x809",
+      "ability": "0x80A"
     },
     "thief": {
-      "global": "0x80B",
-      "keyword": "0x80C"
-    },
-    "knight": {
       "global": "0x80D",
       "keyword": "0x80E",
       "ability": "0x80F"
     },
+    "knight": {
+      "global": "0x812",
+      "keyword": "0x813",
+      "ability": "0x814"
+    },
     "barbarian": {
-      "global": "0x811",
-      "keyword": "0x812"
+      "global": "0x817",
+      "keyword": "0x818",
+      "ability": "0x819"
     },
     "sorcerer": {
-      "global": "0x813",
-      "keyword": "0x814",
-      "ability": "0x815"
+      "global": "0x81A",
+      "keyword": "0x81B",
+      "ability": "0x81C"
     },
     "healer": {
-      "global": "0x817",
-      "keyword": "0x818"
+      "global": "0x81F",
+      "keyword": "0x820",
+      "ability": "0x821"
     },
     "assassin": {
-      "global": "0x819",
-      "keyword": "0x81A"
+      "global": "0x822",
+      "keyword": "0x823",
+      "ability": "0x824"
     },
     "archer": {
-      "global": "0x81B",
-      "keyword": "0x81C"
+      "global": "0x825",
+      "keyword": "0x826",
+      "ability": "0x827"
     },
     "crusader": {
-      "global": "0x81D",
-      "keyword": "0x81E"
-    },
-    "blademaster": {
-      "global": "0x81F",
-      "keyword": "0x820"
-    },
-    "berserker": {
-      "global": "0x821",
-      "keyword": "0x822"
-    },
-    "rogue": {
-      "global": "0x823",
-      "keyword": "0x824"
-    },
-    "battlemage": {
-      "global": "0x825",
-      "keyword": "0x826"
-    },
-    "occultist": {
-      "global": "0x827",
-      "keyword": "0x828"
-    },
-    "cleric": {
-      "global": "0x829",
-      "keyword": "0x82A"
-    },
-    "nightblade": {
-      "global": "0x82B",
-      "keyword": "0x82C"
-    },
-    "burglar": {
-      "global": "0x82D",
-      "keyword": "0x82E"
-    },
-    "scout": {
-      "global": "0x82F",
-      "keyword": "0x830",
-      "ability": "0x831"
-    },
-    "hunter": {
-      "global": "0x833",
-      "keyword": "0x834"
+      "global": "0x82A",
+      "keyword": "0x82B",
+      "ability": "0x82C",
+      "ranks": {
+        "A1": "0x82D",
+        "B1": "0x82E",
+        "A2": "0x82F",
+        "B2": "0x830",
+        "A3": "0x831",
+        "B3": "0x832"
+      }
     },
     "spellsword": {
-      "global": "0x835",
-      "keyword": "0x836"
+      "global": "0x833",
+      "keyword": "0x834",
+      "ability": "0x835",
+      "ranks": {
+        "A1": "0x836",
+        "B1": "0x837",
+        "A2": "0x838",
+        "B2": "0x839",
+        "A3": "0x83A",
+        "B3": "0x83B"
+      }
+    },
+    "rogue": {
+      "global": "0x83C",
+      "keyword": "0x83D",
+      "ability": "0x83E",
+      "ranks": {
+        "A1": "0x83F",
+        "B1": "0x840",
+        "A2": "0x841",
+        "B2": "0x842",
+        "A3": "0x843",
+        "B3": "0x844"
+      }
+    },
+    "scout": {
+      "global": "0x845",
+      "keyword": "0x846",
+      "ability": "0x847",
+      "ranks": {
+        "A1": "0x84A",
+        "B1": "0x84B",
+        "A2": "0x84C",
+        "B2": "0x84D",
+        "A3": "0x84E",
+        "B3": "0x84F"
+      }
+    },
+    "battlemage": {
+      "global": "0x850",
+      "keyword": "0x851",
+      "ability": "0x852",
+      "ranks": {
+        "A1": "0x853",
+        "B1": "0x854",
+        "A2": "0x855",
+        "B2": "0x856",
+        "A3": "0x857",
+        "B3": "0x858"
+      }
+    },
+    "nightblade": {
+      "global": "0x859",
+      "keyword": "0x85A",
+      "ability": "0x85B",
+      "ranks": {
+        "A1": "0x85C",
+        "B1": "0x85D",
+        "A2": "0x85E",
+        "B2": "0x85F",
+        "A3": "0x860",
+        "B3": "0x861"
+      }
     },
     "witchhunter": {
-      "global": "0x837",
-      "keyword": "0x838"
-    },
-    "agent": {
-      "global": "0x839",
-      "keyword": "0x83A"
+      "global": "0x862",
+      "keyword": "0x863",
+      "ability": "0x864",
+      "ranks": {
+        "A1": "0x865",
+        "B1": "0x866",
+        "A2": "0x867",
+        "B2": "0x868",
+        "A3": "0x869",
+        "B3": "0x86A"
+      }
     },
     "monk": {
-      "global": "0x83B",
-      "keyword": "0x83C"
+      "global": "0x86D",
+      "keyword": "0x86E",
+      "ability": "0x86F",
+      "ranks": {
+        "A1": "0x872",
+        "B1": "0x873",
+        "A2": "0x874",
+        "B2": "0x875",
+        "A3": "0x878",
+        "B3": "0x879"
+      }
+    },
+    "agent": {
+      "global": "0x87C",
+      "keyword": "0x87D",
+      "ability": "0x87E",
+      "ranks": {
+        "A1": "0x87F",
+        "B1": "0x880",
+        "A2": "0x881",
+        "B2": "0x882",
+        "A3": "0x883",
+        "B3": "0x884"
+      }
     }
   },
+  "titles": {
+    "harbinger": "0x885",
+    "archmage": "0x886",
+    "listener": "0x887",
+    "nightingale": "0x888",
+    "dragonborn": "0x889",
+    "heroofold": "0x88C"
+  },
   "stubs": [
-    "thief: \u002B20% sneak speed needs a conditioned speed effect",
-    "barbarian: \u002B50% power-attack damage needs a perk entry point",
-    "healer: -20% dual-cast Restoration cost needs a perk entry point",
-    "assassin: \u002B25% sneak-attack damage needs a perk entry point",
-    "archer: \u002B20% speed while drawing needs a conditioned speed effect",
-    "crusader: no ability defined",
-    "blademaster: no ability defined",
-    "berserker: no ability defined",
-    "rogue: no ability defined",
-    "battlemage: no ability defined",
-    "occultist: no ability defined",
-    "cleric: no ability defined",
-    "nightblade: no ability defined",
-    "burglar: no ability defined",
-    "hunter: no ability defined",
-    "spellsword: no ability defined",
-    "witchhunter: no ability defined",
-    "agent: no ability defined",
-    "monk: no ability defined"
+    "NJCGO_Rank_crusader_A2: needs a silence spell applied by the bash",
+    "NJCGO_Rank_crusader_B2: needs a script or a hit event",
+    "NJCGO_Rank_crusader_A3: needs a kill event",
+    "NJCGO_Rank_crusader_B3: needs a cooldown",
+    "NJCGO_Rank_spellsword_A1: needs a combat-hit spell",
+    "NJCGO_Rank_spellsword_A2: needs a 3 second window",
+    "NJCGO_Rank_spellsword_B2: needs a 3 second window",
+    "NJCGO_Rank_spellsword_A3: needs a script",
+    "NJCGO_Rank_rogue_A2: needs a knock-down spell on hit",
+    "NJCGO_Rank_rogue_B2: needs a hit event",
+    "NJCGO_Rank_scout_B1: sprint stamina has no entry point",
+    "NJCGO_Rank_scout_A3: needs a projectile change",
+    "NJCGO_Rank_scout_B3: needs a conditioned detect-life effect",
+    "NJCGO_Rank_battlemage_A2: needs a script",
+    "NJCGO_Rank_battlemage_A3: needs a script",
+    "NJCGO_Rank_nightblade_A2: needs a kill event",
+    "NJCGO_Rank_nightblade_B2: needs a silence effect",
+    "NJCGO_Rank_nightblade_A3: needs a kill event",
+    "NJCGO_Ab_witchhunter: potions lasting 50% longer has no entry point; poisons get 50% more hits instead",
+    "NJCGO_Rank_witchhunter_A2: needs a slow spell on hit",
+    "NJCGO_Rank_witchhunter_B2: needs a script",
+    "NJCGO_Rank_witchhunter_A3: needs a kill event",
+    "NJCGO_Rank_monk_B1: needs a block event",
+    "NJCGO_Rank_monk_A2: needs a hit counter",
+    "NJCGO_Rank_monk_A3: needs a combat-hit spell",
+    "NJCGO_Ab_agent: Speech checks 20% easier has no entry point",
+    "NJCGO_Rank_agent_B1: Speech checks 20% easier has no entry point",
+    "NJCGO_Rank_agent_A2: needs a calm spell on poison",
+    "NJCGO_Rank_agent_A3: needs a script",
+    "NJCGO_Rank_agent_B3: needs a script",
+    "NJCGO_Title_harbinger: follower damage and the beast blood\u0027s sleep penalty need scripts or the followers\u0027 own perks",
+    "NJCGO_Title_listener: detect life while sneaking needs a conditioned detect-life effect",
+    "NJCGO_Title_nightingale: unbreakable lockpicks"
+  ],
+  "approximations": [
+    "NJCGO_Ab_archer: a bow drawn = weapon out with a bow equipped",
+    "NJCGO_Rank_crusader_B1: a bash = a power attack while blocking with a shield",
+    "NJCGO_Rank_rogue_B1: the dodge is the hit doing no damage",
+    "NJCGO_Rank_scout_A1: the \u0027while moving\u0027 half is not built",
+    "NJCGO_Rank_scout_A2: a bow sneak attack (x2) is raised to x3",
+    "NJCGO_Rank_battlemage_B3: also lowers beneficial spells cast on you by others",
+    "NJCGO_Ab_nightblade: undetected = sneaking",
+    "NJCGO_Rank_nightblade_B1: sneak attacks with spells = dual casting while sneaking",
+    "NJCGO_Rank_nightblade_B3: undetected = sneaking",
+    "NJCGO_Rank_agent_B2: undetected = sneaking",
+    "NJCGO_Title_nightingale: in shadow = sneaking"
   ]
 }
