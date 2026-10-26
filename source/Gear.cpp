@@ -2,6 +2,7 @@
 
 #include "Gear.h"
 
+#include "GameSettingFactors.h"
 #include "Settings.h"
 
 #include "utils/Logger.h"
@@ -59,6 +60,11 @@ namespace Gear
 		float g_appliedSetStrength = -1.0F;      // -1: never applied (the records hold the authored values)
 		float g_appliedUniqueStrength = -1.0F;
 		bool g_noEnchantDone = false;
+		RE::SpellItem* g_silence = nullptr;      // helpers.silence - Spellbreaker's 2-second silence
+		const UniqueDef* g_saviorsHide = nullptr;
+		const UniqueDef* g_shieldOfYsgramor = nullptr;
+		const UniqueDef* g_spellbreaker = nullptr;
+		std::atomic<std::uint32_t> g_spellbreakerSilences{ 0 };
 
 		// ---- shared ----
 		std::mutex g_lock;                       // g_snapshot and g_dirty
@@ -196,6 +202,16 @@ namespace Gear
 			std::vector<UniqueState> uniques;
 			if (isPlayer)
 			{
+				// the two unique effects no record can carry: game settings scaled while the player wears the item
+				// (Fable review 2026-10-26; every actor's sprint / block cost while it holds - an approximation)
+				auto wears = [&](const UniqueDef* u) {
+					if (!u || !u->keyword || !settings::gear::uniques) { return false; }
+					for (auto* a : worn) { if (a->HasKeyword(u->keyword)) { return true; } }
+					return false;
+				};
+				const float cut = std::max(0.0F, 1.0F - 0.25F * settings::gear::uniqueStrength);
+				GameSettingFactors::Set("fSprintStaminaDrainMult", "Savior's Hide", wears(g_saviorsHide) ? cut : 1.0F);
+				GameSettingFactors::Set("fStaminaBlockDmgMult", "Shield of Ysgramor", wears(g_shieldOfYsgramor) ? cut : 1.0F);
 				std::vector<RE::TESForm*> equipped(worn.begin(), worn.end());
 				for (bool left : { false, true })
 				{
@@ -268,6 +284,52 @@ namespace Gear
 			}
 		};
 		EquipSink g_equip;
+
+		// Spellbreaker: a shield bash by the player on an actor who is casting interrupts the cast and silences 2 s.
+		void HandleBash(RE::ObjectRefHandle a_target)
+		{
+			auto* player = Player();
+			auto ref = a_target.get();
+			auto* target = ref ? ref->As<RE::Actor>() : nullptr;
+			if (!player || !target || !g_spellbreaker || !g_spellbreaker->keyword || !settings::gear::uniques) { return; }
+			auto* left = player->GetEquippedObject(true);
+			auto* shield = left ? left->As<RE::TESObjectARMO>() : nullptr;
+			if (!shield || !shield->HasKeyword(g_spellbreaker->keyword)) { return; }
+			bool interrupted = false;
+			for (auto src : { RE::MagicSystem::CastingSource::kLeftHand, RE::MagicSystem::CastingSource::kRightHand, RE::MagicSystem::CastingSource::kOther })
+			{
+				auto* caster = target->GetMagicCaster(src);
+				if (caster && caster->currentSpell)
+				{
+					logger::debug("gear: Spellbreaker interrupts {:08X} casting {:08X}", target->GetFormID(), caster->currentSpell->GetFormID());
+					caster->InterruptCast(false);
+					interrupted = true;
+				}
+			}
+			if (!interrupted) { return; }
+			if (!g_silence) { logger::warn("gear: Spellbreaker interrupted a cast but the silence spell is missing from the plugin"); return; }
+			if (auto* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant))
+			{
+				caster->CastSpellImmediate(g_silence, false, target, 1.0F, false, 0.0F, player);
+				++g_spellbreakerSilences;
+				logger::info("gear: Spellbreaker's bash silenced {:08X} for 2 s", target->GetFormID());
+			}
+		}
+
+		class HitSink : public RE::BSTEventSink<RE::TESHitEvent>
+		{
+		public:
+			RE::BSEventNotifyControl ProcessEvent(const RE::TESHitEvent* a_e, RE::BSTEventSource<RE::TESHitEvent>*) override
+			{
+				if (!a_e || !a_e->flags.any(RE::TESHitEvent::Flag::kBashAttack) || !a_e->target) { return RE::BSEventNotifyControl::kContinue; }
+				auto* p = Player();
+				if (!p || a_e->cause.get() != p) { return RE::BSEventNotifyControl::kContinue; }
+				const auto target = a_e->target->GetHandle();
+				if (auto* tasks = SKSE::GetTaskInterface()) { tasks->AddTask([target]() { HandleBash(target); }); }
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+		HitSink g_hit;
 
 		class LoadedSink : public RE::BSTEventSink<RE::TESObjectLoadedEvent>
 		{
@@ -426,11 +488,19 @@ namespace Gear
 			}
 		}
 		catch (const std::exception& e) { fail(std::string("gear.json is not in the expected shape: ") + e.what()); return; }
+		g_silence = Resolve<RE::SpellItem>(j.value("helpers", nlohmann::json::object()), "silence", "helpers");
+		for (const auto& u : g_uniques)
+		{
+			if (u.id == "SaviorsHide") { g_saviorsHide = &u; }
+			else if (u.id == "ShieldOfYsgramor") { g_shieldOfYsgramor = &u; }
+			else if (u.id == "Spellbreaker") { g_spellbreaker = &u; }
+		}
 
 		auto* holder = RE::ScriptEventSourceHolder::GetSingleton();
 		if (!holder) { fail("no event source holder - piece counting cannot run"); return; }
 		holder->AddEventSink<RE::TESEquipEvent>(&g_equip);
 		holder->AddEventSink<RE::TESObjectLoadedEvent>(&g_loaded);
+		holder->AddEventSink<RE::TESHitEvent>(&g_hit);
 		g_running = true;
 		std::thread(Worker).detach();
 		{
@@ -439,7 +509,7 @@ namespace Gear
 			for (const auto& s : g_sets) { g_snapshot.sets.push_back({ s.name, 0, false, false, s.keyword && s.ability2 && s.ability4 }); }
 			for (const auto& u : g_uniques) { g_snapshot.uniques.push_back({ u.id, u.name, false, u.keyword && u.perk && u.ability }); }
 		}
-		logger::info("gear: {} sets, {} uniques; {} set and {} unique effects, {} set and {} unique entry points can be scaled; equip and load sinks registered",
+		logger::info("gear: {} sets, {} uniques; {} set and {} unique effects, {} set and {} unique entry points can be scaled; equip, load and hit sinks registered",
 					 g_sets.size(), g_uniques.size(), g_setEffects.size(), g_uniqueEffects.size(), g_setEntries.size(), g_uniqueEntries.size());
 	}
 
@@ -487,6 +557,7 @@ namespace Gear
 		j["uniquesResolved"] = resolved;
 		j["uniquesDefined"] = s.uniques.size();
 		j["recounts"] = s.recounts;
+		j["spellbreakerSilences"] = g_spellbreakerSilences.load();
 		j["abilitiesAdded"] = s.abilitiesAdded;
 		j["abilitiesRemoved"] = s.abilitiesRemoved;
 		j["noEnchant"] = { { "done", s.noEnchantPassDone }, { "uniqueTierItems", s.uniqueTierItems }, { "noEnchantAdded", s.noEnchantAdded }, { "disallowAdded", s.disallowAdded } };

@@ -2,9 +2,11 @@
   // PLAN.md phase 1 step 3: set-membership keywords for the first five unique sets (D14; bonuses in phase 3).
   // The plan does not name the five; these are the vanilla unique armour sets of four pieces, chosen by the build
   // session on 2026-10-26 as PROPOSED - swap any of them freely, the keywords carry no effect until phase 3.
+  // 2026-10-26 (Fable review, Q58): Deathbrand also matches Konungr Gaaf's replacement pieces by name - the owner counts
+  // that mod as vanilla (EQUIPMENT-AUDIT.md section 0).
   { "name": "Nightingale",      "keyword": "NJCGO_Set_Nightingale",     "editorIdPrefixes": [ "ArmorNightingale" ], "nameRegex": "^Nightingale (Armor|Boots|Gloves|Hood)$", "status": "proposed" },
   { "name": "Ancient Shrouded", "keyword": "NJCGO_Set_AncientShrouded", "editorIdPrefixes": [ "DBArmorSP", "DBArmorBootsSP", "DBArmorGlovesSP", "DBArmorHelmetSP" ], "nameRegex": null, "status": "proposed" },
   { "name": "Guild Master's",   "keyword": "NJCGO_Set_GuildMaster",     "editorIdPrefixes": [ "ArmorThievesGuildLeader" ], "nameRegex": "^Guild Master's (Armor|Boots|Gloves|Hood)$", "status": "proposed" },
-  { "name": "Deathbrand",       "keyword": "NJCGO_Set_Deathbrand",      "editorIdPrefixes": [ "DLC2dunHaknirArmor" ], "nameRegex": "^Deathbrand (Armor|Boots|Gauntlets|Helm)$", "status": "proposed" },
+  { "name": "Deathbrand",       "keyword": "NJCGO_Set_Deathbrand",      "editorIdPrefixes": [ "DLC2dunHaknirArmor" ], "nameRegex": "^(Deathbrand (Armor|Boots|Gauntlets|Helm)|Konungr Gaaf .+)$", "status": "proposed" },
   { "name": "Linwe's",          "keyword": "NJCGO_Set_Linwe",           "editorIdPrefixes": [ "ArmorLinwe" ], "nameRegex": "^Linwe's (Armor|Boots|Gloves|Hood)$", "status": "proposed" }
 ]

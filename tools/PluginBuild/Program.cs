@@ -46,6 +46,7 @@ foreach (var g in content["helpers"]?["globals"]?.AsArray() ?? new JsonArray())
 }
 // Phase 3 (gear): the plugin's own keywords by editor ID, and the keyword '@unique' stands for while a unique is built.
 var ownKeywords = new Dictionary<string, FormKey>();
+var races = new Dictionary<string, FormKey>();   // gear-content.json "races" (Skyrim.esm), for GetIsRace
 string? currentUniqueKeyword = null;
 var dllDone = new List<string>();
 var stubs = new List<string>();
@@ -95,6 +96,7 @@ Condition MakeCondition(JsonNode c, string owner)
         "SpellHasKeyword" => MakeKeywordData(new EPMagic_SpellHasKeywordConditionData(), Kw()),
         "EPMagic_SpellHasSkill" => new EPMagic_SpellHasSkillConditionData { ActorValue = Enum.Parse<ActorValue>(c["skill"]!.GetValue<string>()) },
         "GetLightLevel" => new GetLightLevelConditionData(),
+        "GetIsRace" => SetRace(new GetIsRaceConditionData(), races[c["race"]!.GetValue<string>()]),
         "GetGlobalValue" => SetGlobal(new GetGlobalValueConditionData(), helperGlobals[c["global"]!.GetValue<string>()]),        _ => throw new InvalidOperationException($"{owner}: condition {f} is not supported by the plugin build")
     };
     data.RunOnType = Condition.RunOnType.Subject;
@@ -111,6 +113,17 @@ ConditionData SetGlobal(ConditionData d, GlobalShort g)
     if (current is IFormLinkOrIndex<IGlobalGetter> fli) { fli.Link.SetTo(g.FormKey); }
     else if (current is IFormLink<IGlobalGetter> fl) { fl.SetTo(g.FormKey); }
     else { throw new InvalidOperationException("cannot set the global of " + d.GetType().Name); }
+    return d;
+}
+
+// Sets the race parameter of GetIsRace, whichever link type this Mutagen version gives it.
+ConditionData SetRace(ConditionData d, FormKey fk)
+{
+    var prop = d.GetType().GetProperties().First(p => p.Name.Contains("Race") && p.CanWrite);
+    var current = prop.GetValue(d);
+    if (current is IFormLinkOrIndex<IRaceGetter> a) { a.Link.SetTo(fk); }
+    else if (current is IFormLink<IRaceGetter> b) { b.SetTo(fk); }
+    else { throw new InvalidOperationException("cannot set the race of " + d.GetType().Name + " (" + current?.GetType().FullName + ")"); }
     return d;
 }
 
@@ -328,6 +341,10 @@ if (File.Exists(gearPath))
     {
         keywords[name] = new FormKey(skyrim, Convert.ToUInt32(id!.GetValue<string>(), 16));
     }
+    foreach (var (name, id) in gear["races"]?.AsObject() ?? new JsonObject())
+    {
+        races[name] = new FormKey(skyrim, Convert.ToUInt32(id!.GetValue<string>(), 16));
+    }
     var setsOn = new GlobalShort(mod) { EditorID = "NJCGO_Gear_SetsOn", Data = 1 };
     mod.Globals.Add(setsOn);
     var uniquesOn = new GlobalShort(mod) { EditorID = "NJCGO_Gear_UniquesOn", Data = 1 };
@@ -492,6 +509,7 @@ if (File.Exists(gearPath))
         GearEntries(perk, u["effects"]!.AsArray(), () => new() { GlobalOn(uniquesOn), Worn(kw.FormKey) }, "NJCGO_UniPerk_" + uid);
         perk.Effects.Add(new PerkAbilityEffect { Ability = ab.ToLink() });
         currentUniqueKeyword = null;
+        if (u["dll"] is JsonNode udll) { dllDone.Add($"NJCGO_UniPerk_{uid}: {udll.GetValue<string>()}"); }
         var refs = u["forms"]!.AsArray().Select(f =>
         {
             var parts = f!.GetValue<string>().Split('|');
@@ -504,6 +522,34 @@ if (File.Exists(gearPath))
         uniqueForms.Add(new JsonObject { ["id"] = uid, ["name"] = uname, ["keyword"] = Hex(kw), ["perk"] = Hex(perk), ["ability"] = Hex(ab) });
     }
     gearForms["uniques"] = uniqueForms;
+    // Gear helper spells the SKSE plugin casts (Spellbreaker's silence), built last so no earlier form ID moves.
+    var gearHelpers = new JsonObject();
+    foreach (var (hid, def) in gear["helpers"]?.AsObject() ?? new JsonObject())
+    {
+        var spell = mod.Spells.AddNew("NJCGO_GearFx_" + char.ToUpper(hid[0]) + hid[1..]);
+        spell.Name = def!["name"]!.GetValue<string>();
+        spell.Type = SpellType.Spell;
+        spell.CastType = CastType.FireAndForget;
+        spell.TargetType = TargetType.TargetActor;
+        spell.Description = "";
+        var k = 0;
+        foreach (var e in def["effects"]!.AsArray())
+        {
+            var mgef = mod.MagicEffects.AddNew($"NJCGO_GearFxEf_{hid}_{k++}");
+            mgef.Name = spell.Name.String;
+            mgef.Archetype = new MagicEffectArchetype(MagicEffectArchetype.TypeEnum.ValueModifier) { ActorValue = Enum.Parse<ActorValue>(e!["av"]!.GetValue<string>()) };
+            var duration = e["duration"]?.GetValue<int>() ?? 0;
+            mgef.CastType = CastType.FireAndForget;
+            mgef.TargetType = TargetType.TargetActor;
+            mgef.Flags = MagicEffect.Flag.NoArea | MagicEffect.Flag.Detrimental | MagicEffect.Flag.Hostile | (duration == 0 ? MagicEffect.Flag.NoDuration : MagicEffect.Flag.Recover);
+            mgef.MagicSkill = ActorValue.None;
+            mgef.ResistValue = ActorValue.None;
+            mgef.SecondActorValue = ActorValue.None;
+            spell.Effects.Add(new Effect { BaseEffect = mgef.ToNullableLink(), Data = new EffectData { Magnitude = e["magnitude"]!.GetValue<float>(), Area = 0, Duration = duration } });
+        }
+        gearHelpers[hid] = Hex(spell);
+    }
+    gearForms["helpers"] = gearHelpers;
     forms["gear"] = gearForms;
     File.WriteAllText(Path.Combine(repo, "data", "NjordlingerCGO_Gear_DISTR.ini"), string.Join("\r\n", distr) + "\r\n");
     File.WriteAllText(Path.Combine(repo, "data", "NjordlingerCGO_Uniques_KID.ini"), string.Join("\r\n", kid) + "\r\n");

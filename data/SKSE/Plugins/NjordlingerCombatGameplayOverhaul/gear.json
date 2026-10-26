@@ -161,43 +161,46 @@
       "id": "SaviorsHide",
       "name": "Savior's Hide",
       "keyword": "0x914",
-      "perk": "0x918",
+      "perk": "0x917",
       "ability": "0x915"
     },
     {
       "id": "MasqueOfClavicusVile",
       "name": "Masque of Clavicus Vile",
-      "keyword": "0x919",
-      "perk": "0x91C",
-      "ability": "0x91A"
+      "keyword": "0x918",
+      "perk": "0x91B",
+      "ability": "0x919"
     },
     {
       "id": "RingOfNamira",
       "name": "Ring of Namira",
-      "keyword": "0x91D",
-      "perk": "0x920",
-      "ability": "0x91E"
+      "keyword": "0x91C",
+      "perk": "0x91F",
+      "ability": "0x91D"
     },
     {
       "id": "RingOfHircine",
       "name": "Ring of Hircine",
-      "keyword": "0x921",
-      "perk": "0x924",
-      "ability": "0x922"
+      "keyword": "0x920",
+      "perk": "0x923",
+      "ability": "0x921"
     },
     {
       "id": "GauldurAmulet",
       "name": "The Gauldur Amulet",
-      "keyword": "0x925",
-      "perk": "0x92A",
-      "ability": "0x926"
+      "keyword": "0x924",
+      "perk": "0x927",
+      "ability": "0x925"
     },
     {
       "id": "SavosArensAmulet",
       "name": "Savos Aren's Amulet",
-      "keyword": "0x92B",
-      "perk": "0x92E",
-      "ability": "0x92C"
+      "keyword": "0x928",
+      "perk": "0x92B",
+      "ability": "0x929"
     }
-  ]
+  ],
+  "helpers": {
+    "silence": "0x92C"
+  }
 }

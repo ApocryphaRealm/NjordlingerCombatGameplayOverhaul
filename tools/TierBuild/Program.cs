@@ -41,6 +41,7 @@ namespace TierBuild
         public string[] UniqueSourcePlugins { get; set; } = Array.Empty<string>();   // a plugin whose every weapon/armour is an artefact
         public string[] ExcludedPlugins { get; set; } = Array.Empty<string>();
         public int ItemsPerLine { get; set; } = 60;
+        public bool SetPiecesAreUnique { get; set; } = false;   // sets.json pieces -> unique tier (Q58)
     }
     public class Band { public int MaxLevel { get; set; } public string Tier { get; set; } = ""; }
     public class SetDef { public string Name { get; set; } = ""; public string Keyword { get; set; } = ""; public string[] EditorIdPrefixes { get; set; } = Array.Empty<string>(); public string? NameRegex { get; set; } public string Status { get; set; } = ""; }
@@ -247,6 +248,11 @@ namespace TierBuild
             // 5. tier per base item: unique rules, then recipe level, then temper level; material fallback after
             var reason = new Dictionary<FormKey, string>();
             var uniques = new List<Item>();
+            // Q58 (Fable review / Main Agent, 2026-10-26): a named set's pieces are named uniques - unique tier
+            var setPieces = cfg.SetPiecesAreUnique
+                ? Load<List<SetDef>>("sets.json").SelectMany(sd => SetPieces(state, sd)).Select(a => a.FormKey).ToHashSet()
+                : new HashSet<FormKey>();
+            R($"set pieces made unique: {setPieces.Count}");
             foreach (var it in items.Values)
             {
                 if (excluded.Contains(it.Key.ModKey)) { reason[it.Key] = "excluded (Q47)"; continue; }
@@ -254,6 +260,7 @@ namespace TierBuild
                 bool unique = Listed(it.Edid) || fromSource.Contains(it.Key) || it.Keywords.Any(uniqueKw.Contains)
                               || (it.Enchanted && !inLists.Contains(it.Key) && !createdByAnyRecipe.Contains(it.Key) && !usedAsTemplate.Contains(it.Key));
                 if (uExcRx != null && uExcRx.IsMatch(it.Edid) && !Listed(it.Edid)) unique = false;
+                if (setPieces.Contains(it.Key)) { TierOf[it.Key] = "Unique"; reason[it.Key] = "unique: set piece"; uniques.Add(it); continue; }
                 if (unique) { TierOf[it.Key] = "Unique"; reason[it.Key] = Listed(it.Edid) ? "unique: listed" : fromSource.Contains(it.Key) ? "unique: artefact plugin" : it.Keywords.Any(uniqueKw.Contains) ? "unique: keyword" : "unique: enchanted, not in any list, no recipe"; uniques.Add(it); continue; }
                 if (craftLvl.TryGetValue(it.Key, out var cl)) { TierOf[it.Key] = TierForLevel(cl); reason[it.Key] = $"recipe level {cl}"; continue; }
                 if (temperLvl.TryGetValue(it.Key, out var tl) && tl > 0) {   // a temper recipe with no material perk says nothing
@@ -294,6 +301,7 @@ namespace TierBuild
                 if (!TierOf.TryGetValue(root.Key, out var t))
                     t = "Common";
                 if (fromSource.Contains(it.Key) && !(uExcRx != null && uExcRx.IsMatch(it.Edid))) t = "Unique";
+                if (setPieces.Contains(it.Key)) t = "Unique";
                 if (t == "Unique") t = "Unique";
                 TierOf[it.Key] = t; reason[it.Key] = $"variant of {root.Edid}"; variants++;
             }
@@ -327,6 +335,19 @@ namespace TierBuild
         record Item(FormKey Key, string Edid, string Name, string Type, FormKey? Template, bool Enchanted, List<FormKey> Keywords);
 
         // ---------------------------------------------------------------- sets
+        // The pieces of one set: playable armour whose EditorID starts with one of the set's prefixes or whose name matches
+        // its regex (a replacer such as Konungr Gaaf for Deathbrand is matched by name). Used by the set keywords AND by the
+        // tier rule (2026-10-26, Q58: set pieces are unique-tier).
+        static List<IArmorGetter> SetPieces(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, SetDef s)
+        {
+            var re = s.NameRegex == null ? null : new Regex(s.NameRegex);
+            return state.LoadOrder.PriorityOrder.Armor().WinningOverrides()
+                .Where(a => !a.MajorFlags.HasFlag(Armor.MajorFlag.NonPlayable))
+                .Where(a => (a.EditorID != null && s.EditorIdPrefixes.Any(p => a.EditorID.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
+                         || (re != null && a.Name?.String != null && re.IsMatch(a.Name.String)))
+                .OrderBy(a => a.FormKey.ModKey.FileName.String).ThenBy(a => a.FormKey.ID).ToList();
+        }
+
         static void Sets(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
             var sets = Load<List<SetDef>>("sets.json");
@@ -336,12 +357,7 @@ namespace TierBuild
             R("\n## Sets");
             foreach (var s in sets)
             {
-                var re = s.NameRegex == null ? null : new Regex(s.NameRegex);
-                var hits = state.LoadOrder.PriorityOrder.Armor().WinningOverrides()
-                    .Where(a => !a.MajorFlags.HasFlag(Armor.MajorFlag.NonPlayable))
-                    .Where(a => (a.EditorID != null && s.EditorIdPrefixes.Any(p => a.EditorID.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
-                             || (re != null && a.Name?.String != null && re.IsMatch(a.Name.String)))
-                    .OrderBy(a => a.FormKey.ModKey.FileName.String).ThenBy(a => a.FormKey.ID).ToList();
+                var hits = SetPieces(state, s);
                 R($"{s.Name} ({s.Keyword}, {s.Status}): {hits.Count} pieces - {string.Join("; ", hits.Select(h => h.Name?.String + " [" + h.EditorID + "]"))}");
                 if (hits.Count == 0) { sb.AppendLine($"; {s.Name}: no pieces found in this load order"); continue; }
                 sb.AppendLine($"\n; {s.Name} - {s.Status}");

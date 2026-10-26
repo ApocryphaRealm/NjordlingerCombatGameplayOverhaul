@@ -3,6 +3,7 @@
 #include "ClassEffects.h"
 
 #include "ClassData.h"
+#include "GameSettingFactors.h"
 #include "Settings.h"
 
 #include "utils/Logger.h"
@@ -52,7 +53,6 @@ namespace ClassEffects
 		std::set<RE::ActiveEffect*> g_lengthened;
 		std::vector<RE::TESFaction*> g_crimeFactions;
 		std::unordered_map<RE::FormID, float> g_bountySeen;   // faction -> seconds a small bounty has stood out of combat
-		float g_sprintVanilla = -1.0F;
 		bool g_sprintApplied = false;
 		std::set<RE::FormID> g_followersBuffed;
 		int g_tickCount = 0;
@@ -660,18 +660,13 @@ namespace ClassEffects
 					}
 				}
 			}
-			if (auto* gs = RE::GameSettingCollection::GetSingleton())
 			{
-				if (auto* drain = gs->GetSetting("fSprintStaminaDrainMult"))
+				// Long Legs: the sprint-drain setting, through the one writer it shares with Savior's Hide (Gear)
+				const bool want = OwnsRank("scout", 0, 1);
+				if (want != g_sprintApplied)
 				{
-					if (g_sprintVanilla < 0.0F) { g_sprintVanilla = drain->data.f; }
-					const bool want = OwnsRank("scout", 0, 1);
-					if (want != g_sprintApplied)
-					{
-						drain->data.f = want ? g_sprintVanilla * 0.75F : g_sprintVanilla;
-						g_sprintApplied = want;
-						logger::info("class effects: fSprintStaminaDrainMult {} ({:.3f})", want ? "lowered for Long Legs" : "restored", drain->data.f);
-					}
+					GameSettingFactors::Set("fSprintStaminaDrainMult", "Long Legs", want ? 0.75F : 1.0F);
+					g_sprintApplied = want;
 				}
 			}
 			if (g_restedUntil.load() >= 0.0F)

@@ -62,5 +62,9 @@
     "[Orimagen]GoamEarrings.esp", "RVX Argonian Koi Whiskers.esp", "[Witchy] The Horniest Mod Ever.esp", "MagicTweaks.esl",
     "talkToSummons.esp", "ReadTheRoom.esp", "FEC.esp", "Immersive Death Cycle.esp", "COR_AllRace.esp", "Byzantium Serana.esp"
   ],
-  "itemsPerLine": 60
+  "itemsPerLine": 60,
+
+  // Q58 (owner default, Fable review 2026-10-26): the pieces of every set in sets.json are unique-tier (red, three slots,
+  // cannot be enchanted) - a named set is named uniques.
+  "setPiecesAreUnique": true
 }
