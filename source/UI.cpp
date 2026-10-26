@@ -16,12 +16,14 @@
 #include "Settings.h"
 #include "SkillList.h"
 #include "Skills.h"
+#include "SoulStones.h"
 
 #include "utils/Logger.h"
 #include "utils/Strings.h"
 #include "utils/Toggle.h"
 
 #include <algorithm>
+#include <chrono>
 #include <functional>
 #include <mutex>
 #include <string>
@@ -108,7 +110,12 @@ namespace UI
 				"igGetFrameHeight",
 				"igInvisibleButton",
 				"ImDrawList_AddRectFilled",
-				"ImDrawList_AddCircleFilled"
+				"ImDrawList_AddCircleFilled",
+				"igSelectable_Bool",     // the Soul Stones page
+				"igBeginChild_Str",
+				"igEndChild",
+				"igTextColoredV",
+				"igSmallButton"
 			};
 			for (const char* name : required)
 			{
@@ -251,6 +258,7 @@ namespace UI
 		SKSEMenuFramework::AddSectionItem("Classes", Pages::Classes);
 		SKSEMenuFramework::AddSectionItem("Quest Rewards", Pages::QuestRewards);
 		SKSEMenuFramework::AddSectionItem("Gear", Pages::Gear);
+		SKSEMenuFramework::AddSectionItem("Soul Stones", Pages::SoulStones);
 		logger::info("Registered the settings pages with the menu framework");
 	}
 
@@ -479,6 +487,167 @@ namespace UI
 		if (worn == 0) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_GearNoUniqueWorn", "No unique with an effect of its own is worn.")); }
 		ImGuiMCP::TextDisabled(strings::TR("NJ_GearNoEnchantLine", "Unique items that cannot be enchanted: %u"), g.uniqueTierItems);
 		ImGuiMCP::PopItemWidth();
+		RenderButtons();
+	}
+
+	// PLAN.md phase 4 step 4 (Q13): the socketing page - the eligible items, a slot list in word order, the stones you
+	// carry with what each does in THIS item, the phrase the slots spell (highlighted when you know it), take out.
+	// Every action is a request the main thread runs; the page draws the module's snapshot.
+	void __stdcall Pages::SoulStones()
+	{
+		strings::Tick();
+		using namespace settings;
+		static std::string selectedKey;
+		static int targetSlot = 0;
+		static auto lastAsk = std::chrono::steady_clock::now() - std::chrono::seconds(10);
+		const auto now = std::chrono::steady_clock::now();
+		if (now - lastAsk > std::chrono::milliseconds(750))
+		{
+			::SoulStones::RequestRefresh();
+			lastAsk = now;
+		}
+		const auto s = ::SoulStones::GetSnapshot();
+		auto tierName = [](int a_t) {
+			static const char* keys[] = { "NJ_SS_Tier0", "NJ_SS_Tier1", "NJ_SS_Tier2", "NJ_SS_Tier3", "NJ_SS_Tier4" };
+			static const char* en[] = { "Petty", "Lesser", "Common", "Greater", "Grand" };
+			return (a_t >= 0 && a_t < 5) ? strings::TR(keys[a_t], en[a_t]) : "";
+		};
+		auto hostName = [](::SoulStones::Host a_h) {
+			switch (a_h)
+			{
+			case ::SoulStones::Host::kMelee: return strings::TR("NJ_SS_HostMelee", "melee weapon");
+			case ::SoulStones::Host::kRanged: return strings::TR("NJ_SS_HostRanged", "bow or crossbow");
+			case ::SoulStones::Host::kArmour: return strings::TR("NJ_SS_HostArmour", "armour");
+			default: return "";
+			}
+		};
+		const ImGuiMCP::ImVec4 known{ 0.45F, 0.85F, 0.45F, 1.0F };
+		const ImGuiMCP::ImVec4 unknown{ 0.95F, 0.75F, 0.35F, 1.0F };
+
+		if (!s.loaded)
+		{
+			ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_NotLoaded", "The soul stone table could not be read, so stones do nothing. See the log."));
+			if (!s.error.empty()) { ImGuiMCP::TextWrapped("%s", s.error.c_str()); }
+			RenderButtons();
+			return;
+		}
+		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_Intro", "A soul stone is a word of the dragon tongue. Magic gear has one slot, epic two, legendary and unique three; staves take none. Each stone acts for the item it sits in, and three stones of one Shout in word order add its phrase once you have unlocked all three words."));
+		if (s.serviceOpen) { ImGuiMCP::TextColored(known, "%s", strings::TR("NJ_SS_ServiceOpen", "The runesmith is at work: set and take out stones below.")); }
+		else { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_ServiceClosed", "Stones are set and taken out only at the runesmith. Here you can see what your gear carries.")); }
+		ImGuiMCP::TextDisabled(strings::TR("NJ_SS_FeeLine", "Fee: one soul gem of the stone's tier for each stone set or taken out. You carry %d / %d / %d / %d / %d (petty to grand)."),
+							   s.feeGems[0], s.feeGems[1], s.feeGems[2], s.feeGems[3], s.feeGems[4]);
+
+		ImGuiMCP::SeparatorText(strings::TR("NJ_SS_ItemsTitle", "Your gear with slots"));
+		if (s.items.empty())
+		{
+			ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoItems", "Nothing in your pack has a stone slot."));
+		}
+		const ::SoulStones::ItemView* sel = nullptr;
+		for (const auto& it : s.items) { if (it.key == selectedKey) { sel = &it; } }
+		if (!sel && !s.items.empty()) { sel = &s.items.front(); selectedKey = sel->key; }
+		if (ImGuiMCP::BeginChild("njss_items", ImGuiMCP::ImVec2(330.0F, 260.0F), true))
+		{
+			for (const auto& it : s.items)
+			{
+				std::string marks;
+				for (int k = 0; k < it.slots; ++k) { marks += it.stones[k].word >= 0 ? s.words[it.stones[k].word] : std::string("-"); marks += k + 1 < it.slots ? " " : ""; }
+				const std::string label = (it.equipped ? "* " : "  ") + it.name + (it.count > 1 ? " (" + std::to_string(it.count) + ")" : "") + "  [" + marks + "]##" + it.key;
+				if (ImGuiMCP::Selectable(label.c_str(), it.key == selectedKey)) { selectedKey = it.key; targetSlot = 0; }
+			}
+		}
+		ImGuiMCP::EndChild();
+		ImGuiMCP::SameLine();
+		if (ImGuiMCP::BeginChild("njss_detail", ImGuiMCP::ImVec2(0.0F, 260.0F), true) && sel)
+		{
+			ImGuiMCP::Text("%s", sel->name.c_str());
+			ImGuiMCP::TextDisabled(strings::TR("NJ_SS_ItemLine", "A %s with %d slot(s)."), hostName(sel->host), sel->slots);
+			if (sel->key.find(":plain") != std::string::npos) { ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_PlainHint", "This is a plain stack: wear or wield one of them once, then come back to set a stone.")); }
+			if (targetSlot >= sel->slots) { targetSlot = 0; }
+			for (int k = 0; k < sel->slots; ++k)
+			{
+				const auto& st = sel->stones[k];
+				std::string label;
+				if (st.word >= 0)
+				{
+					char buf[160];
+					std::snprintf(buf, sizeof(buf), strings::TR("NJ_SS_SlotFull", "Slot %d: %s (%s)"), k + 1, s.words[st.word].c_str(), tierName(st.tier));
+					label = buf;
+				}
+				else
+				{
+					char buf[160];
+					std::snprintf(buf, sizeof(buf), strings::TR("NJ_SS_SlotEmpty", "Slot %d: empty"), k + 1);
+					label = buf;
+				}
+				label += "##slot" + std::to_string(k);
+				if (ImGuiMCP::Selectable(label.c_str(), targetSlot == k)) { targetSlot = k; }
+				if (st.word >= 0)
+				{
+					ImGuiMCP::TextDisabled("    %s", ::SoulStones::CellText(st.word, sel->host).c_str());
+					if (s.serviceOpen)
+					{
+						ImGuiMCP::SameLine();
+						const std::string b = std::string(strings::TR("NJ_SS_TakeOut", "Take out")) + "##out" + std::to_string(k);
+						if (ImGuiMCP::SmallButton(b.c_str())) { ::SoulStones::RequestUnsocket(sel->key, k); }
+					}
+				}
+			}
+			if (sel->phrase >= 0)
+			{
+				if (sel->phraseKnown) { ImGuiMCP::TextColored(known, strings::TR("NJ_SS_PhraseActive", "The stones spell %s: the phrase is active."), ::SoulStones::PhraseName(sel->phrase).c_str()); }
+				else { ImGuiMCP::TextColored(unknown, "%s", strings::TR("NJ_SS_PhraseUnknown", "The stones spell a phrase you do not yet know.")); }
+			}
+		}
+		ImGuiMCP::EndChild();
+
+		if (sel && s.serviceOpen && sel->stones[targetSlot].word < 0 && sel->key.find(":plain") == std::string::npos)
+		{
+			char title[160];
+			std::snprintf(title, sizeof(title), strings::TR("NJ_SS_StonesTitle", "Your stones - into slot %d"), targetSlot + 1);
+			ImGuiMCP::SeparatorText(title);
+			if (s.stones.empty()) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoStones", "You carry no soul stones. They are found in boss chests and sold where soul gems are sold.")); }
+			for (const auto& v : s.stones)
+			{
+				// the known-phrase highlight: this stone continues, in this slot, a phrase whose three words you have learned
+				const int ph = ::SoulStones::PhraseOfWord(v.word);
+				bool continues = false;
+				if (ph >= 0 && ph < static_cast<int>(s.phrases.size()) && s.phrases[ph].learned == 3 && s.phrases[ph].words[targetSlot] == v.word)
+				{
+					continues = true;
+					for (int k = 0; k < targetSlot; ++k) { continues &= sel->stones[k].word == s.phrases[ph].words[k]; }
+				}
+				const std::string b = std::string(strings::TR("NJ_SS_Set", "Set")) + "##set" + std::to_string(v.word) + "_" + std::to_string(v.tier);
+				if (ImGuiMCP::SmallButton(b.c_str())) { ::SoulStones::RequestSocket(sel->key, targetSlot, v.word, v.tier); }
+				ImGuiMCP::SameLine();
+				if (continues) { ImGuiMCP::TextColored(known, "%s (%s) x%d - %s", s.words[v.word].c_str(), tierName(v.tier), v.count, ::SoulStones::CellText(v.word, sel->host).c_str()); }
+				else { ImGuiMCP::Text("%s (%s) x%d - %s", s.words[v.word].c_str(), tierName(v.tier), v.count, ::SoulStones::CellText(v.word, sel->host).c_str()); }
+			}
+		}
+		if (!s.lastResult.empty()) { ImGuiMCP::TextWrapped("%s", s.lastResult.c_str()); }
+
+		ImGuiMCP::SeparatorText(strings::TR("NJ_SS_PhrasesTitle", "Phrases you know"));
+		int shown = 0;
+		for (std::size_t i = 0; i < s.phrases.size(); ++i)
+		{
+			const auto& p = s.phrases[i];
+			if (p.learned < 3) { continue; }   // the blueprint: a phrase is named only once all three words are learned
+			++shown;
+			const auto name = ::SoulStones::PhraseName(static_cast<int>(i));
+			if (p.unlocked) { ImGuiMCP::TextColored(known, strings::TR("NJ_SS_PhraseUnlocked", "%s (%s) - unlocked: works in any item"), name.c_str(), p.shout.c_str()); }
+			else { ImGuiMCP::Text(strings::TR("NJ_SS_PhraseLearned", "%s (%s) - learned: unlock all three words with dragon souls to make it work"), name.c_str(), p.shout.c_str()); }
+			if (p.granted > 0) { ImGuiMCP::TextDisabled(strings::TR("NJ_SS_Granted", "    your armour's stones let you shout it: %d word(s)"), p.granted); }
+		}
+		if (shown == 0) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoPhrases", "You have not learned all three words of any Shout yet.")); }
+
+		ImGuiMCP::SeparatorText(strings::TR("NJ_SS_SettingsTitle", "Settings"));
+		if (ImGuiMCP::Toggle(strings::TR("NJ_SS_Enabled", "Soul stones"), &stones::enabled)) { ::SoulStones::RequestRecompose(); }
+		HelpMarker(strings::TR("NJ_SS_HelpEnabled", "Off: socketed stones do nothing and items show only their own enchantment; the stones stay in their slots."));
+		if (ImGuiMCP::Toggle(strings::TR("NJ_SS_NameSlots", "Words in item names"), &stones::nameSlots)) { ::SoulStones::RequestRecompose(); }
+		HelpMarker(strings::TR("NJ_SS_HelpNameSlots", "A socketed item's name ends with its words, for example Elven Sword [Yol Fo -]."));
+		if (ImGuiMCP::Toggle(strings::TR("NJ_SS_NameDragon", "Dragon letters in names"), &stones::nameDragonLetters)) { ::SoulStones::RequestRecompose(); }
+		HelpMarker(strings::TR("NJ_SS_HelpNameDragon", "Writes those words in the dragon alphabet. Only for inventories that draw font tags in item names; others show the tags as text."));
+		if (ImGuiMCP::Toggle(strings::TR("NJ_SS_Glow", "Weapon glow"), &stones::weaponGlow)) { ::SoulStones::RequestRecompose(); }
+		HelpMarker(strings::TR("NJ_SS_HelpGlow", "A drawn weapon glows in the colour of its best stone's tier."));
 		RenderButtons();
 	}
 }

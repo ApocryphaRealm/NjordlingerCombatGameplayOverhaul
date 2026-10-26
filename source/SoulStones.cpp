@@ -5,6 +5,9 @@
 #include "Settings.h"
 
 #include "utils/Logger.h"
+#include "utils/Strings.h"
+
+#include <cstdarg>
 
 #include <nlohmann/json.hpp>
 
@@ -163,6 +166,25 @@ namespace SoulStones
 			logger::info("soul stones: {}", a_text);
 			std::scoped_lock l(g_lock);
 			g_snapshot.lastResult = std::move(a_text);
+		}
+
+		// A player-facing line in the active language (printf-style, as the translation files carry it).
+		std::string Say(const char* a_key, const char* a_english, ...)
+		{
+			const std::string fmtText = strings::TR(a_key, a_english);
+			char buf[512];
+			va_list args;
+			va_start(args, a_english);
+			std::vsnprintf(buf, sizeof(buf), fmtText.c_str(), args);
+			va_end(args);
+			return buf;
+		}
+
+		std::string TierName(int a_tier)
+		{
+			static const char* keys[] = { "NJ_SS_Tier0", "NJ_SS_Tier1", "NJ_SS_Tier2", "NJ_SS_Tier3", "NJ_SS_Tier4" };
+			static const char* en[] = { "Petty", "Lesser", "Common", "Greater", "Grand" };
+			return (a_tier >= 0 && a_tier < kTiers) ? std::string(strings::TR(keys[a_tier], en[a_tier])) : std::string();
 		}
 
 		// "0x812" = our plugin, "Skyrim.esm|0x1234" = another; nullptr (logged) when it does not resolve.
@@ -984,7 +1006,7 @@ namespace SoulStones
 					return true;
 				}
 			}
-			a_why = fmt::format("the fee is one {} soul gem, and you carry none", g_t.tierNames[a_tier]);
+			a_why = Say("NJ_SS_RFee", "The fee is one %s soul gem, and you carry none.", TierName(a_tier).c_str());
 			return false;
 		}
 
@@ -1000,7 +1022,7 @@ namespace SoulStones
 		RE::ExtraDataList* Individualise(RE::TESBoundObject* a_obj, RE::InventoryEntryData*& a_entry)
 		{
 			a_entry = nullptr;
-			SetResult(fmt::format("{} is still part of a plain stack - wear or wield it once, then set the stone", a_obj ? a_obj->GetName() : "the item"));
+			SetResult(Say("NJ_SS_RPlain", "%s is still part of a plain stack - wear or wield it once, then set the stone.", a_obj ? a_obj->GetName() : ""));
 			return nullptr;
 		}
 
@@ -1035,47 +1057,47 @@ namespace SoulStones
 		void DoSocket(std::string a_key, int a_slot, int a_word, int a_tier, bool a_unsocket)
 		{
 			auto* p = Player();
-			if (!g_t.loaded || !p) { SetResult("the soul stone table is not loaded"); return; }
-			if (!g_service.load()) { SetResult("stones are set and taken out only at the runesmith"); BuildSnapshot(); return; }
+			if (!g_t.loaded || !p) { SetResult(Say("NJ_SS_RNotLoaded", "The soul stone table is not loaded - see the log.")); return; }
+			if (!g_service.load()) { SetResult(Say("NJ_SS_RService", "Stones are set and taken out only at the runesmith.")); BuildSnapshot(); return; }
 			RE::TESBoundObject* obj = nullptr;
 			if (!a_unsocket)
 			{
-				if (a_word < 0 || a_word >= static_cast<int>(g_t.words.size()) || a_tier < 0 || a_tier >= kTiers) { SetResult("no such stone"); return; }
+				if (a_word < 0 || a_word >= static_cast<int>(g_t.words.size()) || a_tier < 0 || a_tier >= kTiers) { SetResult(Say("NJ_SS_RNoSuchStone", "There is no such stone.")); return; }
 				auto* stone = g_t.words[a_word].stones[a_tier];
-				if (!stone || CountOf(stone) <= 0) { SetResult("you carry no such stone"); BuildSnapshot(); return; }
-				if (!HasFee(a_tier)) { SetResult(fmt::format("the fee is one {} soul gem, and you carry none", g_t.tierNames[a_tier])); BuildSnapshot(); return; }
+				if (!stone || CountOf(stone) <= 0) { SetResult(Say("NJ_SS_RNoStone", "You carry no such stone.")); BuildSnapshot(); return; }
+				if (!HasFee(a_tier)) { SetResult(Say("NJ_SS_RFee", "The fee is one %s soul gem, and you carry none.", TierName(a_tier).c_str())); BuildSnapshot(); return; }
 				obj = BaseOfKey(a_key);
-				if (!obj || a_slot < 0 || a_slot >= SlotsOf(obj)) { SetResult("that item has no such slot"); BuildSnapshot(); return; }
+				if (!obj || a_slot < 0 || a_slot >= SlotsOf(obj)) { SetResult(Say("NJ_SS_RNoSlot", "That item has no such slot.")); BuildSnapshot(); return; }
 			}
 			std::string key;
 			auto* x = Resolve(a_key, obj, key);
 			if (!x || !obj)
 			{
-				if (a_key.find(":plain") == std::string::npos) { SetResult("the item was not found in your inventory"); }
+				if (a_key.find(":plain") == std::string::npos) { SetResult(Say("NJ_SS_RNoItem", "The item was not found in your pack.")); }
 				BuildSnapshot();
 				return;
 			}
 			const int slots = SlotsOf(obj);
-			if (a_slot < 0 || a_slot >= slots) { SetResult("that item has no such slot"); BuildSnapshot(); return; }
+			if (a_slot < 0 || a_slot >= slots) { SetResult(Say("NJ_SS_RNoSlot", "That item has no such slot.")); BuildSnapshot(); return; }
 			auto it = g_entries.find(key);
 			std::string why;
 			if (a_unsocket)
 			{
-				if (it == g_entries.end() || it->second.stones[a_slot].word < 0) { SetResult("that slot is empty"); BuildSnapshot(); return; }
+				if (it == g_entries.end() || it->second.stones[a_slot].word < 0) { SetResult(Say("NJ_SS_REmpty", "That slot is empty.")); BuildSnapshot(); return; }
 				const auto s = it->second.stones[a_slot];
 				if (!PayFee(s.tier, why)) { SetResult(why); BuildSnapshot(); return; }
 				if (auto* stone = g_t.words[s.word].stones[s.tier]) { p->AddObjectToContainer(stone, nullptr, 1, nullptr); }
 				it->second.stones[a_slot] = {};
-				SetResult(fmt::format("{} ({}) taken out of {} - the stone is back in your pack", g_t.words[s.word].name, g_t.tierNames[s.tier], obj->GetName()));
+				SetResult(Say("NJ_SS_RTaken", "%s (%s) taken out of %s - the stone is back in your pack.", g_t.words[s.word].name.c_str(), TierName(s.tier).c_str(), obj->GetName()));
 			}
 			else
 			{
 				if (it == g_entries.end()) { it = g_entries.emplace(key, NewEntry(obj, x)).first; }
-				if (it->second.stones[a_slot].word >= 0) { SetResult("that slot holds a stone already - take it out first"); BuildSnapshot(); return; }
+				if (it->second.stones[a_slot].word >= 0) { SetResult(Say("NJ_SS_RFull", "That slot holds a stone already - take it out first.")); BuildSnapshot(); return; }
 				if (!PayFee(a_tier, why)) { SetResult(why); BuildSnapshot(); return; }
 				p->RemoveItem(g_t.words[a_word].stones[a_tier], 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				it->second.stones[a_slot] = { a_word, a_tier };
-				SetResult(fmt::format("{} ({}) set into slot {} of {}", g_t.words[a_word].name, g_t.tierNames[a_tier], a_slot + 1, obj->GetName()));
+				SetResult(Say("NJ_SS_RSet", "%s (%s) set into slot %d of %s.", g_t.words[a_word].name.c_str(), TierName(a_tier).c_str(), a_slot + 1, obj->GetName()));
 			}
 			const bool changed = Compose(obj, x, it->second);
 			bool any = false;
