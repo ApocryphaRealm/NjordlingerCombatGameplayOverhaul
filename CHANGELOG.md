@@ -17,13 +17,22 @@
   Adept classes of the lineage (a hybrid opens its second group), two rank paths at Expert and Master, and at
   Legendary a title whose questline you have finished (Harbinger, Archmage, Listener, Nightingale, Dragonborn).
 - **Quest rewards**: the main quest's and the Miraak line's quests pay a perk point each, once per character.
-- **NjordlingerCombatGameplayOverhaul.esp** (light): the group and class globals, class keywords and five class
-  abilities (Warrior, Mage, Knight, Sorcerer, Scout).
-- Eleven languages for every string of the pages and notices.
+- **The class tree**: Warrior to Knight or Barbarian, Mage to Sorcerer or Healer, Thief to Assassin or Archer; then
+  Crusader or Spellsword (Knight), Rogue or Scout (Barbarian), Battlemage or Nightblade (Sorcerer), Witchhunter or Monk
+  (Healer), Agent or Nightblade (Assassin), Scout or Witchhunter (Archer). Every class has its own ability, kept for
+  good as the class evolves; the Archer's Archery stays with the Scout or Witchhunter it becomes.
+- **Rank perks**: at Expert, Master and Legendary each Adept class offers two perks (54 in all). At Legendary a title
+  you have earned takes the place of the last pair - Harbinger, Archmage, Listener, Nightingale, Dragonborn or Hero of
+  Old, each with its own ability; every title you earn applies.
+- **The skills menu** shows your class line, and when your class can evolve it offers the two choices (or Later).
+- **NjordlingerCombatGameplayOverhaul.esp** (light): the group and class globals, class keywords, and the abilities,
+  title abilities and rank perks as perks.
+- Eleven languages for every string of the pages, notices and perks shown on the pages.
 
 ### Not yet in this build
-- The rank perks of the Expert and Master paths, most class abilities, and the stats-menu class line (the class line
-  and the evolution choice are on the Classes tab meanwhile).
+- 33 of the class, title and rank effects need scripts or events this build does not have (procs, cooldowns, kill
+  and hit triggers): those perks exist and are named but do nothing yet; 11 more are close readings of their design
+  line ("undetected" is sneaking). The list is generated/plugin-forms.json.
 
 ### Added (phase 1 - data layer)
 - **Item tiers (phase 1 data layer).** Every playable weapon and armour piece gets one tier keyword from Keyword Item

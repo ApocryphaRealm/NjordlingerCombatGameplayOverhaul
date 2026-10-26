@@ -12,7 +12,11 @@ WHAT IS IN THIS BUILD
   cannot be taken and do nothing, and their crafting station refuses you (forge, grindstone and workbench for warriors,
   enchanting table for mages, alchemy lab for thieves). Class levels come from your class's own skills; every 10 class
   levels the class evolves - Novice, Apprentice, Adept, Expert, Master, Legendary - and each time you choose one of two
-  options for good. A hybrid class opens its second group.
+  options for good: Knight or Barbarian, Sorcerer or Healer, Assassin or Archer; then one of nine Adept classes
+  (Crusader, Spellsword, Rogue, Scout, Battlemage, Nightblade, Witchhunter, Monk, Agent - a hybrid opens its second
+  group); then a rank perk at Expert and Master; and at Legendary a title you have earned (Harbinger, Archmage, Listener,
+  Nightingale, Dragonborn, Hero of Old) or a last rank perk. Every class you have been keeps its ability. The skills
+  menu shows your class line and offers the evolution when it is due.
 - Quest rewards: the main quest and the Miraak line pay perk points once per character (Quest Rewards tab).
 - Item tiers (colours through Inventory Interface Information Injector), unique set keywords and NPC levels by lore
   tier (Keyword Item Distributor, SkyPatcher).
