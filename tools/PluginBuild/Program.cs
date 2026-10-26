@@ -590,6 +590,22 @@ forms["approximations"] = new JsonArray(approx.Select(s => (JsonNode)JsonValue.C
 
 var esp = Path.Combine(repo, "data", "NjordlingerCombatGameplayOverhaul.esp");
 mod.WriteToBinary(esp);
+// The SEQ file (combined run 68e5: Thorvar offered none of his topics): a start-game-enabled quest with dialogue needs
+// its form ID in Data\SEQ\<plugin>.seq, or its dialogue never loads. The ID is file-relative: the plugin's own index is
+// the number of its masters.
+{
+    using var written = SkyrimMod.CreateFromBinaryOverlay(esp, SkyrimRelease.SkyrimSE);
+    var masterCount = (uint)written.ModHeader.MasterReferences.Count;
+    var seqIds = written.Quests.Records.Where(q => q.FormKey.ModKey == modKey && q.Flags.HasFlag(Quest.Flag.StartGameEnabled)).Select(q => (masterCount << 24) | q.FormKey.ID).ToList();
+    var seqDir = Path.Combine(repo, "data", "SEQ");
+    if (seqIds.Count > 0)
+    {
+        Directory.CreateDirectory(seqDir);
+        using var fs = File.Create(Path.Combine(seqDir, Path.ChangeExtension(modKey.FileName, ".seq")));
+        foreach (var id in seqIds) { fs.Write(BitConverter.GetBytes(id)); }
+        Console.WriteLine($"wrote SEQ\\{Path.ChangeExtension(modKey.FileName, ".seq")}: {seqIds.Count} start-game-enabled quest(s)");
+    }
+}
 Directory.CreateDirectory(Path.Combine(repo, "generated"));
 File.WriteAllText(Path.Combine(repo, "generated", "plugin-forms.json"), forms.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");
 Console.WriteLine($"wrote {esp}: {mod.Globals.Count} globals, {mod.Keywords.Count} keywords, {mod.Perks.Count} perks ({entryPoints} entry points), {mod.Spells.Count} ability spells ({constantEffects} constant effects)");

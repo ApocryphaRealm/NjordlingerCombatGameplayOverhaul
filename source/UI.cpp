@@ -697,8 +697,6 @@ namespace UI
 		HelpMarker(strings::TR("NJ_SS_HelpEnabled", "Off: socketed stones do nothing and items show only their own enchantment; the stones stay in their slots."));
 		if (ImGuiMCP::Toggle(strings::TR("NJ_SS_NameSlots", "Words in item names"), &stones::nameSlots)) { ::SoulStones::RequestRecompose(); }
 		HelpMarker(strings::TR("NJ_SS_HelpNameSlots", "A socketed item's name ends with its words, for example Elven Sword [Yol Fo -]."));
-		if (ImGuiMCP::Toggle(strings::TR("NJ_SS_NameDragon", "Dragon letters in names"), &stones::nameDragonLetters)) { ::SoulStones::RequestRecompose(); }
-		HelpMarker(strings::TR("NJ_SS_HelpNameDragon", "Writes those words in the dragon alphabet. Only for inventories that draw font tags in item names; others show the tags as text."));
 		if (ImGuiMCP::Toggle(strings::TR("NJ_SS_Glow", "Weapon glow"), &stones::weaponGlow)) { ::SoulStones::RequestRecompose(); }
 		HelpMarker(strings::TR("NJ_SS_HelpGlow", "A drawn weapon glows in the colour of its best stone's tier."));
 		RenderButtons();

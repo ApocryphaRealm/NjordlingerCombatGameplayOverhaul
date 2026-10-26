@@ -1,0 +1,180 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Exit-9B/InventoryInjector/main/docs/InventoryInjector.schema.json",
+  "rules": [
+    {
+      "match": {
+        "formType": "Weapon",
+        "keywords": [
+          "NJCGO_Tier_Common"
+        ]
+      },
+      "assign": {
+        "iconColor": "#9D9D9D"
+      }
+    },
+    {
+      "match": {
+        "formType": "Armor",
+        "keywords": [
+          "NJCGO_Tier_Common"
+        ]
+      },
+      "assign": {
+        "iconColor": "#9D9D9D"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "keywords": [
+          "NJCGO_Tier_Magic"
+        ]
+      },
+      "assign": {
+        "iconColor": "#3A8EF0"
+      }
+    },
+    {
+      "match": {
+        "formType": "Armor",
+        "keywords": [
+          "NJCGO_Tier_Magic"
+        ]
+      },
+      "assign": {
+        "iconColor": "#3A8EF0"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "keywords": [
+          "NJCGO_Tier_Epic"
+        ]
+      },
+      "assign": {
+        "iconColor": "#A335EE"
+      }
+    },
+    {
+      "match": {
+        "formType": "Armor",
+        "keywords": [
+          "NJCGO_Tier_Epic"
+        ]
+      },
+      "assign": {
+        "iconColor": "#A335EE"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "keywords": [
+          "NJCGO_Tier_Legendary"
+        ]
+      },
+      "assign": {
+        "iconColor": "#FF8000"
+      }
+    },
+    {
+      "match": {
+        "formType": "Armor",
+        "keywords": [
+          "NJCGO_Tier_Legendary"
+        ]
+      },
+      "assign": {
+        "iconColor": "#FF8000"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "keywords": [
+          "NJCGO_Tier_Unique"
+        ]
+      },
+      "assign": {
+        "iconColor": "#E6312B"
+      }
+    },
+    {
+      "match": {
+        "formType": "Armor",
+        "keywords": [
+          "NJCGO_Tier_Unique"
+        ]
+      },
+      "assign": {
+        "iconColor": "#E6312B"
+      }
+    },
+    {
+      "match": {
+        "formType": "MiscItem",
+        "keywords": [
+          "NJCGO_StoneTier_Petty"
+        ]
+      },
+      "assign": {
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "soulgem_full",
+        "iconColor": "#CFE3F5"
+      }
+    },
+    {
+      "match": {
+        "formType": "MiscItem",
+        "keywords": [
+          "NJCGO_StoneTier_Lesser"
+        ]
+      },
+      "assign": {
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "soulgem_full",
+        "iconColor": "#4E8CFF"
+      }
+    },
+    {
+      "match": {
+        "formType": "MiscItem",
+        "keywords": [
+          "NJCGO_StoneTier_Common"
+        ]
+      },
+      "assign": {
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "soulgem_full",
+        "iconColor": "#6A5CFF"
+      }
+    },
+    {
+      "match": {
+        "formType": "MiscItem",
+        "keywords": [
+          "NJCGO_StoneTier_Greater"
+        ]
+      },
+      "assign": {
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "soulgem_full",
+        "iconColor": "#9B4DFF"
+      }
+    },
+    {
+      "match": {
+        "formType": "MiscItem",
+        "keywords": [
+          "NJCGO_StoneTier_Grand"
+        ]
+      },
+      "assign": {
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "soulgem_full",
+        "iconColor": "#6B1FB8"
+      }
+    }
+  ]
+}

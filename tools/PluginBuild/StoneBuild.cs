@@ -118,6 +118,15 @@ static class StoneBuild
             sh.ColorKey1 = colours[t];
             sh.ColorKey2 = colours[t];
             sh.ColorKey3 = colours[t];
+            // 68e5: the shell read pale lavender - the membrane ADDS its colour over the lit blade, so a dark tier colour
+            // washes out. It now blends over the blade (source alpha / inverse source alpha) at full strength, steadier,
+            // with a wider edge.
+            sh.FillPersistentAlphaRatio = 1f;
+            sh.FillFullAlphaRatio = 1f;
+            sh.FillAlphaPulseAmplitude = 0.25f;
+            sh.EdgeEffectPersistentAlphaRatio = 1f;
+            sh.EdgeEffectFallOff = 0.6f;
+            sh.MembraneDestBlendMode = EffectShader.BlendMode.SourceInvertedAlpha;
             var mg = mod.MagicEffects.AddNew($"NJCGO_StoneGlow_{tiers[t]}");
             mg.Name = $"Soul stone glow ({tiers[t]})";
             mg.Archetype = new MagicEffectArchetype(MagicEffectArchetype.TypeEnum.Script);
@@ -509,8 +518,15 @@ static class StoneBuild
                 ["assign"] = new JsonObject { ["iconSource"] = "skyui/icons_item_psychosteve.swf", ["iconLabel"] = "soulgem_full", ["iconColor"] = cfg["tierColour"]![t]!.GetValue<string>() }
             });
         }
-        var i4 = new JsonObject { ["$schema"] = "https://raw.githubusercontent.com/Exit-9B/InventoryInjector/main/docs/InventoryInjector.schema.json", ["rules"] = i4Rules };
-        File.WriteAllText(Path.Combine(repo, "data", "SKSE", "Plugins", "InventoryInjector", "NjordlingerCGO_StoneIcons.json"), i4.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");
+        // Combined run 68e5: I4 reads a rule file ONLY when a loaded plugin carries the same name (its log listed
+        // Skyrim.json, Dawnguard.json, I4WeaponIconsOverhaul.json ... and skipped ours and every CC file whose plugin is
+        // absent). So the tier colours (config/i4-tier-colours.json, phase 1) and the stone icons go into ONE file named
+        // after our plugin.
+        var tierRules = JsonNode.Parse(File.ReadAllText(Path.Combine(repo, "config", "i4-tier-colours.json")))!["rules"]!.AsArray();
+        var all = new JsonArray(tierRules.Select(r => JsonNode.Parse(r!.ToJsonString())).Concat(i4Rules.Select(r => JsonNode.Parse(r!.ToJsonString()))).ToArray());
+        var i4 = new JsonObject { ["$schema"] = "https://raw.githubusercontent.com/Exit-9B/InventoryInjector/main/docs/InventoryInjector.schema.json", ["rules"] = all };
+        Directory.CreateDirectory(Path.Combine(repo, "data", "SKSE", "Plugins", "InventoryInjector"));
+        File.WriteAllText(Path.Combine(repo, "data", "SKSE", "Plugins", "InventoryInjector", modKey.Name + ".json"), i4.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");
 
         // ---- the SKSE plugin's table ------------------------------------------------------------------------------------
         var tierOut = new JsonArray();

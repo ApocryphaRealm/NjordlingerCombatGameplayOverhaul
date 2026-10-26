@@ -50,7 +50,7 @@ DEFAULTS = [
     ("Gear", "fUniqueStrength", "1.00", "gear::uniqueStrength", "0.25 to 2.00 - scales every unique effect"),
     ("SoulStones", "bEnableSoulStones", "1", "stones::enabled", "soul stone effects, phrases and the Shouts phrases grant"),
     ("SoulStones", "bNameSlots", "1", "stones::nameSlots", "a socketed item's name ends with its words, e.g. Elven Sword [Yol Fo -]"),
-    ("SoulStones", "bNameDragonLetters", "0", "stones::nameDragonLetters", "1 = write those words in dragon letters (needs an inventory that renders font tags)"),
+    ("SoulStones", "bNameDragonLetters", "0", "stones::nameDragonLetters", "leave 0: tested 2026-10-26 - the inventories on this list show font tags in item names as raw text"),
     ("SoulStones", "bWeaponGlow", "1", "stones::weaponGlow", "a drawn weapon glows in the colour of its best stone's tier"),
 ]
 

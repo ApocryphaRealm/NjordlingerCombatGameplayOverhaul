@@ -176,6 +176,7 @@ namespace SoulStones
 			RE::TESGlobal* learned = nullptr;
 			float radius = 1500.0F;
 			RE::FormID homeCell = 0;
+			RE::TESQuest* quest = nullptr;
 			RE::NiPoint3 homePos{};
 			float homeAngleZ = 0.0F;
 		};
@@ -1643,6 +1644,7 @@ namespace SoulStones
 					g_rs.homePos = { r["homePos"][0].get<float>(), r["homePos"][1].get<float>(), r["homePos"][2].get<float>() };
 				}
 				g_rs.homeAngleZ = r.value("homeAngleZ", 0.0F);
+				g_rs.quest = Form<RE::TESQuest>(r.value("quest", nlohmann::json()), "runesmith's quest");
 				g_rs.npcRef = ref ? ref->GetFormID() : 0;
 				g_rs.socketInfo = infoId;
 				// one missing part never disables the rest: the quest's global, the move into the inn and the line each
@@ -1681,6 +1683,12 @@ namespace SoulStones
 		}
 		Recompute(true);
 		logger::info("soul stones: game loaded - {} socketed instance(s) in the table, {} equipped with stones", g_entries.size(), g_equipped.size());
+		if (auto* q = g_rs.quest)
+		{
+			const bool running = q->IsRunning();
+			if (!running && !q->IsCompleted()) { q->Start(); }
+			logger::info("soul stones: the runesmith's quest {} - {} (stage {})", q->GetFormEditorID(), running ? "running" : (q->IsRunning() ? "started now" : "NOT running"), q->GetCurrentStageID());
+		}
 	}
 
 	void OnSave(SKSE::SerializationInterface* a_intfc)
