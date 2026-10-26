@@ -60,7 +60,10 @@
         "harbinger",
         "dragonborn"
       ],
-      "description": "A fighter of steel and shield. Holds the warrior skills and smithing. Health regenerates faster."
+      "description": "A fighter of steel and shield. Holds the warrior skills and smithing. Health regenerates faster.",
+      "ability": "0x805",
+      "global": "0x803",
+      "keyword": "0x804"
     },
     {
       "id": "mage",
@@ -78,7 +81,10 @@
         "archmage",
         "dragonborn"
       ],
-      "description": "A student of the five schools. Holds the magic skills and enchanting. Magicka regenerates faster."
+      "description": "A student of the five schools. Holds the magic skills and enchanting. Magicka regenerates faster.",
+      "ability": "0x809",
+      "global": "0x807",
+      "keyword": "0x808"
     },
     {
       "id": "thief",
@@ -96,7 +102,9 @@
         "nightingale",
         "dragonborn"
       ],
-      "description": "Quick hands and a quiet step. Holds the covert skills and alchemy. Moves faster while sneaking."
+      "description": "Quick hands and a quiet step. Holds the covert skills and alchemy. Moves faster while sneaking.",
+      "global": "0x80B",
+      "keyword": "0x80C"
     },
     {
       "id": "knight",
@@ -109,7 +117,10 @@
         "crusader",
         "blademaster"
       ],
-      "description": "Armour and discipline. Resists a little of every weapon and spell."
+      "description": "Armour and discipline. Resists a little of every weapon and spell.",
+      "ability": "0x80F",
+      "global": "0x80D",
+      "keyword": "0x80E"
     },
     {
       "id": "barbarian",
@@ -122,7 +133,9 @@
         "berserker",
         "rogue"
       ],
-      "description": "Raw strength. Power attacks hit harder."
+      "description": "Raw strength. Power attacks hit harder.",
+      "global": "0x811",
+      "keyword": "0x812"
     },
     {
       "id": "sorcerer",
@@ -135,7 +148,10 @@
         "battlemage",
         "occultist"
       ],
-      "description": "Raw arcane power. A chance to absorb hostile spells."
+      "description": "Raw arcane power. A chance to absorb hostile spells.",
+      "ability": "0x815",
+      "global": "0x813",
+      "keyword": "0x814"
     },
     {
       "id": "healer",
@@ -148,7 +164,9 @@
         "cleric",
         "nightblade"
       ],
-      "description": "The restoring hand. Dual-cast Restoration costs less."
+      "description": "The restoring hand. Dual-cast Restoration costs less.",
+      "global": "0x817",
+      "keyword": "0x818"
     },
     {
       "id": "assassin",
@@ -161,7 +179,9 @@
         "nightblade",
         "burglar"
       ],
-      "description": "Death from the shadows. Sneak attacks deal more damage."
+      "description": "Death from the shadows. Sneak attacks deal more damage.",
+      "global": "0x819",
+      "keyword": "0x81A"
     },
     {
       "id": "archer",
@@ -177,7 +197,9 @@
         "scout",
         "hunter"
       ],
-      "description": "The patient bow. Moves faster while drawing a bow, and keeps Archery."
+      "description": "The patient bow. Moves faster while drawing a bow, and keeps Archery.",
+      "global": "0x81B",
+      "keyword": "0x81C"
     },
     {
       "id": "crusader",
@@ -191,7 +213,9 @@
         "harbinger",
         "dragonborn"
       ],
-      "description": "Steel and faith. Opens the magic skills. Blocking resists arrows and spells."
+      "description": "Steel and faith. Opens the magic skills. Blocking resists arrows and spells.",
+      "global": "0x81D",
+      "keyword": "0x81E"
     },
     {
       "id": "blademaster",
@@ -204,7 +228,9 @@
         "harbinger",
         "dragonborn"
       ],
-      "description": "Mastery of the blade. Weapon attacks cost less stamina."
+      "description": "Mastery of the blade. Weapon attacks cost less stamina.",
+      "global": "0x81F",
+      "keyword": "0x820"
     },
     {
       "id": "berserker",
@@ -217,7 +243,9 @@
         "harbinger",
         "dragonborn"
       ],
-      "description": "Rage made flesh. Deals more damage while badly hurt."
+      "description": "Rage made flesh. Deals more damage while badly hurt.",
+      "global": "0x821",
+      "keyword": "0x822"
     },
     {
       "id": "rogue",
@@ -231,7 +259,9 @@
         "nightingale",
         "dragonborn"
       ],
-      "description": "A blade with no code. Opens the covert skills. Power attacks hit harder with an empty off hand."
+      "description": "A blade with no code. Opens the covert skills. Power attacks hit harder with an empty off hand.",
+      "global": "0x823",
+      "keyword": "0x824"
     },
     {
       "id": "battlemage",
@@ -245,7 +275,9 @@
         "archmage",
         "dragonborn"
       ],
-      "description": "Spell and steel together. Opens the warrior skills. Wards resist weapon damage."
+      "description": "Spell and steel together. Opens the warrior skills. Wards resist weapon damage.",
+      "global": "0x825",
+      "keyword": "0x826"
     },
     {
       "id": "occultist",
@@ -258,7 +290,9 @@
         "archmage",
         "dragonborn"
       ],
-      "description": "Forbidden lore. Summoned and raised servants last longer."
+      "description": "Forbidden lore. Summoned and raised servants last longer.",
+      "global": "0x827",
+      "keyword": "0x828"
     },
     {
       "id": "cleric",
@@ -271,7 +305,9 @@
         "archmage",
         "dragonborn"
       ],
-      "description": "Sworn to the Divines. Restoration spells are stronger against the undead."
+      "description": "Sworn to the Divines. Restoration spells are stronger against the undead.",
+      "global": "0x829",
+      "keyword": "0x82A"
     },
     {
       "id": "nightblade",
@@ -285,7 +321,9 @@
         "listener",
         "dragonborn"
       ],
-      "description": "Shadow and spell. Holds both the magic and the covert skills. Illusion is stronger while undetected."
+      "description": "Shadow and spell. Holds both the magic and the covert skills. Illusion is stronger while undetected.",
+      "global": "0x82B",
+      "keyword": "0x82C"
     },
     {
       "id": "burglar",
@@ -298,7 +336,9 @@
         "nightingale",
         "dragonborn"
       ],
-      "description": "No lock holds. Lockpicking and pickpocketing are easier."
+      "description": "No lock holds. Lockpicking and pickpocketing are easier.",
+      "global": "0x82D",
+      "keyword": "0x82E"
     },
     {
       "id": "scout",
@@ -312,7 +352,10 @@
         "harbinger",
         "dragonborn"
       ],
-      "description": "Far ahead of the column. Opens the warrior skills. Stamina regenerates faster."
+      "description": "Far ahead of the column. Opens the warrior skills. Stamina regenerates faster.",
+      "ability": "0x831",
+      "global": "0x82F",
+      "keyword": "0x830"
     },
     {
       "id": "hunter",
@@ -328,7 +371,9 @@
         "nightingale",
         "dragonborn"
       ],
-      "description": "Tracker and trapper. Keeps Archery; arrows hit harder against animals."
+      "description": "Tracker and trapper. Keeps Archery; arrows hit harder against animals.",
+      "global": "0x833",
+      "keyword": "0x834"
     },
     {
       "id": "spellsword",
@@ -343,7 +388,9 @@
         "archmage",
         "dragonborn"
       ],
-      "description": "Destruction costs less with a weapon drawn."
+      "description": "Destruction costs less with a weapon drawn.",
+      "global": "0x835",
+      "keyword": "0x836"
     },
     {
       "id": "witchhunter",
@@ -358,7 +405,9 @@
         "listener",
         "dragonborn"
       ],
-      "description": "Potions last longer."
+      "description": "Potions last longer.",
+      "global": "0x837",
+      "keyword": "0x838"
     },
     {
       "id": "agent",
@@ -373,7 +422,9 @@
         "nightingale",
         "dragonborn"
       ],
-      "description": "Poisons last for more hits."
+      "description": "Poisons last for more hits.",
+      "global": "0x839",
+      "keyword": "0x83A"
     },
     {
       "id": "monk",
@@ -388,7 +439,9 @@
         "listener",
         "dragonborn"
       ],
-      "description": "Fights unarmed and unarmoured with extra armour."
+      "description": "Fights unarmed and unarmoured with extra armour.",
+      "global": "0x83B",
+      "keyword": "0x83C"
     }
   ],
   "ranks": {
@@ -426,5 +479,10 @@
       "quest": "MQ305",
       "description": "The one who ended Alduin."
     }
-  ]
+  ],
+  "groupGlobals": {
+    "warrior": "0x800",
+    "magic": "0x801",
+    "covert": "0x802"
+  }
 }

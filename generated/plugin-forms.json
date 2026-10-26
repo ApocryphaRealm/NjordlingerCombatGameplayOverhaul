@@ -1,0 +1,131 @@
+{
+  "groupGlobals": {
+    "warrior": "0x800",
+    "magic": "0x801",
+    "covert": "0x802"
+  },
+  "classes": {
+    "warrior": {
+      "global": "0x803",
+      "keyword": "0x804",
+      "ability": "0x805"
+    },
+    "mage": {
+      "global": "0x807",
+      "keyword": "0x808",
+      "ability": "0x809"
+    },
+    "thief": {
+      "global": "0x80B",
+      "keyword": "0x80C"
+    },
+    "knight": {
+      "global": "0x80D",
+      "keyword": "0x80E",
+      "ability": "0x80F"
+    },
+    "barbarian": {
+      "global": "0x811",
+      "keyword": "0x812"
+    },
+    "sorcerer": {
+      "global": "0x813",
+      "keyword": "0x814",
+      "ability": "0x815"
+    },
+    "healer": {
+      "global": "0x817",
+      "keyword": "0x818"
+    },
+    "assassin": {
+      "global": "0x819",
+      "keyword": "0x81A"
+    },
+    "archer": {
+      "global": "0x81B",
+      "keyword": "0x81C"
+    },
+    "crusader": {
+      "global": "0x81D",
+      "keyword": "0x81E"
+    },
+    "blademaster": {
+      "global": "0x81F",
+      "keyword": "0x820"
+    },
+    "berserker": {
+      "global": "0x821",
+      "keyword": "0x822"
+    },
+    "rogue": {
+      "global": "0x823",
+      "keyword": "0x824"
+    },
+    "battlemage": {
+      "global": "0x825",
+      "keyword": "0x826"
+    },
+    "occultist": {
+      "global": "0x827",
+      "keyword": "0x828"
+    },
+    "cleric": {
+      "global": "0x829",
+      "keyword": "0x82A"
+    },
+    "nightblade": {
+      "global": "0x82B",
+      "keyword": "0x82C"
+    },
+    "burglar": {
+      "global": "0x82D",
+      "keyword": "0x82E"
+    },
+    "scout": {
+      "global": "0x82F",
+      "keyword": "0x830",
+      "ability": "0x831"
+    },
+    "hunter": {
+      "global": "0x833",
+      "keyword": "0x834"
+    },
+    "spellsword": {
+      "global": "0x835",
+      "keyword": "0x836"
+    },
+    "witchhunter": {
+      "global": "0x837",
+      "keyword": "0x838"
+    },
+    "agent": {
+      "global": "0x839",
+      "keyword": "0x83A"
+    },
+    "monk": {
+      "global": "0x83B",
+      "keyword": "0x83C"
+    }
+  },
+  "stubs": [
+    "thief: \u002B20% sneak speed needs a conditioned speed effect",
+    "barbarian: \u002B50% power-attack damage needs a perk entry point",
+    "healer: -20% dual-cast Restoration cost needs a perk entry point",
+    "assassin: \u002B25% sneak-attack damage needs a perk entry point",
+    "archer: \u002B20% speed while drawing needs a conditioned speed effect",
+    "crusader: no ability defined",
+    "blademaster: no ability defined",
+    "berserker: no ability defined",
+    "rogue: no ability defined",
+    "battlemage: no ability defined",
+    "occultist: no ability defined",
+    "cleric: no ability defined",
+    "nightblade: no ability defined",
+    "burglar: no ability defined",
+    "hunter: no ability defined",
+    "spellsword: no ability defined",
+    "witchhunter: no ability defined",
+    "agent: no ability defined",
+    "monk: no ability defined"
+  ]
+}
