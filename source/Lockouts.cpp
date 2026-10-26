@@ -10,7 +10,11 @@
 #include "utils/Notify.h"
 #include "utils/Strings.h"
 
+#include <nlohmann/json.hpp>
+
 #include <atomic>
+#include <filesystem>
+#include <fstream>
 #include <chrono>
 #include <thread>
 #include <mutex>
@@ -107,6 +111,34 @@ namespace Lockouts
 				}
 				logger::debug("perk lock: {} - {} perks conditioned on the {} group", skilllist::kDisplayName[i], g_perks.load() - before, ClassData::kGroupId[group]);
 			}
+			// Custom Skills Framework trees (PLAN.md phase 2 step 9; classes.json "customTrees"): every perk the tree's plugin
+			// defines is gated on the group the tree belongs to, the same way. The tree's own perk points are its own
+			// globals - a class without the group can still earn them, but no perk of the tree takes or works for it.
+			try
+			{
+				std::ifstream in(std::filesystem::path("Data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul/classes.json"));
+				const auto j = in ? nlohmann::json::parse(in) : nlohmann::json::object();
+				auto* handler = RE::TESDataHandler::GetSingleton();
+				for (const auto& t : j.value("customTrees", nlohmann::json::array()))
+				{
+					const auto plugin = t.value("plugin", std::string());
+					const auto groupId = t.value("group", std::string());
+					int group = -1;
+					for (int g = 0; g < ClassData::kGroupCount; ++g) { if (groupId == ClassData::kGroupId[g]) { group = g; } }
+					auto* file = handler ? handler->LookupModByName(plugin) : nullptr;
+					RE::TESGlobal* global = group >= 0 ? table.groupGlobal[group] : nullptr;
+					if (!file || !global) { logger::info("perk lock: custom tree {} ({}) - {}", t.value("skill", std::string()), plugin, !file ? "plugin not loaded" : "unknown group"); continue; }
+					std::uint32_t n = 0;
+					for (auto* perk : handler->GetFormArray<RE::BGSPerk>())
+					{
+						if (!perk || perk->GetFile(0) != file || !seen.insert(perk).second) { continue; }
+						ConditionPerk(perk, global, player);
+						++n;
+					}
+					logger::info("perk lock: custom tree {} - {} perks of {} conditioned on the {} group", t.value("skill", std::string()), n, plugin, groupId);
+				}
+			}
+			catch (const std::exception& e) { logger::warn("perk lock: the custom trees in classes.json could not be read ({})", e.what()); }
 			logger::info("perk lock: {} perks and {} entry points conditioned on their group's global; {} ability entries left as they are",
 						 g_perks.load(), g_entries.load(), g_abilities.load());
 		}

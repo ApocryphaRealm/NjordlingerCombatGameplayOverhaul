@@ -14,6 +14,14 @@
     "next: the two options at the next upgrade. A class reachable from two parents is one record."
   ],
   "version": 2,
+  "customTrees": [
+    {
+      "skill": "Necromancer",
+      "plugin": "CustomSkills -Necromancer-.esp",
+      "group": "magic",
+      "note": "PROPOSED 2026-10-26 for Fable / the owner: Necromancy (Custom Skills Framework, Nexus 184608) belongs to the magic group beside Conjuration - its perks take and work only for a class holding magic (Mage, Sorcerer, Healer and every magic hybrid); the Sorcerer -> Battlemage / Nightblade line is its natural home in CLASS-CONTENT. Its perk points are its own globals and are not touched."
+    }
+  ],
   "groups": {
     "warrior": [
       "OneHanded",
