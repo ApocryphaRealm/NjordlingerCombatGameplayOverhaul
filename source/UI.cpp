@@ -15,6 +15,7 @@
 #include "QuestRewards.h"
 #include "Settings.h"
 #include "SkillList.h"
+#include "Shouting.h"
 #include "Skills.h"
 #include "SoulStones.h"
 
@@ -324,6 +325,16 @@ namespace UI
 		const auto lug = LevelUpGains::GetState();
 		ImGuiMCP::TextDisabled(strings::TR("NJ_LevelUpReadout", "Level ups this session: %u - attribute picks skipped: %u"), lug.levelUps, lug.picksSkipped);
 
+		// D26: Shouting, per save
+		{
+			ImGuiMCP::SeparatorText(strings::TR("NJ_ShoutingTitle", "The Voice"));
+			const auto sh = Shouting::GetState();
+			bool on = sh.enabled;
+			if (ImGuiMCP::Toggle(strings::TR("NJ_Shouting", "Shouting"), &on)) { Shouting::RequestSetEnabled(on); }
+			HelpMarker(strings::TR("NJ_HelpShouting", "Off (the default): your shout key does nothing - the Shouts your soul stones grant and the ones a quest needs still work - and every dragon soul becomes perk points. Off also parks Stormcrown's Dragonborn tree and meditations, which are paid in souls. This choice is kept per save."));
+			ImGuiMCP::TextDisabled(strings::TR("NJ_ShoutingLine", "Dragon souls turned into perk points: %u (%d soul(s) per point)%s"), sh.soulsConverted, sh.soulsPerPoint,
+				sh.reserved ? strings::TR("NJ_ShoutingReserved", " - waiting until The Way of the Voice is done") : "");
+		}
 		ImGuiMCP::SeparatorText(strings::TR("NJ_SkillsTitle", "Skills"));
 		ImGuiMCP::Toggle(strings::TR("NJ_ControlCaps", "Control skill caps"), &skills::overrideCaps);
 		HelpMarker(strings::TR("NJ_HelpCaps", "On: each skill stops at its cap below. Off: 100, as in vanilla. A skill your class does not hold stays at its starting value either way."));
@@ -686,8 +697,7 @@ namespace UI
 			if (p.learned < 3) { continue; }   // the blueprint: a phrase is named only once all three words are learned
 			++shown;
 			const auto name = ::SoulStones::PhraseName(static_cast<int>(i));
-			if (p.unlocked) { ImGuiMCP::TextColored(known, strings::TR("NJ_SS_PhraseUnlocked", "%s (%s) - unlocked: works in any item"), name.c_str(), p.shout.c_str()); }
-			else { ImGuiMCP::Text(strings::TR("NJ_SS_PhraseLearned", "%s (%s) - learned: unlock all three words with dragon souls to make it work"), name.c_str(), p.shout.c_str()); }
+			ImGuiMCP::TextColored(known, strings::TR("NJ_SS_PhraseWorks", "%s (%s) - its words are learned: it works in any item"), name.c_str(), p.shout.c_str());
 			if (p.granted > 0) { ImGuiMCP::TextDisabled(strings::TR("NJ_SS_Granted", "    your armour's stones let you shout it: %d word(s)"), p.granted); }
 		}
 		if (shown == 0) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoPhrases", "You have not learned all three words of any Shout yet.")); }

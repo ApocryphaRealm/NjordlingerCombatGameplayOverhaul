@@ -400,9 +400,10 @@ namespace SoulStones
 		bool PhraseUnlocked(int a_phrase)
 		{
 			if (a_phrase < 0 || a_phrase >= static_cast<int>(g_t.phrases.size()) || !g_t.phrases[a_phrase].available) { return false; }
+			// D20 revised (the owner 19:12, SHOUTING-OFF.md 1): the words LEARNED at a wall are the blueprint - no soul needed
 			for (auto* w : g_t.phrases[a_phrase].real)
 			{
-				if (!Unlocked(w)) { return false; }
+				if (!Learned(w)) { return false; }
 			}
 			return true;
 		}
@@ -1858,6 +1859,13 @@ namespace SoulStones
 	}
 
 	void SetWindowOpener(std::function<void(bool)> a_fn) { g_windowOpener = std::move(a_fn); }
+
+	bool IsStoneShout(RE::TESShout* a_shout)
+	{
+		if (!a_shout) { return false; }
+		for (const auto& ph : g_t.phrases) { if (ph.clone == a_shout) { return true; } }
+		return false;
+	}
 
 	bool IsServiceOpen() { return g_service.load(); }
 

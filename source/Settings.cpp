@@ -127,6 +127,7 @@ namespace settings
 			gear::uniques = true;
 			gear::setStrength = 1.0F;
 			gear::uniqueStrength = 1.0F;
+			shouting::enabledDefault = false;
 			stones::enabled = true;
 			stones::nameSlots = true;
 			stones::nameDragonLetters = false;
@@ -202,6 +203,7 @@ namespace settings
 			get("buniqueeffects:gear", gear::uniques, ParseBool);
 			get("fsetstrength:gear", gear::setStrength, ParseFloat);
 			get("funiquestrength:gear", gear::uniqueStrength, ParseFloat);
+			get("bshouting:shouting", shouting::enabledDefault, ParseBool);
 			get("benablesoulstones:soulstones", stones::enabled, ParseBool);
 			get("bnameslots:soulstones", stones::nameSlots, ParseBool);
 			get("bnamedragonletters:soulstones", stones::nameDragonLetters, ParseBool);
@@ -316,6 +318,7 @@ namespace settings
 		ok &= WriteKey(lines, "Gear", "bUniqueEffects", gear::uniques ? "1" : "0");
 		ok &= WriteKey(lines, "Gear", "fSetStrength", FormatFloat(gear::setStrength));
 		ok &= WriteKey(lines, "Gear", "fUniqueStrength", FormatFloat(gear::uniqueStrength));
+		ok &= WriteKey(lines, "Shouting", "bShouting", shouting::enabledDefault ? "1" : "0");
 		ok &= WriteKey(lines, "SoulStones", "bEnableSoulStones", stones::enabled ? "1" : "0");
 		ok &= WriteKey(lines, "SoulStones", "bNameSlots", stones::nameSlots ? "1" : "0");
 		ok &= WriteKey(lines, "SoulStones", "bNameDragonLetters", stones::nameDragonLetters ? "1" : "0");

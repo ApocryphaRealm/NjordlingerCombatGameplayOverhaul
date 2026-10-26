@@ -13,6 +13,7 @@
 #include "RaceMenuClass.h"
 #include "StatsMenuClass.h"
 #include "Settings.h"
+#include "Shouting.h"
 #include "SoulStones.h"
 #include "UI.h"
 
@@ -118,6 +119,12 @@ namespace DevBenchTool
 			{
 				if (args.value("refresh", false)) { SoulStones::RequestRefresh(); }
 				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "stones", nlohmann::json::parse(SoulStones::StatusJson(), nullptr, false) } });
+				return;
+			}
+			if (op == "shouting")
+			{
+				if (args.contains("enabled")) { Shouting::RequestSetEnabled(args.value("enabled", false)); }
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "shouting", nlohmann::json::parse(Shouting::StatusJson(), nullptr, false) } });
 				return;
 			}
 			if (op == "stoneswords")

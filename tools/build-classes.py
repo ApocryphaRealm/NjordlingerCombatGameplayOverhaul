@@ -48,6 +48,7 @@ DEFAULTS = [
     ("Gear", "bUniqueEffects", "1", "gear::uniques", "named unique items carry an effect of their own"),
     ("Gear", "fSetStrength", "1.00", "gear::setStrength", "0.25 to 2.00 - scales every set bonus from the value in the plugin (1.00 = as written)"),
     ("Gear", "fUniqueStrength", "1.00", "gear::uniqueStrength", "0.25 to 2.00 - scales every unique effect"),
+    ("Shouting", "bShouting", "0", "shouting::enabledDefault", "a NEW save's Shouting: 0 = the shout key is refused (stone Shouts and quest Shouts still work) and dragon souls become perk points; each save keeps its own choice"),
     ("SoulStones", "bEnableSoulStones", "1", "stones::enabled", "soul stone effects, phrases and the Shouts phrases grant"),
     ("SoulStones", "bNameSlots", "1", "stones::nameSlots", "a socketed item's name ends with its words, e.g. Elven Sword [Yol Fo -]"),
     ("SoulStones", "bNameDragonLetters", "0", "stones::nameDragonLetters", "leave 0: tested 2026-10-26 - the inventories on this list show font tags in item names as raw text"),

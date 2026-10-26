@@ -87,6 +87,12 @@ namespace settings
 		inline float uniqueStrength = 1.0F;                // fUniqueStrength:Gear - 0.25 to 2.00
 	}
 
+	// Shouting (PLAN.md D26): whether a NEW save can shout (each save keeps its own choice in the co-save).
+	namespace shouting
+	{
+		inline bool enabledDefault = false;               // bShouting:Shouting - off: the shout key is refused, dragon souls become perk points
+	}
+
 	// Soul Stones (PLAN.md phase 4, D17-D22): the module switch and the display choices.
 	namespace stones
 	{

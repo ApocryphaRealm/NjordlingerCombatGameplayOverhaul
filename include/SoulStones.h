@@ -122,6 +122,9 @@ namespace SoulStones
 	void SetServiceOpen(bool a_open);
 	bool IsServiceOpen();
 
+	// A Shout the stones grant (D21's hidden clones) - Shouting-off lets these through.
+	bool IsStoneShout(RE::TESShout* a_shout);
+
 	// The settings page registers how its runesmith window opens and closes (true = open); called on the main thread.
 	void SetWindowOpener(std::function<void(bool)> a_fn);
 

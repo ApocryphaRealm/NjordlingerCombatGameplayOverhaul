@@ -20,6 +20,7 @@
 #include "SkillExperience.h"
 #include "StatsMenuClass.h"
 #include "Skills.h"
+#include "Shouting.h"
 #include "SoulStones.h"
 #include "UI.h"
 
@@ -51,6 +52,7 @@ namespace
 			ClassEffects::Install();
 			Gear::Install();
 			SoulStones::Install();
+			Shouting::Install();
 			QuestRewards::Install();
 			RaceMenuClass::Install();
 			StatsMenuClass::Install();
@@ -62,6 +64,7 @@ namespace
 			Classes::OnGameLoaded();
 			Gear::OnGameLoaded();
 			SoulStones::OnGameLoaded();
+			Shouting::OnGameLoaded();
 			break;
 		default:
 			break;
@@ -74,6 +77,7 @@ namespace
 		ClassEffects::OnSave(a_intfc);
 		QuestRewards::OnSave(a_intfc);
 		SoulStones::OnSave(a_intfc);
+		Shouting::OnSave(a_intfc);
 	}
 
 	void LoadCallback(SKSE::SerializationInterface* a_intfc)
@@ -87,6 +91,7 @@ namespace
 			case QuestRewards::kRecord: QuestRewards::ReadRecord(a_intfc, version, length); break;
 			case ClassEffects::kRecord: ClassEffects::ReadRecord(a_intfc, version, length); break;
 			case SoulStones::kRecord: SoulStones::ReadRecord(a_intfc, version, length); break;
+			case Shouting::kRecord: Shouting::ReadRecord(a_intfc, version, length); break;
 			default: logger::warn("co-save: unknown record {:08X} (version {}, {} bytes) skipped", type, version, length); break;
 			}
 		}
@@ -98,6 +103,7 @@ namespace
 		ClassEffects::OnRevert();
 		QuestRewards::OnRevert();
 		SoulStones::OnRevert();
+		Shouting::OnRevert();
 	}
 }
 
