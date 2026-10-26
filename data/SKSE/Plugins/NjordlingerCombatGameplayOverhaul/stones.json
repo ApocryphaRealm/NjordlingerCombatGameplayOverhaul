@@ -3696,6 +3696,11 @@
   ],
   "phrases": [
     {
+      "glyphNames": [
+        "Fus",
+        "Ro",
+        "D4"
+      ],
       "shout": "Unrelenting Force",
       "shoutForm": "Skyrim.esm|0x13E07",
       "words": [
@@ -3748,6 +3753,11 @@
       }
     },
     {
+      "glyphNames": [
+        "Yol",
+        "T8r",
+        "Shul"
+      ],
       "shout": "Fire Breath",
       "shoutForm": "Skyrim.esm|0x3F9EA",
       "words": [
@@ -3807,6 +3817,11 @@
       }
     },
     {
+      "glyphNames": [
+        "Fo",
+        "Kr4",
+        "D3n"
+      ],
       "shout": "Frost Breath",
       "shoutForm": "Skyrim.esm|0x5D16B",
       "words": [
@@ -3873,6 +3888,11 @@
       }
     },
     {
+      "glyphNames": [
+        "3z",
+        "Slen",
+        "Nus"
+      ],
       "shout": "Ice Form",
       "shoutForm": "Skyrim.esm|0x70980",
       "words": [
@@ -3926,6 +3946,11 @@
       }
     },
     {
+      "glyphNames": [
+        "F2m",
+        "Z3",
+        "Gron"
+      ],
       "shout": "Become Ethereal",
       "shoutForm": "Skyrim.esm|0x32920",
       "words": [
@@ -3977,6 +4002,11 @@
       }
     },
     {
+      "glyphNames": [
+        "Zun",
+        "H1l",
+        "V3k"
+      ],
       "shout": "Disarm",
       "shoutForm": "Skyrim.esm|0x70981",
       "words": [
@@ -4022,6 +4052,11 @@
       }
     },
     {
+      "glyphNames": [
+        "K1n",
+        "Drem",
+        "Ov"
+      ],
       "shout": "Kyne\u0027s Peace",
       "shoutForm": "Skyrim.esm|0x7097E",
       "words": [
@@ -4065,6 +4100,11 @@
       }
     },
     {
+      "glyphNames": [
+        "L1s",
+        "Y4",
+        "N7"
+      ],
       "shout": "Aura Whisper",
       "shoutForm": "Skyrim.esm|0x7097B",
       "words": [
@@ -4124,6 +4164,11 @@
       }
     },
     {
+      "glyphNames": [
+        "Od",
+        "4",
+        "V3ng"
+      ],
       "shout": "Call Dragon",
       "shoutForm": "Skyrim.esm|0x46B8C",
       "words": [
@@ -4169,6 +4214,11 @@
       }
     },
     {
+      "glyphNames": [
+        "Wuld",
+        "N4",
+        "Kest"
+      ],
       "shout": "Whirlwind Sprint",
       "shoutForm": "Skyrim.esm|0x2F7BA",
       "words": [
@@ -4200,6 +4250,11 @@
       }
     },
     {
+      "glyphNames": [
+        "Su",
+        "Gr4",
+        "Dun"
+      ],
       "shout": "Elemental Fury",
       "shoutForm": "Skyrim.esm|0x32921",
       "words": [
@@ -4247,6 +4302,11 @@
       }
     },
     {
+      "glyphNames": [
+        "Strun",
+        "B4",
+        "Qo"
+      ],
       "shout": "Storm Call",
       "shoutForm": "Skyrim.esm|0x7097D",
       "words": [
@@ -4307,6 +4367,11 @@
       }
     },
     {
+      "glyphNames": [
+        "T3d",
+        "Klo",
+        "Ul"
+      ],
       "shout": "Slow Time",
       "shoutForm": "Skyrim.esm|0x48AC9",
       "words": [
@@ -4360,6 +4425,11 @@
       }
     },
     {
+      "glyphNames": [
+        "Lok",
+        "V4",
+        "K8r"
+      ],
       "shout": "Clear Skies",
       "shoutForm": "Skyrim.esm|0x3CD34",
       "words": [
@@ -4413,6 +4483,11 @@
       }
     },
     {
+      "glyphNames": [
+        "F1s",
+        "Ru",
+        "M1r"
+      ],
       "shout": "Dismay",
       "shoutForm": "Skyrim.esm|0x2395A",
       "words": [
@@ -4463,6 +4538,11 @@
       }
     },
     {
+      "glyphNames": [
+        "",
+        "",
+        ""
+      ],
       "shout": "Soul Tear",
       "shoutForm": "Dawnguard.esm|0x7CB6",
       "words": [
@@ -4530,6 +4610,11 @@
       }
     },
     {
+      "glyphNames": [
+        "",
+        "",
+        ""
+      ],
       "shout": "Bend Will",
       "shoutForm": "Dragonborn.esm|0x179D8",
       "words": [
@@ -4585,6 +4670,11 @@
       }
     },
     {
+      "glyphNames": [
+        "",
+        "",
+        ""
+      ],
       "shout": "Dragon Aspect",
       "shoutForm": "Dragonborn.esm|0x1DF92",
       "words": [
@@ -4644,6 +4734,11 @@
       }
     },
     {
+      "glyphNames": [
+        "Hun",
+        "K1l",
+        "Z8r"
+      ],
       "shout": "Call of Valor",
       "shoutForm": "Skyrim.esm|0x5196A",
       "words": [
@@ -4683,6 +4778,11 @@
       }
     },
     {
+      "glyphNames": [
+        "Kr3",
+        "Lun",
+        "Aus"
+      ],
       "shout": "Marked for Death",
       "shoutForm": "Skyrim.esm|0x7097C",
       "words": [

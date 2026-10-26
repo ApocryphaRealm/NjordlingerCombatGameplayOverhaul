@@ -128,6 +128,7 @@ namespace SoulStones
 	// DevBench: gives the player stones and fee gems (tests only), and the live state as JSON.
 	void RequestGiveForTest(int a_word, int a_tier, int a_count);
 	std::string StatusJson();
+	std::string WordsJson();   // the 60 real words: form, flags, learned, unlocked (op=stoneswords)
 
 	// The words' names (stone-scheme order) and the tier names, for the page.
 	const std::vector<std::string>& WordNames();

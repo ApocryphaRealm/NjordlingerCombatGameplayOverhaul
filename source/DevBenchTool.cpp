@@ -120,6 +120,11 @@ namespace DevBenchTool
 				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "stones", nlohmann::json::parse(SoulStones::StatusJson(), nullptr, false) } });
 				return;
 			}
+			if (op == "stoneswords")
+			{
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "words", nlohmann::json::parse(SoulStones::WordsJson(), nullptr, false) } });
+				return;
+			}
 			if (op == "stonesservice")
 			{
 				SoulStones::SetServiceOpen(args.value("open", true));

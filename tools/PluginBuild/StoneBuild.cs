@@ -429,7 +429,9 @@ static class StoneBuild
                 }
             }
             var realWords = new JsonArray(shout.WordsOfPower.Select(w => (JsonNode)JsonValue.Create(Ref(w.Word))!).ToArray());
-            var po = new JsonObject { ["shout"] = shoutName, ["shoutForm"] = Ref(shout), ["words"] = new JsonArray(words.Select(w => (JsonNode)JsonValue.Create(w)!).ToArray()), ["wordForms"] = realWords, ["hosts"] = phHosts };
+            // the word records' own names are written for the dragon font (e.g. "D4" for Dah): kept for the glyph mapping
+            var glyphNames = new JsonArray(shout.WordsOfPower.Select(w => (JsonNode)JsonValue.Create(cache.Resolve<IWordOfPowerGetter>(w.Word.FormKey).Name?.String ?? "")!).ToArray());
+            var po = new JsonObject { ["glyphNames"] = glyphNames, ["shout"] = shoutName, ["shoutForm"] = Ref(shout), ["words"] = new JsonArray(words.Select(w => (JsonNode)JsonValue.Create(w)!).ToArray()), ["wordForms"] = realWords, ["hosts"] = phHosts };
             if (grant != null) { po["grant"] = grant; }
             phraseOut.Add(po);
         }

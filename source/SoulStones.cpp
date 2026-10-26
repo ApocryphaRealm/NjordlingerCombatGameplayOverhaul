@@ -30,7 +30,10 @@ namespace SoulStones
 		constexpr std::uint32_t kRecordVersion = 1;
 		constexpr int kTiers = 5;
 		constexpr std::uint32_t kWordLearned = 1u << 6;    // TESWordOfPower: learned at a wall (RecordFlags::kKnown)
-		constexpr std::uint32_t kWordUnlocked = 1u << 0;   // TESWordOfPower: unlocked with a dragon soul (RecordFlags::kUnlocked)
+		// TESWordOfPower: unlocked with a dragon soul. NOT bit 0 (CommonLib's generic kUnlocked): combined run dcf7 read 0x9
+		// on all three words of a character who knows no Shout. Bit 16 is this build's reading, to be proven with
+		// DevBench op=stoneswords before and after the console's unlockword (rule 30).
+		constexpr std::uint32_t kWordUnlocked = 1u << 16;
 		constexpr std::uint16_t kNoOriginalCharge = 3000;  // a weapon whose only enchantment is its stones: cost 0, this charge
 
 		using Clock = std::chrono::steady_clock;
@@ -216,8 +219,14 @@ namespace SoulStones
 			std::uint32_t local = 0;
 			try { local = static_cast<std::uint32_t>(std::stoul(id, nullptr, 0)); } catch (...) { return nullptr; }
 			auto* handler = RE::TESDataHandler::GetSingleton();
-			auto* form = handler ? handler->LookupForm<T>(local, plugin) : nullptr;
-			if (!form) { logger::warn("soul stones: {} {} does not resolve - that part is skipped", a_what, text); }
+			auto* any = handler ? handler->LookupForm(local, plugin) : nullptr;
+			// combined run dcf7: LookupForm<TESBoundObject> returned null for every stone and soul gem that exists -
+			// TESBoundObject is a base class with no form type of its own, so the typed lookup's As<> refuses it
+			T* form = nullptr;
+			if constexpr (std::is_same_v<T, RE::TESBoundObject>) { form = (any && any->IsBoundObject()) ? static_cast<RE::TESBoundObject*>(any) : nullptr; }
+			else if constexpr (std::is_same_v<T, RE::TESForm>) { form = any; }
+			else { form = any ? any->As<T>() : nullptr; }
+			if (!form) { logger::warn("soul stones: {} {} does not resolve{} - that part is skipped", a_what, text, any ? fmt::format(" as the expected type (it is form type {})", static_cast<int>(any->GetFormType())) : std::string()); }
 			return form;
 		}
 
@@ -532,7 +541,7 @@ namespace SoulStones
 
 		std::string DragonLetters(const std::string& a_word)
 		{
-			static const std::pair<const char*, char> digraphs[] = { { "AA", '1' }, { "EI", '2' }, { "II", '3' }, { "IR", '4' }, { "OO", '5' }, { "UU", '6' }, { "AH", '7' }, { "EY", '8' }, { "UR", '9' } };
+			static const std::pair<const char*, char> digraphs[] = { { "AA", '1' }, { "EI", '2' }, { "II", '3' }, { "AH", '4' }, { "IR", '7' }, { "OO", '8' } };   // as the game's own word records write them ("D4" = Dah, "T8r" = Toor)
 			std::string up = a_word;
 			std::transform(up.begin(), up.end(), up.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
 			std::string out;
@@ -1508,7 +1517,7 @@ namespace SoulStones
 		// rule 30: ask the object - the knowledge flags of the first phrase, once
 		for (auto* w : g_t.phrases[0].real)
 		{
-			if (w) { logger::info("soul stones: word {} {:08X} flags {:08X} (learned bit {}, unlocked bit {})", w->GetName(), w->GetFormID(), w->formFlags, (w->formFlags & kWordLearned) != 0, (w->formFlags & kWordUnlocked) != 0); }
+			if (w) { logger::info("soul stones: word {:08X} flags {:08X} (learned bit {}, unlocked bit {})", w->GetFormID(), w->formFlags, (w->formFlags & kWordLearned) != 0, (w->formFlags & kWordUnlocked) != 0); }
 		}
 		try
 		{
@@ -1550,7 +1559,7 @@ namespace SoulStones
 		g_streaks.clear();
 		for (auto* w : g_t.phrases[0].real)
 		{
-			if (w) { logger::info("soul stones: at load, word {} flags {:08X} (learned {}, unlocked {})", w->GetName(), w->formFlags, Learned(w), Unlocked(w)); }
+			if (w) { logger::info("soul stones: at load, word {:08X} flags {:08X} (learned {}, unlocked {})", w->GetFormID(), w->formFlags, Learned(w), Unlocked(w)); }
 		}
 		Recompute(true);
 		logger::info("soul stones: game loaded - {} socketed instance(s) in the table, {} equipped with stones", g_entries.size(), g_equipped.size());
@@ -1682,8 +1691,11 @@ namespace SoulStones
 		Queue([a_word, a_tier, a_count]() {
 			auto* p = Player();
 			if (!p || !g_t.loaded || a_word < 0 || a_word >= static_cast<int>(g_t.words.size()) || a_tier < 0 || a_tier >= kTiers) { SetResult("give: no such stone"); return; }
-			if (auto* s = g_t.words[a_word].stones[a_tier]) { p->AddObjectToContainer(s, nullptr, a_count, nullptr); }
-			if (!g_t.tiers[a_tier].feeGems.empty() && g_t.tiers[a_tier].feeGems[0]) { p->AddObjectToContainer(g_t.tiers[a_tier].feeGems[0], nullptr, a_count, nullptr); }
+			auto* stone = g_t.words[a_word].stones[a_tier];
+			auto* gem = g_t.tiers[a_tier].feeGems.empty() ? nullptr : g_t.tiers[a_tier].feeGems[0];
+			if (!stone || !gem) { SetResult(fmt::format("give: FAILED - the {} form did not resolve at load (see the log)", !stone ? "stone" : "fee gem")); BuildSnapshot(); return; }
+			p->AddObjectToContainer(stone, nullptr, a_count, nullptr);
+			p->AddObjectToContainer(gem, nullptr, a_count, nullptr);
 			SetResult(fmt::format("gave {} x {} ({}) and {} fee gem(s)", a_count, g_t.words[a_word].name, g_t.tierNames[a_tier], a_count));
 			BuildSnapshot();
 		});
@@ -1702,6 +1714,22 @@ namespace SoulStones
 	{
 		if (a_word < 0 || a_word >= static_cast<int>(g_t.words.size()) || a_host == Host::kNone) { return {}; }
 		return g_t.words[a_word].hosts[static_cast<int>(a_host)].text;
+	}
+
+	std::string WordsJson()
+	{
+		nlohmann::json arr = nlohmann::json::array();
+		for (const auto& ph : g_t.phrases)
+		{
+			for (int i = 0; i < 3; ++i)
+			{
+				auto* w = ph.real[i];
+				arr.push_back({ { "word", ph.words[i] >= 0 ? g_t.words[ph.words[i]].name : std::string() }, { "shout", ph.shout },
+					{ "form", w ? fmt::format("{:08X}", w->GetFormID()) : std::string() }, { "flags", w ? fmt::format("{:08X}", w->formFlags) : std::string() },
+					{ "learned", Learned(w) }, { "unlocked", Unlocked(w) } });
+			}
+		}
+		return arr.dump();
 	}
 
 	std::string StatusJson()

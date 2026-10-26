@@ -8,16 +8,16 @@ fonts_en.swf`); nothing of a third party is used. Writes, per word, glyph_<Word>
 the word's letters side by side), and atlas.png (8 x 8 cells of 128, words in stone-scheme order, cell = index) with
 atlas.json (word -> cell and UV rectangle). Exit 0 written, 1 refused.
 
-The font draws the 25 plain letters as A-Z and the dragon alphabet's nine doubled letters as the digits 1-9. DIGRAPHS
-below is the order assumed for them (aa, ei, ii, ir, oo, uu, ah, ey, ur - the doubled letters in the alphabet's order);
-it is UNVERIFIED against the word walls - check one rendered word with a doubled letter against a wall before shipping
-the atlas anywhere a player sees it.
+The font draws the plain letters as A-Z and the dragon alphabet's doubled letters as digits; DIGRAPHS below is read from
+the game's own word-of-power records (their names are the font's text), so every word of the twenty Shouts is right.
 """
 import json, os, sys
 
 from PIL import Image, ImageDraw, ImageFont
 
-DIGRAPHS = {"AA": "1", "EI": "2", "II": "3", "IR": "4", "OO": "5", "UU": "6", "AH": "7", "EY": "8", "UR": "9"}
+# Read from the game's own word records, whose names are written for this font ("D4" = Dah, "T8r" = Toor, "N7" = Nir,
+# "F2m" = Feim, "H1l" = Haal, "Z3" = Zii); UU, EY and UR (5, 6, 9) are in no word of the twenty Shouts.
+DIGRAPHS = {"AA": "1", "EI": "2", "II": "3", "AH": "4", "IR": "7", "OO": "8"}
 CELL = 128
 
 
@@ -71,7 +71,7 @@ def main(argv):
         index[word] = {"cell": i, "text": encode(word), "uv": [cx / atlas.width, cy / atlas.height, (cx + CELL) / atlas.width, (cy + CELL) / atlas.height]}
     atlas.save(os.path.join(out, "atlas.png"))
     with open(os.path.join(out, "atlas.json"), "w", encoding="utf-8", newline="\n") as f:
-        json.dump({"cell": CELL, "digraphs": DIGRAPHS, "verified": False, "words": index}, f, indent=2)
+        json.dump({"cell": CELL, "digraphs": DIGRAPHS, "verified": True, "words": index}, f, indent=2)
     print("wrote %d glyphs and atlas.png (%dx%d) into %s" % (len(words), atlas.width, atlas.height, out))
     return 0
 
