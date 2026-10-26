@@ -27,6 +27,8 @@ namespace LevelUpGains
 		int lastGain = 0;                // what the last choice granted
 		bool skipResolved = false;       // the choose-attribute function was found (step 8b)
 		std::uint32_t picksSkipped = 0;  // attribute picks made for the player this session
+		std::uint32_t confirmsAnswered = 0;  // the game confirmation box answered OK
+		std::uint32_t menusClosed = 0;   // LevelUp Menus still open after the answer, closed
 	};
 	State GetState();
 }

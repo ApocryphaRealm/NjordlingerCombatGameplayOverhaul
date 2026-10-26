@@ -11,6 +11,8 @@
 #include "utils/Strings.h"
 
 #include <atomic>
+#include <chrono>
+#include <thread>
 #include <mutex>
 #include <unordered_set>
 
@@ -165,7 +167,23 @@ namespace Lockouts
 				if (auto* queue = RE::UIMessageQueue::GetSingleton()) { queue->AddMessage(RE::CraftingMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr); }
 				static constexpr const char* kKeys[3] = { "NJ_NoticeNoSmithing", "NJ_NoticeNoEnchanting", "NJ_NoticeNoAlchemy" };
 				static constexpr const char* kText[3] = { "Your class does not know the smith's craft.", "Your class does not know the enchanter's craft.", "Your class does not know the alchemist's craft." };
-				notify::Show(strings::TR(kKeys[group], kText[group]));
+				const char* notice = strings::TR(kKeys[group], kText[group]);
+				notify::Show(notice);
+				logger::info("notice: {}", notice);
+				// Combined run 78d7: with the menu refused the player stayed seated at the forge, hammering, until a move key.
+				// Leave the station once the menu has gone: a main-thread task a moment later (the hide is queued first).
+				std::thread([]() {
+					std::this_thread::sleep_for(std::chrono::milliseconds(300));
+					if (auto* tasks = SKSE::GetTaskInterface())
+					{
+						tasks->AddTask([]() {
+							auto* pl = RE::PlayerCharacter::GetSingleton();
+							if (!pl || !pl->GetOccupiedFurniture()) { return; }
+							pl->StopInteractingQuick(false);
+							logger::info("crafting gate: the player was taken out of the refused station");
+						});
+					}
+				}).detach();
 				return RE::BSEventNotifyControl::kContinue;
 			}
 		};

@@ -9,6 +9,8 @@
 #include "utils/Logger.h"
 
 #include <atomic>
+#include <chrono>
+#include <thread>
 #include <cstring>
 #include <format>
 
@@ -91,6 +93,50 @@ namespace LevelUpGains
 				   settings::levelup::staminaPerLevel < 0.5F;
 		}
 
+		std::atomic<std::uint32_t> g_session{ 0 };
+		std::atomic<bool> g_confirmed{ false };
+		std::atomic<std::uint32_t> g_confirms{ 0 };
+		std::atomic<std::uint32_t> g_closedByUs{ 0 };
+
+		// UI thread: the game's confirmation box for the pick, answered OK (button 0).
+		void AnswerConfirm(std::uint32_t a_session)
+		{
+			if (g_session.load() != a_session || g_confirmed.load()) { return; }
+			auto* ui = RE::UI::GetSingleton();
+			if (!ui || !ui->IsMenuOpen(RE::LevelUpMenu::MENU_NAME)) { return; }
+			auto box = ui->GetMenu(RE::MessageBoxMenu::MENU_NAME);
+			if (!box || !box->uiMovie) { return; }
+			RE::GFxValue arr;
+			box->uiMovie->CreateArray(&arr);
+			arr.PushBack(RE::GFxValue(0.0));
+			RE::GFxValue args[2];
+			args[0] = RE::GFxValue("buttonPress");
+			args[1] = arr;
+			RE::GFxValue result;
+			const bool ok = box->uiMovie->Invoke("_global.gfx.io.GameDelegate.call", &result, args, 2);
+			g_confirmed = true;
+			++g_confirms;
+			logger::info("level-up skip: the game's confirmation box answered OK ({})", ok ? "sent" : "the call failed");
+		}
+
+		// UI thread: a LevelUp Menu still open a second after the answer is closed (the level up has been applied).
+		void CloseIfStillOpen(std::uint32_t a_session)
+		{
+			if (g_session.load() != a_session) { return; }
+			auto* ui = RE::UI::GetSingleton();
+			if (!g_confirmed.load())
+			{
+				logger::warn("level-up skip: no confirmation box appeared within 3 s - the level-up screen is left to the player");
+				return;
+			}
+			if (ui && ui->IsMenuOpen(RE::LevelUpMenu::MENU_NAME) && !ui->IsMenuOpen(RE::MessageBoxMenu::MENU_NAME))
+			{
+				if (auto* q = RE::UIMessageQueue::GetSingleton()) { q->AddMessage(RE::LevelUpMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr); }
+				++g_closedByUs;
+				logger::info("level-up skip: the LevelUp Menu was still open after the confirmation - closed");
+			}
+		}
+
 		class LevelUpMenuSink : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 		{
 		public:
@@ -114,9 +160,26 @@ namespace LevelUpGains
 						using Choose_t = void(RE::IMenu*, std::uint32_t);
 						reinterpret_cast<Choose_t*>(choose)(menu.get(), kHealth);
 						++g_skipped;
-						logger::info("level-up skip: attribute pick made for the player (every gain is 0); the level up completes with its perk points");
+						logger::info("level-up skip: attribute pick made for the player (every gain is 0); answering the game's confirmation next");
 					});
 				}
+				// The pick is not the level up yet: the game's choose function raises its own "Increase Health?" box, and the
+				// attribute is applied when that box's OK runs its callback (the routine Hook() sits on). Seen in combined run
+				// 78d7: the routine ran only when the tester answered the box, 38 s after the pick; the level-up SWF (vanilla or
+				// the CPC-style one Norden UI ships) raises no box of its own. So the box is answered here - button 0, OK, the
+				// same GameDelegate call the box's own buttons make - and the LevelUp Menu is closed if it is still open after
+				// that. A worker only waits; every look at a menu is a UI task (gate rule scaleform-calls-only-on-the-ui-thread).
+				const auto session = ++g_session;
+				g_confirmed = false;
+				std::thread([session]() {
+					for (int i = 0; i < 30 && g_session.load() == session && !g_confirmed.load(); ++i)
+					{
+						std::this_thread::sleep_for(std::chrono::milliseconds(100));
+						if (auto* t = SKSE::GetTaskInterface()) { t->AddUITask([session]() { AnswerConfirm(session); }); }
+					}
+					std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+					if (auto* t = SKSE::GetTaskInterface()) { t->AddUITask([session]() { CloseIfStillOpen(session); }); }
+				}).detach();
 				return RE::BSEventNotifyControl::kContinue;
 			}
 		};
@@ -209,6 +272,8 @@ namespace LevelUpGains
 		s.lastGain = g_lastGain.load();
 		s.skipResolved = g_choose != 0;
 		s.picksSkipped = g_skipped.load();
+		s.confirmsAnswered = g_confirms.load();
+		s.menusClosed = g_closedByUs.load();
 		return s;
 	}
 }

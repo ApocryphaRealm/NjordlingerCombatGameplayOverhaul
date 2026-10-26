@@ -37,6 +37,12 @@
   Nightingale's unbreakable lockpicks. "Undetected" now means no nearby actor detects you while you sneak; "in shadow"
   is a light level under 50.
 
+### Fixed after combined run 78d7
+- The level-up screen now closes by itself: the game's own "Increase Health?" box that follows the automatic pick is
+  answered for you (it appeared with the vanilla and the Norden UI level-up screen alike).
+- A refused crafting station no longer leaves you seated at it; the refusal notice is in the log.
+- Past its tier's mark the class line reads "... class level 18 - ready to evolve" instead of "18 of 10".
+
 ### Close readings (owner may want them tuned)
 - A "critical hit" (Spellsword) is a power-attack hit; a "dodge" (Rogue) is a hit that leaves your health where it
   was; a "bash" (Crusader B1) is a power attack while blocking with a shield; a poison taking effect (Agent) is a

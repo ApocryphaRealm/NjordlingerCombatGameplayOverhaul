@@ -67,7 +67,7 @@ namespace StatsMenuClass
 			const auto snap = Classes::GetSnapshot();
 			if (!snap.tableLoaded || !snap.enabled) { return; }
 			std::string text = snap.line;
-			if (snap.upgradeDue) { text += "  -  " + std::string(strings::TR("NJ_StatsEvolveHint", "your class can evolve")); }
+			// the line itself says "ready to evolve" once the class can evolve (Classes::LineLocked)
 
 			RE::GFxValue root;
 			if (!movie->GetVariable(&root, "_root") || !root.IsObject()) { Problem("the Stats Menu has no _root"); return; }

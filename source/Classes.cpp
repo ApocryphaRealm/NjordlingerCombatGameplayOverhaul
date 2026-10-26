@@ -214,6 +214,9 @@ namespace Classes
 				return Fmt(TrS("NJ_ClassLineTop", "{} {} - class level {}"), TierName(a_r.tier), name, a_r.level);
 			}
 			const int next = UpgradeLevelFor(a_r.tier);
+			// Combined run 78d7: "Novice Mage - class level 18 of 10" - past the tier's mark the line says the class can
+			// evolve instead of a count it has already passed.
+			if (a_r.level >= next) { return Fmt(TrS("NJ_ClassLineReady", "{} {} - class level {} - ready to evolve"), TierName(a_r.tier), name, a_r.level); }
 			return Fmt(TrS("NJ_ClassLine", "{} {} - class level {} of {}"), TierName(a_r.tier), name, a_r.level, next);
 		}
 

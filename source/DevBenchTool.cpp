@@ -98,7 +98,7 @@ namespace DevBenchTool
 			const auto lug = LevelUpGains::GetState();
 			j["levelUp"] = { { "control", settings::levelup::overrideRewards }, { "perks", settings::levelup::PerksTableText() },
 							 { "gains", { settings::levelup::healthPerLevel, settings::levelup::magickaPerLevel, settings::levelup::staminaPerLevel } },
-							 { "hookAttached", lug.attached }, { "levelUps", lug.levelUps }, { "skipResolved", lug.skipResolved }, { "picksSkipped", lug.picksSkipped } };
+							 { "hookAttached", lug.attached }, { "levelUps", lug.levelUps }, { "skipResolved", lug.skipResolved }, { "picksSkipped", lug.picksSkipped }, { "confirmsAnswered", lug.confirmsAnswered }, { "menusClosed", lug.menusClosed } };
 			const auto lk = Lockouts::GetState();
 			j["lockouts"] = { { "perksConditioned", lk.perksConditioned }, { "entriesConditioned", lk.entriesConditioned },
 							  { "abilityEntriesSkipped", lk.abilityEntriesSkipped }, { "craftingRefusals", lk.craftingRefusals }, { "lastRefusal", lk.lastRefusal } };
