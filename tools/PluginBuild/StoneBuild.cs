@@ -125,6 +125,9 @@ static class StoneBuild
             glowForms.Add(Hex(mg));
         }
 
+        // Q66 (Fable 14:20): a cell not built yet never reads as active - "<line> (dormant)" on the card and the page.
+        string CardText(JsonNode cell) => cell["d"]!.GetValue<string>() + (cell["k"]?.GetValue<string>() == "stub" ? " (dormant)" : "");
+
         // ---- the effect of one cell -------------------------------------------------------------------------------------
         int recCount = 0, markerCount = 0;
         MagicEffect CellEffect(string edid, string name, string host, JsonNode cell)
@@ -133,7 +136,7 @@ static class StoneBuild
             var weapon = host != "armour";
             var mg = mod.MagicEffects.AddNew(edid);
             mg.Name = name;
-            mg.Description = cell["d"]!.GetValue<string>();
+            mg.Description = CardText(cell);
             mg.MagicSkill = ActorValue.None;
             mg.ResistValue = ActorValue.None;
             mg.SecondActorValue = ActorValue.None;
@@ -330,7 +333,7 @@ static class StoneBuild
         {
             var kind = cell["k"]!.GetValue<string>();
             var mg = CellEffect(edid, name, host, cell);
-            var o = new JsonObject { ["kind"] = kind, ["effect"] = Hex(mg), ["text"] = cell["d"]!.GetValue<string>() };
+            var o = new JsonObject { ["kind"] = kind, ["effect"] = Hex(mg), ["text"] = CardText(cell) };
             if (kind == "rec")
             {
                 o["m"] = phrase ? new JsonArray(Enumerable.Range(0, tiers.Length).Select(_ => (JsonNode)JsonValue.Create(Lerp(cell["m"], 0, 1))!).ToArray()) : ByTier(cell["m"], 1);

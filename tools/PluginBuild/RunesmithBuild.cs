@@ -89,22 +89,17 @@ static class RunesmithBuild
         // his place: the inn's interior cell, overridden as a whole copy of the master's record
         var home = cfg["home"]!;
         var cellGetter = ByEdid<ICellGetter>(home["cell"]!.GetValue<string>());
-        var cellCtx = cache.ResolveContext<ICell, ICellGetter>(cellGetter.FormKey);
-        var cell = cellCtx.GetOrAddAsOverride(mod);
-        // keep the override to the cell header and our reference: the master's own references stay the master's
-        cell.Persistent.Clear();
-        cell.Temporary.Clear();
-        cell.NavigationMeshes.Clear();
-        cell.Landscape = null;
+        // Q67 (Fable 14:20): the inn's CELL record is NOT overridden (inn overhauls edit it). He is placed in our storage
+        // cell, and the SKSE plugin moves him to this spot the first time the player is in the inn (runesmith.json).
         var spot = FindSpot(cellGetter, cache, home["near"]!.AsArray().Select(x => x!.GetValue<string>()).ToArray());
         var off = home["offset"]!.AsArray().Select(x => x!.GetValue<float>()).ToArray();
         var npcRef = new PlacedNpc(mod)
         {
             Base = npc.ToNullableLink(),
-            Placement = new Placement { Position = new P3Float(spot.pos.X + off[0], spot.pos.Y + off[1], spot.pos.Z + off[2]), Rotation = spot.rot }
+            Placement = new Placement { Position = new P3Float(0, 64, 0), Rotation = new P3Float(0, 0, 0) }
         };
         npcRef.MajorRecordFlagsRaw |= 0x400;
-        cell.Persistent.Add(npcRef);
+        storage.Persistent.Add(npcRef);
 
         // ---- the quest and its dialogue -------------------------------------------------------------------------------
         var q = cfg["quest"]!;
@@ -146,10 +141,6 @@ static class RunesmithBuild
             return new ConditionFloat { CompareOperator = CompareOperator.EqualTo, ComparisonValue = a_v, Data = d };
         }
 
-        var branch = mod.DialogBranches.AddNew("NJCGO_RunesmithBranch");
-        branch.Quest.SetTo(quest);
-        // category: the default (Topic)
-        branch.Flags = DialogBranch.Flag.TopLevel;
         var topicForms = new JsonObject();
         DialogTopic? first = null;
         foreach (var t in cfg["topics"]!.AsArray())
@@ -158,13 +149,21 @@ static class RunesmithBuild
             var topic = mod.DialogTopics.AddNew("NJCGO_Runesmith" + id);
             topic.Name = t["prompt"]!.GetValue<string>();
             topic.Quest.SetTo(quest);
+            // one top-level branch per topic, starting at it, as every vanilla player topic is built
+            var branch = mod.DialogBranches.AddNew("NJCGO_RunesmithBranch" + id);
+            branch.Quest.SetTo(quest);
+            { var cp = branch.GetType().GetProperty("Category")!; cp.SetValue(branch, Enum.Parse(Nullable.GetUnderlyingType(cp.PropertyType) ?? cp.PropertyType, "Player")); }
+            branch.Flags = DialogBranch.Flag.TopLevel;
+            branch.StartingTopic.SetTo(topic);
             topic.Branch.SetTo(branch);
             topic.Category = DialogTopic.CategoryEnum.Topic;
             topic.Subtype = DialogTopic.SubtypeEnum.Custom;
+            topic.SubtypeName = "CUST";   // SNAM: the game reads the subtype from it (blank in the df8b build)
             topic.Priority = 50;
             first ??= topic;
             var info = new DialogResponses(mod.GetNextFormKey(), SkyrimRelease.SkyrimSE);
             info.Flags = new DialogResponseFlags();
+            info.FavorLevel = FavorLevel.None;
             var k = 1;
             foreach (var line in t["say"]!.AsArray())
             {
@@ -179,19 +178,21 @@ static class RunesmithBuild
                 info.VirtualMachineAdapter = new DialogResponsesAdapter
                 {
                     Scripts = new ExtendedList<ScriptEntry> { new ScriptEntry { Name = name } },
-                    ScriptFragments = new ScriptFragments { OnEnd = new ScriptFragment { ScriptName = name, FragmentName = "Fragment_0" } }
+                    ScriptFragments = new ScriptFragments { FileName = name, OnEnd = new ScriptFragment { ScriptName = name, FragmentName = "Fragment_0" } }
                 };
             }
             topic.Responses.Add(info);
             topicForms[id] = new JsonObject { ["topic"] = Hex(topic), ["info"] = Hex(info) };
         }
-        branch.StartingTopic.SetTo(first!);
 
         forms["runesmith"] = new JsonObject
         {
             ["npc"] = Hex(npc), ["npcRef"] = Hex(npcRef), ["quest"] = Hex(quest), ["learnedGlobal"] = Hex(learnedGlobal),
             ["faction"] = Hex(faction), ["chest"] = Hex(chest), ["chestRef"] = Hex(chestRef), ["topics"] = topicForms,
-            ["home"] = $"{cellGetter.EditorID} at {spot.pos.X:F0},{spot.pos.Y:F0},{spot.pos.Z:F0} (near {spot.what})"
+            ["home"] = $"{cellGetter.EditorID} at {spot.pos.X:F0},{spot.pos.Y:F0},{spot.pos.Z:F0} (near {spot.what})",
+            ["homeCell"] = $"{cellGetter.FormKey.ModKey.FileName}|0x{cellGetter.FormKey.ID:X}",
+            ["homePos"] = new JsonArray(spot.pos.X + off[0], spot.pos.Y + off[1], spot.pos.Z + off[2]),
+            ["homeAngleZ"] = spot.rot.Z
         };
         var outDir = Path.Combine(repo, "data", "SKSE", "Plugins", "NjordlingerCombatGameplayOverhaul");
         var table = JsonNode.Parse(forms["runesmith"]!.ToJsonString())!.AsObject();

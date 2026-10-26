@@ -34,6 +34,11 @@ def cell_text(c):
             parts.append("%d%% chance" % c["chance"])
     elif k == "perk":
         parts.append(c["ep"] + " x" + band(c.get("mult") or c.get("add")))
+        for cond in c.get("if", []):
+            what = cond.get("kw") or cond.get("skill") or cond["f"]
+            if cond["f"] == "GetHealthPercentage":
+                what = "health %s %g" % (cond.get("op", "=="), cond["v"])
+            parts.append("[%s: %s]" % ("target" if cond.get("tab") == 2 else "spell" if cond.get("tab") == 1 else "you", what))
     elif k == "self":
         parts.append(c["av"] + " " + band(c.get("m")))
     elif k == "proc":
@@ -49,6 +54,8 @@ def cell_text(c):
             parts.append(what)
         if p.get("mag") is not None:
             parts.append("mag " + band(p["mag"]))
+        if p.get("stack"):
+            parts.append("stacks to %d in %g s" % (p["stack"], p.get("window", 3)))
         if p.get("mult") is not None:
             parts.append("x" + band(p["mult"]))
         if p.get("cd"):

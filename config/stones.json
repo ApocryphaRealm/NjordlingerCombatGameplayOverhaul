@@ -32,6 +32,7 @@
     "AbsorbHealth": { "name": "Soul stone absorb", "target": true, "effects": [{ "a": "Absorb", "av": "Health", "det": true, "m": 3 }] },
     "Drain": { "name": "Soul stone drain", "target": true, "effects": [{ "av": "Health", "det": true, "m": 2, "dur": 5 }] },
     "DragonFire": { "name": "Dragon fire", "target": true, "effects": [{ "av": "Health", "det": true, "m": 30, "res": "ResistFire", "mkw": "MagicDamageFire", "copyMgef": "EnchFireDamageFFContact" }] },
+    "Stack": { "name": "Soul stone momentum", "target": false, "effects": [{ "av": "AttackDamageMult", "m": 0.05, "dur": 3 }] },
     "Fury": { "name": "Soul stone fury", "target": false, "effects": [{ "av": "AttackDamageMult", "m": 0.2, "dur": 5 }] },
     "BowHaste": { "name": "Soul stone haste", "target": false, "effects": [{ "av": "BowSpeedBonus", "m": 0.2, "dur": 5 }] },
     "Haste": { "name": "Soul stone swiftness", "target": false, "effects": [{ "av": "SpeedMult", "m": 15, "dur": 5 }] },
@@ -241,8 +242,8 @@
     { "shout": "Elemental Fury", "words": ["Su", "Grah", "Dun"],
       "word": {
         "Su": {
-          "melee": { "k": "stub", "d": "Consecutive hits build damage.", "note": "stacking needs a hit counter with stacks; not built yet" },
-          "ranged": { "k": "stub", "d": "Consecutive hits build damage.", "note": "stacking needs a hit counter with stacks; not built yet" },
+          "melee": { "k": "proc", "d": "Each hit within 3 seconds of the last adds damage, up to five times.", "proc": { "on": "hit", "stack": 5, "window": 3, "cast": { "helper": "Stack" }, "at": "self", "mag": [0.05, 0.25], "cd": 0 } },
+          "ranged": { "k": "proc", "d": "Each arrow hit within 3 seconds of the last adds damage, up to five times.", "proc": { "on": "hit", "stack": 5, "window": 3, "cast": { "helper": "Stack" }, "at": "self", "mag": [0.05, 0.25], "cd": 0 } },
           "armour": { "k": "rec", "d": "You move <mag>% faster.", "av": "SpeedMult", "m": [5, 25] } },
         "Grah": {
           "melee": { "k": "perk", "d": "Damage is increased.", "ep": "ModAttackDamage", "mult": [1.05, 1.25] },

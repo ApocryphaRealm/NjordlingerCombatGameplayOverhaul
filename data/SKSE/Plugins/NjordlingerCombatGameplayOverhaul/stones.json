@@ -22,7 +22,7 @@
       "name": "Petty",
       "keyword": "0x934",
       "glow": "0x976",
-      "list": "0xBF3",
+      "list": "0xBF5",
       "feeGems": [
         "Skyrim.esm|0x2E4E2",
         "Skyrim.esm|0x2E4E3"
@@ -32,7 +32,7 @@
       "name": "Lesser",
       "keyword": "0x935",
       "glow": "0x978",
-      "list": "0xBF4",
+      "list": "0xBF6",
       "feeGems": [
         "Skyrim.esm|0x2E4E4",
         "Skyrim.esm|0x2E4E5"
@@ -42,7 +42,7 @@
       "name": "Common",
       "keyword": "0x936",
       "glow": "0x97A",
-      "list": "0xBF5",
+      "list": "0xBF7",
       "feeGems": [
         "Skyrim.esm|0x2E4E6",
         "Skyrim.esm|0x2E4F3"
@@ -52,7 +52,7 @@
       "name": "Greater",
       "keyword": "0x937",
       "glow": "0x97C",
-      "list": "0xBF6",
+      "list": "0xBF8",
       "feeGems": [
         "Skyrim.esm|0x2E4F4",
         "Skyrim.esm|0x2E4FB"
@@ -62,7 +62,7 @@
       "name": "Grand",
       "keyword": "0x938",
       "glow": "0x97E",
-      "list": "0xBF7",
+      "list": "0xBF9",
       "feeGems": [
         "Skyrim.esm|0x2E4FC",
         "Skyrim.esm|0x2E4FF"
@@ -70,11 +70,11 @@
     }
   ],
   "unknownPhrase": {
-    "weapon": "0xBF1",
-    "armour": "0xBF2"
+    "weapon": "0xBF3",
+    "armour": "0xBF4"
   },
-  "loot": "0xBF8",
-  "vendor": "0xBF9",
+  "loot": "0xBFA",
+  "vendor": "0xBFB",
   "helpers": {
     "Burn": "0x97F",
     "Chill": "0x981",
@@ -83,10 +83,11 @@
     "AbsorbHealth": "0x987",
     "Drain": "0x989",
     "DragonFire": "0x98B",
-    "Fury": "0x98D",
-    "BowHaste": "0x98F",
-    "Haste": "0x991",
-    "Restore": "0x993"
+    "Stack": "0x98D",
+    "Fury": "0x98F",
+    "BowHaste": "0x991",
+    "Haste": "0x993",
+    "Restore": "0x995"
   },
   "words": [
     {
@@ -95,16 +96,16 @@
       "position": 0,
       "keyword": "0x939",
       "stones": [
-        "0x995",
-        "0x996",
         "0x997",
         "0x998",
-        "0x999"
+        "0x999",
+        "0x99A",
+        "0x99B"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0x99A",
+          "effect": "0x99C",
           "text": "One hit in five staggers the target (strength \u003Cmag\u003E).",
           "m": [
             0.25,
@@ -123,7 +124,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0x99B",
+          "effect": "0x99D",
           "text": "One arrow in five staggers the target (strength \u003Cmag\u003E).",
           "m": [
             0.25,
@@ -142,9 +143,9 @@
         },
         "armour": {
           "kind": "perk",
-          "effect": "0x99C",
+          "effect": "0x99E",
           "text": "Stagger taken is reduced.",
-          "perk": "0x99D",
+          "perk": "0x99F",
           "value": [
             0.9,
             0.8,
@@ -161,18 +162,18 @@
       "position": 1,
       "keyword": "0x93A",
       "stones": [
-        "0x99E",
-        "0x99F",
         "0x9A0",
         "0x9A1",
-        "0x9A2"
+        "0x9A2",
+        "0x9A3",
+        "0x9A4"
       ],
       "hosts": {
         "melee": {
           "kind": "self",
-          "effect": "0x9A3",
+          "effect": "0x9A5",
           "text": "Stamina regenerates \u003Cmag\u003E% faster while the weapon is drawn.",
-          "ability": "0x9A4",
+          "ability": "0x9A6",
           "value": [
             10,
             20,
@@ -183,9 +184,9 @@
         },
         "ranged": {
           "kind": "self",
-          "effect": "0x9A6",
+          "effect": "0x9A8",
           "text": "Stamina regenerates \u003Cmag\u003E% faster while the bow is drawn.",
-          "ability": "0x9A7",
+          "ability": "0x9A9",
           "value": [
             10,
             20,
@@ -196,7 +197,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0x9A9",
+          "effect": "0x9AB",
           "text": "Stamina regenerates \u003Cmag\u003E% faster.",
           "m": [
             10,
@@ -221,16 +222,16 @@
       "position": 2,
       "keyword": "0x93B",
       "stones": [
-        "0x9AA",
-        "0x9AB",
         "0x9AC",
         "0x9AD",
-        "0x9AE"
+        "0x9AE",
+        "0x9AF",
+        "0x9B0"
       ],
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0x9AF",
+          "effect": "0x9B1",
           "text": "Power attacks knock the target back.",
           "proc": {
             "on": "hit",
@@ -242,7 +243,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0x9B0",
+          "effect": "0x9B2",
           "text": "Arrows push the target back (strength \u003Cmag\u003E).",
           "m": [
             0.3,
@@ -261,7 +262,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0x9B1",
+          "effect": "0x9B3",
           "text": "Attackers who hit you are pushed back.",
           "proc": {
             "on": "hitBy",
@@ -279,16 +280,16 @@
       "position": 0,
       "keyword": "0x93C",
       "stones": [
-        "0x9B5",
-        "0x9B6",
         "0x9B7",
         "0x9B8",
-        "0x9B9"
+        "0x9B9",
+        "0x9BA",
+        "0x9BB"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0x9BA",
+          "effect": "0x9BC",
           "text": "Strikes burn for \u003Cmag\u003E fire damage.",
           "m": [
             5,
@@ -307,7 +308,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0x9BB",
+          "effect": "0x9BD",
           "text": "Arrows burn for \u003Cmag\u003E fire damage.",
           "m": [
             5,
@@ -326,7 +327,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0x9BC",
+          "effect": "0x9BE",
           "text": "Resist fire \u003Cmag\u003E%.",
           "m": [
             10,
@@ -351,16 +352,16 @@
       "position": 1,
       "keyword": "0x93D",
       "stones": [
-        "0x9BD",
-        "0x9BE",
         "0x9BF",
         "0x9C0",
-        "0x9C1"
+        "0x9C1",
+        "0x9C2",
+        "0x9C3"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0x9C2",
+          "effect": "0x9C4",
           "text": "Struck targets burn for \u003Cmag\u003E fire damage per second for \u003Cdur\u003E seconds.",
           "m": [
             2,
@@ -379,7 +380,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0x9C3",
+          "effect": "0x9C5",
           "text": "Arrows set the target burning for \u003Cmag\u003E per second for \u003Cdur\u003E seconds.",
           "m": [
             2,
@@ -398,7 +399,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0x9C4",
+          "effect": "0x9C6",
           "text": "Attackers who hit you catch fire.",
           "proc": {
             "on": "hitBy",
@@ -422,18 +423,18 @@
       "position": 2,
       "keyword": "0x93E",
       "stones": [
-        "0x9C5",
-        "0x9C6",
         "0x9C7",
         "0x9C8",
-        "0x9C9"
+        "0x9C9",
+        "0x9CA",
+        "0x9CB"
       ],
       "hosts": {
         "melee": {
           "kind": "perk",
-          "effect": "0x9CA",
+          "effect": "0x9CC",
           "text": "Extra damage to the undead.",
-          "perk": "0x9CB",
+          "perk": "0x9CD",
           "value": [
             1.1,
             1.2,
@@ -444,9 +445,9 @@
         },
         "ranged": {
           "kind": "perk",
-          "effect": "0x9CC",
+          "effect": "0x9CE",
           "text": "Arrows deal extra damage to the undead.",
-          "perk": "0x9CD",
+          "perk": "0x9CF",
           "value": [
             1.1,
             1.2,
@@ -457,8 +458,8 @@
         },
         "armour": {
           "kind": "stub",
-          "effect": "0x9CE",
-          "text": "Undead near you take light damage."
+          "effect": "0x9D0",
+          "text": "Undead near you take light damage. (dormant)"
         }
       }
     },
@@ -468,16 +469,16 @@
       "position": 0,
       "keyword": "0x93F",
       "stones": [
-        "0x9D2",
-        "0x9D3",
         "0x9D4",
         "0x9D5",
-        "0x9D6"
+        "0x9D6",
+        "0x9D7",
+        "0x9D8"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0x9D7",
+          "effect": "0x9D9",
           "text": "Strikes freeze for \u003Cmag\u003E frost damage.",
           "m": [
             5,
@@ -496,7 +497,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0x9D8",
+          "effect": "0x9DA",
           "text": "Arrows freeze for \u003Cmag\u003E frost damage.",
           "m": [
             5,
@@ -515,7 +516,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0x9D9",
+          "effect": "0x9DB",
           "text": "Resist frost \u003Cmag\u003E%.",
           "m": [
             10,
@@ -540,16 +541,16 @@
       "position": 1,
       "keyword": "0x940",
       "stones": [
-        "0x9DA",
-        "0x9DB",
         "0x9DC",
         "0x9DD",
-        "0x9DE"
+        "0x9DE",
+        "0x9DF",
+        "0x9E0"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0x9DF",
+          "effect": "0x9E1",
           "text": "Struck targets are slowed by \u003Cmag\u003E% for \u003Cdur\u003E seconds.",
           "m": [
             10,
@@ -568,7 +569,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0x9E0",
+          "effect": "0x9E2",
           "text": "Arrows slow the target by \u003Cmag\u003E% for \u003Cdur\u003E seconds.",
           "m": [
             10,
@@ -587,8 +588,8 @@
         },
         "armour": {
           "kind": "stub",
-          "effect": "0x9E1",
-          "text": "Frost does not slow you."
+          "effect": "0x9E3",
+          "text": "Frost does not slow you. (dormant)"
         }
       }
     },
@@ -598,16 +599,16 @@
       "position": 2,
       "keyword": "0x941",
       "stones": [
-        "0x9E2",
-        "0x9E3",
         "0x9E4",
         "0x9E5",
-        "0x9E6"
+        "0x9E6",
+        "0x9E7",
+        "0x9E8"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0x9E7",
+          "effect": "0x9E9",
           "text": "One hit in ten freezes the target solid for \u003Cdur\u003E seconds.",
           "m": [
             1,
@@ -626,7 +627,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0x9E8",
+          "effect": "0x9EA",
           "text": "One arrow in ten freezes the target solid for \u003Cdur\u003E seconds.",
           "m": [
             1,
@@ -645,7 +646,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0x9E9",
+          "effect": "0x9EB",
           "text": "Attackers who hit you are chilled and slowed.",
           "proc": {
             "on": "hitBy",
@@ -669,16 +670,16 @@
       "position": 0,
       "keyword": "0x942",
       "stones": [
-        "0x9ED",
-        "0x9EE",
         "0x9EF",
         "0x9F0",
-        "0x9F1"
+        "0x9F1",
+        "0x9F2",
+        "0x9F3"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0x9F2",
+          "effect": "0x9F4",
           "text": "Struck targets lose \u003Cmag\u003E armour for \u003Cdur\u003E seconds.",
           "m": [
             20,
@@ -697,7 +698,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0x9F3",
+          "effect": "0x9F5",
           "text": "Arrows strip \u003Cmag\u003E armour for \u003Cdur\u003E seconds.",
           "m": [
             20,
@@ -716,7 +717,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0x9F4",
+          "effect": "0x9F6",
           "text": "Armour rating \u002B\u003Cmag\u003E.",
           "m": [
             10,
@@ -741,16 +742,16 @@
       "position": 1,
       "keyword": "0x943",
       "stones": [
-        "0x9F5",
-        "0x9F6",
         "0x9F7",
         "0x9F8",
-        "0x9F9"
+        "0x9F9",
+        "0x9FA",
+        "0x9FB"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0x9FA",
+          "effect": "0x9FC",
           "text": "Hits restore \u003Cmag\u003E health.",
           "m": [
             1,
@@ -769,7 +770,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0x9FB",
+          "effect": "0x9FD",
           "text": "Arrow hits restore \u003Cmag\u003E health.",
           "m": [
             1,
@@ -788,7 +789,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0x9FC",
+          "effect": "0x9FE",
           "text": "Health regenerates \u003Cmag\u003E% faster.",
           "m": [
             10,
@@ -813,16 +814,16 @@
       "position": 2,
       "keyword": "0x944",
       "stones": [
-        "0x9FD",
-        "0x9FE",
         "0x9FF",
         "0xA00",
-        "0xA01"
+        "0xA01",
+        "0xA02",
+        "0xA03"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xA02",
+          "effect": "0xA04",
           "text": "One hit in seven roots the target for \u003Cdur\u003E seconds.",
           "m": [
             100,
@@ -841,7 +842,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xA03",
+          "effect": "0xA05",
           "text": "One arrow in seven pins the target for \u003Cdur\u003E seconds.",
           "m": [
             100,
@@ -860,9 +861,9 @@
         },
         "armour": {
           "kind": "perk",
-          "effect": "0xA04",
+          "effect": "0xA06",
           "text": "Stagger taken while blocking is reduced.",
-          "perk": "0xA05",
+          "perk": "0xA07",
           "value": [
             0.6,
             0.45,
@@ -879,16 +880,16 @@
       "position": 0,
       "keyword": "0x945",
       "stones": [
-        "0xA09",
-        "0xA0A",
         "0xA0B",
         "0xA0C",
-        "0xA0D"
+        "0xA0D",
+        "0xA0E",
+        "0xA0F"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xA0E",
+          "effect": "0xA10",
           "text": "Struck targets fade and slow by \u003Cmag\u003E% for \u003Cdur\u003E seconds.",
           "m": [
             10,
@@ -907,14 +908,14 @@
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xA0F",
-          "text": "Arrows pass through the first body and hit a second."
+          "effect": "0xA11",
+          "text": "Arrows pass through the first body and hit a second. (dormant)"
         },
         "armour": {
           "kind": "perk",
-          "effect": "0xA10",
+          "effect": "0xA12",
           "text": "Below 30% health, damage taken is reduced.",
-          "perk": "0xA11",
+          "perk": "0xA13",
           "value": [
             0.9,
             0.8,
@@ -931,18 +932,18 @@
       "position": 1,
       "keyword": "0x946",
       "stones": [
-        "0xA12",
-        "0xA13",
         "0xA14",
         "0xA15",
-        "0xA16"
+        "0xA16",
+        "0xA17",
+        "0xA18"
       ],
       "hosts": {
         "melee": {
           "kind": "perk",
-          "effect": "0xA17",
+          "effect": "0xA19",
           "text": "Extra damage to ghosts and spirits.",
-          "perk": "0xA18",
+          "perk": "0xA1A",
           "value": [
             1.1,
             1.2,
@@ -953,9 +954,9 @@
         },
         "ranged": {
           "kind": "perk",
-          "effect": "0xA19",
+          "effect": "0xA1B",
           "text": "Arrows deal extra damage to ghosts and spirits.",
-          "perk": "0xA1A",
+          "perk": "0xA1C",
           "value": [
             1.1,
             1.2,
@@ -966,7 +967,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xA1B",
+          "effect": "0xA1D",
           "text": "Resist magic \u003Cmag\u003E%.",
           "m": [
             5,
@@ -991,16 +992,16 @@
       "position": 2,
       "keyword": "0x947",
       "stones": [
-        "0xA1C",
-        "0xA1D",
         "0xA1E",
         "0xA1F",
-        "0xA20"
+        "0xA20",
+        "0xA21",
+        "0xA22"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xA21",
+          "effect": "0xA23",
           "text": "Struck targets are snared by \u003Cmag\u003E% for \u003Cdur\u003E seconds.",
           "m": [
             20,
@@ -1019,7 +1020,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xA22",
+          "effect": "0xA24",
           "text": "Arrows snare the target by \u003Cmag\u003E% for \u003Cdur\u003E seconds.",
           "m": [
             20,
@@ -1038,7 +1039,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xA23",
+          "effect": "0xA25",
           "text": "Attackers who hit you are snared.",
           "proc": {
             "on": "hitBy",
@@ -1062,16 +1063,16 @@
       "position": 0,
       "keyword": "0x948",
       "stones": [
-        "0xA27",
-        "0xA28",
         "0xA29",
         "0xA2A",
-        "0xA2B"
+        "0xA2B",
+        "0xA2C",
+        "0xA2D"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xA2C",
+          "effect": "0xA2E",
           "text": "One hit in ten disarms the target (up to level \u003Cmag\u003E).",
           "m": [
             20,
@@ -1090,7 +1091,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xA2D",
+          "effect": "0xA2F",
           "text": "One arrow in ten knocks the weapon from the hand (up to level \u003Cmag\u003E).",
           "m": [
             20,
@@ -1109,8 +1110,8 @@
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xA2E",
-          "text": "You cannot be disarmed."
+          "effect": "0xA30",
+          "text": "You cannot be disarmed. (dormant)"
         }
       }
     },
@@ -1120,16 +1121,16 @@
       "position": 1,
       "keyword": "0x949",
       "stones": [
-        "0xA2F",
-        "0xA30",
         "0xA31",
         "0xA32",
-        "0xA33"
+        "0xA33",
+        "0xA34",
+        "0xA35"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xA34",
+          "effect": "0xA36",
           "text": "Struck targets deal \u003Cmag\u003E% less damage for \u003Cdur\u003E seconds.",
           "m": [
             0.05,
@@ -1148,7 +1149,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xA35",
+          "effect": "0xA37",
           "text": "Arrows weaken the target\u0027s attacks by \u003Cmag\u003E for \u003Cdur\u003E seconds.",
           "m": [
             0.05,
@@ -1167,9 +1168,9 @@
         },
         "armour": {
           "kind": "perk",
-          "effect": "0xA36",
+          "effect": "0xA38",
           "text": "Your attacks deal more damage.",
-          "perk": "0xA37",
+          "perk": "0xA39",
           "value": [
             1.05,
             1.1,
@@ -1186,18 +1187,18 @@
       "position": 2,
       "keyword": "0x94A",
       "stones": [
-        "0xA38",
-        "0xA39",
         "0xA3A",
         "0xA3B",
-        "0xA3C"
+        "0xA3C",
+        "0xA3D",
+        "0xA3E"
       ],
       "hosts": {
         "melee": {
           "kind": "perk",
-          "effect": "0xA3D",
+          "effect": "0xA3F",
           "text": "Extra damage to targets below 30% health.",
-          "perk": "0xA3E",
+          "perk": "0xA40",
           "value": [
             1.1,
             1.2,
@@ -1208,9 +1209,9 @@
         },
         "ranged": {
           "kind": "perk",
-          "effect": "0xA3F",
+          "effect": "0xA41",
           "text": "Arrows deal extra damage to wounded targets.",
-          "perk": "0xA40",
+          "perk": "0xA42",
           "value": [
             1.1,
             1.2,
@@ -1221,9 +1222,9 @@
         },
         "armour": {
           "kind": "perk",
-          "effect": "0xA41",
+          "effect": "0xA43",
           "text": "Below 30% health, you deal more damage.",
-          "perk": "0xA42",
+          "perk": "0xA44",
           "value": [
             1.1,
             1.2,
@@ -1240,16 +1241,16 @@
       "position": 0,
       "keyword": "0x94B",
       "stones": [
-        "0xA46",
-        "0xA47",
         "0xA48",
         "0xA49",
-        "0xA4A"
+        "0xA4A",
+        "0xA4B",
+        "0xA4C"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xA4B",
+          "effect": "0xA4D",
           "text": "Struck animals up to level \u003Cmag\u003E are calmed.",
           "m": [
             10,
@@ -1268,7 +1269,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xA4C",
+          "effect": "0xA4E",
           "text": "Arrows calm animals up to level \u003Cmag\u003E.",
           "m": [
             10,
@@ -1287,8 +1288,8 @@
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xA4D",
-          "text": "Animals do not attack you."
+          "effect": "0xA4F",
+          "text": "Animals do not attack you. (dormant)"
         }
       }
     },
@@ -1298,16 +1299,16 @@
       "position": 1,
       "keyword": "0x94C",
       "stones": [
-        "0xA4E",
-        "0xA4F",
         "0xA50",
         "0xA51",
-        "0xA52"
+        "0xA52",
+        "0xA53",
+        "0xA54"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xA53",
+          "effect": "0xA55",
           "text": "One hit in ten calms a person up to level \u003Cmag\u003E.",
           "m": [
             10,
@@ -1326,7 +1327,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xA54",
+          "effect": "0xA56",
           "text": "One arrow in ten calms a person up to level \u003Cmag\u003E.",
           "m": [
             10,
@@ -1345,8 +1346,8 @@
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xA55",
-          "text": "Creatures nearby start combat later."
+          "effect": "0xA57",
+          "text": "Creatures nearby start combat later. (dormant)"
         }
       }
     },
@@ -1356,16 +1357,16 @@
       "position": 2,
       "keyword": "0x94D",
       "stones": [
-        "0xA56",
-        "0xA57",
         "0xA58",
         "0xA59",
-        "0xA5A"
+        "0xA5A",
+        "0xA5B",
+        "0xA5C"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xA5B",
+          "effect": "0xA5D",
           "text": "Struck targets lose heart for \u003Cdur\u003E seconds.",
           "m": [
             1,
@@ -1384,7 +1385,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xA5C",
+          "effect": "0xA5E",
           "text": "Arrows make the target lose heart for \u003Cdur\u003E seconds.",
           "m": [
             1,
@@ -1403,9 +1404,9 @@
         },
         "armour": {
           "kind": "perk",
-          "effect": "0xA5D",
+          "effect": "0xA5F",
           "text": "Merchants sell to you for less.",
-          "perk": "0xA5E",
+          "perk": "0xA60",
           "value": [
             0.95,
             0.9,
@@ -1422,26 +1423,26 @@
       "position": 0,
       "keyword": "0x94E",
       "stones": [
-        "0xA62",
-        "0xA63",
         "0xA64",
         "0xA65",
-        "0xA66"
+        "0xA66",
+        "0xA67",
+        "0xA68"
       ],
       "hosts": {
         "melee": {
           "kind": "stub",
-          "effect": "0xA67",
-          "text": "Struck targets are revealed through walls."
+          "effect": "0xA69",
+          "text": "Struck targets are revealed through walls. (dormant)"
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xA68",
-          "text": "Arrows mark the target through walls."
+          "effect": "0xA6A",
+          "text": "Arrows mark the target through walls. (dormant)"
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xA69",
+          "effect": "0xA6B",
           "text": "While sneaking you sense life around you.",
           "m": [
             50,
@@ -1466,26 +1467,26 @@
       "position": 1,
       "keyword": "0x94F",
       "stones": [
-        "0xA6A",
-        "0xA6B",
         "0xA6C",
         "0xA6D",
-        "0xA6E"
+        "0xA6E",
+        "0xA6F",
+        "0xA70"
       ],
       "hosts": {
         "melee": {
           "kind": "stub",
-          "effect": "0xA6F",
-          "text": "Hits show nearby enemies briefly."
+          "effect": "0xA71",
+          "text": "Hits show nearby enemies briefly. (dormant)"
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xA70",
-          "text": "Arrows reveal enemies near the impact."
+          "effect": "0xA72",
+          "text": "Arrows reveal enemies near the impact. (dormant)"
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xA71",
+          "effect": "0xA73",
           "text": "While sneaking you sense the dead around you.",
           "m": [
             50,
@@ -1510,18 +1511,18 @@
       "position": 2,
       "keyword": "0x950",
       "stones": [
-        "0xA72",
-        "0xA73",
         "0xA74",
         "0xA75",
-        "0xA76"
+        "0xA76",
+        "0xA77",
+        "0xA78"
       ],
       "hosts": {
         "melee": {
           "kind": "perk",
-          "effect": "0xA77",
+          "effect": "0xA79",
           "text": "Sneak attacks deal more damage.",
-          "perk": "0xA78",
+          "perk": "0xA7A",
           "value": [
             1.1,
             1.2,
@@ -1532,9 +1533,9 @@
         },
         "ranged": {
           "kind": "perk",
-          "effect": "0xA79",
+          "effect": "0xA7B",
           "text": "Sneak attacks with the bow deal more damage.",
-          "perk": "0xA7A",
+          "perk": "0xA7C",
           "value": [
             1.1,
             1.2,
@@ -1545,7 +1546,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xA7B",
+          "effect": "0xA7D",
           "text": "You make \u003Cmag\u003E less noise.",
           "m": [
             0.1,
@@ -1570,16 +1571,16 @@
       "position": 0,
       "keyword": "0x951",
       "stones": [
-        "0xA7F",
-        "0xA80",
         "0xA81",
         "0xA82",
-        "0xA83"
+        "0xA83",
+        "0xA84",
+        "0xA85"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xA84",
+          "effect": "0xA86",
           "text": "In snow, strikes deal \u003Cmag\u003E frost damage.",
           "m": [
             5,
@@ -1598,7 +1599,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xA85",
+          "effect": "0xA87",
           "text": "In snow, arrows deal \u003Cmag\u003E frost damage.",
           "m": [
             5,
@@ -1617,7 +1618,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xA86",
+          "effect": "0xA88",
           "text": "Resist frost \u003Cmag\u003E%.",
           "m": [
             10,
@@ -1642,18 +1643,18 @@
       "position": 1,
       "keyword": "0x952",
       "stones": [
-        "0xA87",
-        "0xA88",
         "0xA89",
         "0xA8A",
-        "0xA8B"
+        "0xA8B",
+        "0xA8C",
+        "0xA8D"
       ],
       "hosts": {
         "melee": {
           "kind": "perk",
-          "effect": "0xA8C",
+          "effect": "0xA8E",
           "text": "Extra damage to animals.",
-          "perk": "0xA8D",
+          "perk": "0xA8F",
           "value": [
             1.1,
             1.2,
@@ -1664,9 +1665,9 @@
         },
         "ranged": {
           "kind": "perk",
-          "effect": "0xA8E",
+          "effect": "0xA90",
           "text": "Bow damage is increased.",
-          "perk": "0xA8F",
+          "perk": "0xA91",
           "value": [
             1.05,
             1.1,
@@ -1677,8 +1678,8 @@
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xA90",
-          "text": "Animal carcasses yield more."
+          "effect": "0xA92",
+          "text": "Animal carcasses yield more. (dormant)"
         }
       }
     },
@@ -1688,28 +1689,28 @@
       "position": 2,
       "keyword": "0x953",
       "stones": [
-        "0xA91",
-        "0xA92",
         "0xA93",
         "0xA94",
-        "0xA95"
+        "0xA95",
+        "0xA96",
+        "0xA97"
       ],
       "hosts": {
         "melee": {
           "kind": "stub",
-          "effect": "0xA96",
-          "text": "Power attacks lunge further."
+          "effect": "0xA98",
+          "text": "Power attacks lunge further. (dormant)"
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xA97",
-          "text": "Arrows fly faster and farther."
+          "effect": "0xA99",
+          "text": "Arrows fly faster and farther. (dormant)"
         },
         "armour": {
           "kind": "perk",
-          "effect": "0xA98",
+          "effect": "0xA9A",
           "text": "Falling damage is reduced.",
-          "perk": "0xA99",
+          "perk": "0xA9B",
           "value": [
             0.9,
             0.8,
@@ -1726,18 +1727,18 @@
       "position": 0,
       "keyword": "0x954",
       "stones": [
-        "0xA9D",
-        "0xA9E",
         "0xA9F",
         "0xAA0",
-        "0xAA1"
+        "0xAA1",
+        "0xAA2",
+        "0xAA3"
       ],
       "hosts": {
         "melee": {
           "kind": "perk",
-          "effect": "0xAA2",
+          "effect": "0xAA4",
           "text": "Hits while sprinting deal more damage.",
-          "perk": "0xAA3",
+          "perk": "0xAA5",
           "value": [
             1.1,
             1.2,
@@ -1748,12 +1749,12 @@
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xAA4",
-          "text": "Arrows fired while moving are steadier."
+          "effect": "0xAA6",
+          "text": "Arrows fired while moving are steadier. (dormant)"
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xAA5",
+          "effect": "0xAA7",
           "text": "You sprint \u003Cmag\u003E% faster.",
           "m": [
             5,
@@ -1778,16 +1779,16 @@
       "position": 1,
       "keyword": "0x955",
       "stones": [
-        "0xAA6",
-        "0xAA7",
         "0xAA8",
         "0xAA9",
-        "0xAAA"
+        "0xAAA",
+        "0xAAB",
+        "0xAAC"
       ],
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xAAB",
+          "effect": "0xAAD",
           "text": "After a kill your attacks deal more damage for 5 seconds.",
           "proc": {
             "on": "kill",
@@ -1800,12 +1801,12 @@
               0.5
             ],
             "cd": 0,
-            "spell": "0x98D"
+            "spell": "0x98F"
           }
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xAAC",
+          "effect": "0xAAE",
           "text": "After a kill you draw faster for 5 seconds.",
           "proc": {
             "on": "kill",
@@ -1818,12 +1819,12 @@
               0.3
             ],
             "cd": 0,
-            "spell": "0x98F"
+            "spell": "0x991"
           }
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xAAD",
+          "effect": "0xAAF",
           "text": "After a kill you move faster for 5 seconds.",
           "proc": {
             "on": "kill",
@@ -1836,7 +1837,7 @@
               25
             ],
             "cd": 0,
-            "spell": "0x991"
+            "spell": "0x993"
           }
         }
       }
@@ -1847,18 +1848,18 @@
       "position": 2,
       "keyword": "0x956",
       "stones": [
-        "0xAAE",
-        "0xAAF",
         "0xAB0",
         "0xAB1",
-        "0xAB2"
+        "0xAB2",
+        "0xAB3",
+        "0xAB4"
       ],
       "hosts": {
         "melee": {
           "kind": "perk",
-          "effect": "0xAB3",
+          "effect": "0xAB5",
           "text": "Power attacks cost less stamina.",
-          "perk": "0xAB4",
+          "perk": "0xAB6",
           "value": [
             0.9,
             0.8,
@@ -1869,12 +1870,12 @@
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xAB5",
-          "text": "Shots cost no stamina to hold."
+          "effect": "0xAB7",
+          "text": "Shots cost no stamina to hold. (dormant)"
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xAB6",
+          "effect": "0xAB8",
           "text": "While sprinting, stamina regenerates \u003Cmag\u003E% faster.",
           "m": [
             10,
@@ -1899,26 +1900,56 @@
       "position": 0,
       "keyword": "0x957",
       "stones": [
-        "0xABA",
-        "0xABB",
         "0xABC",
         "0xABD",
-        "0xABE"
+        "0xABE",
+        "0xABF",
+        "0xAC0"
       ],
       "hosts": {
         "melee": {
-          "kind": "stub",
-          "effect": "0xABF",
-          "text": "Consecutive hits build damage."
+          "kind": "proc",
+          "effect": "0xAC1",
+          "text": "Each hit within 3 seconds of the last adds damage, up to five times.",
+          "proc": {
+            "on": "hit",
+            "stack": 5,
+            "window": 3,
+            "at": "self",
+            "mag": [
+              0.05,
+              0.1,
+              0.15,
+              0.2,
+              0.25
+            ],
+            "cd": 0,
+            "spell": "0x98D"
+          }
         },
         "ranged": {
-          "kind": "stub",
-          "effect": "0xAC0",
-          "text": "Consecutive hits build damage."
+          "kind": "proc",
+          "effect": "0xAC2",
+          "text": "Each arrow hit within 3 seconds of the last adds damage, up to five times.",
+          "proc": {
+            "on": "hit",
+            "stack": 5,
+            "window": 3,
+            "at": "self",
+            "mag": [
+              0.05,
+              0.1,
+              0.15,
+              0.2,
+              0.25
+            ],
+            "cd": 0,
+            "spell": "0x98D"
+          }
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xAC1",
+          "effect": "0xAC3",
           "text": "You move \u003Cmag\u003E% faster.",
           "m": [
             5,
@@ -1943,27 +1974,14 @@
       "position": 1,
       "keyword": "0x958",
       "stones": [
-        "0xAC2",
-        "0xAC3",
         "0xAC4",
         "0xAC5",
-        "0xAC6"
+        "0xAC6",
+        "0xAC7",
+        "0xAC8"
       ],
       "hosts": {
         "melee": {
-          "kind": "perk",
-          "effect": "0xAC7",
-          "text": "Damage is increased.",
-          "perk": "0xAC8",
-          "value": [
-            1.05,
-            1.1,
-            1.15,
-            1.2,
-            1.25
-          ]
-        },
-        "ranged": {
           "kind": "perk",
           "effect": "0xAC9",
           "text": "Damage is increased.",
@@ -1976,11 +1994,24 @@
             1.25
           ]
         },
-        "armour": {
+        "ranged": {
           "kind": "perk",
           "effect": "0xACB",
-          "text": "You deal more damage in battle.",
+          "text": "Damage is increased.",
           "perk": "0xACC",
+          "value": [
+            1.05,
+            1.1,
+            1.15,
+            1.2,
+            1.25
+          ]
+        },
+        "armour": {
+          "kind": "perk",
+          "effect": "0xACD",
+          "text": "You deal more damage in battle.",
+          "perk": "0xACE",
           "value": [
             1.05,
             1.1,
@@ -1997,18 +2028,18 @@
       "position": 2,
       "keyword": "0x959",
       "stones": [
-        "0xACD",
-        "0xACE",
         "0xACF",
         "0xAD0",
-        "0xAD1"
+        "0xAD1",
+        "0xAD2",
+        "0xAD3"
       ],
       "hosts": {
         "melee": {
           "kind": "perk",
-          "effect": "0xAD2",
+          "effect": "0xAD4",
           "text": "Power attacks cannot be interrupted by stagger.",
-          "perk": "0xAD3",
+          "perk": "0xAD5",
           "value": [
             0.6,
             0.45,
@@ -2019,9 +2050,9 @@
         },
         "ranged": {
           "kind": "perk",
-          "effect": "0xAD4",
+          "effect": "0xAD6",
           "text": "Stagger taken while the bow is drawn is reduced.",
-          "perk": "0xAD5",
+          "perk": "0xAD7",
           "value": [
             0.8,
             0.7,
@@ -2032,9 +2063,9 @@
         },
         "armour": {
           "kind": "perk",
-          "effect": "0xAD6",
+          "effect": "0xAD8",
           "text": "Stagger taken is reduced.",
-          "perk": "0xAD7",
+          "perk": "0xAD9",
           "value": [
             0.9,
             0.8,
@@ -2051,16 +2082,16 @@
       "position": 0,
       "keyword": "0x95A",
       "stones": [
-        "0xADB",
-        "0xADC",
         "0xADD",
         "0xADE",
-        "0xADF"
+        "0xADF",
+        "0xAE0",
+        "0xAE1"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xAE0",
+          "effect": "0xAE2",
           "text": "Strikes shock for \u003Cmag\u003E damage.",
           "m": [
             5,
@@ -2079,7 +2110,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xAE1",
+          "effect": "0xAE3",
           "text": "Arrows shock for \u003Cmag\u003E damage.",
           "m": [
             5,
@@ -2098,7 +2129,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xAE2",
+          "effect": "0xAE4",
           "text": "Resist shock \u003Cmag\u003E%.",
           "m": [
             10,
@@ -2123,16 +2154,16 @@
       "position": 1,
       "keyword": "0x95B",
       "stones": [
-        "0xAE3",
-        "0xAE4",
         "0xAE5",
         "0xAE6",
-        "0xAE7"
+        "0xAE7",
+        "0xAE8",
+        "0xAE9"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xAE8",
+          "effect": "0xAEA",
           "text": "Struck targets crackle for \u003Cmag\u003E shock damage per second for \u003Cdur\u003E seconds.",
           "m": [
             2,
@@ -2151,7 +2182,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xAE9",
+          "effect": "0xAEB",
           "text": "Arrows crackle for \u003Cmag\u003E shock damage per second for \u003Cdur\u003E seconds.",
           "m": [
             2,
@@ -2170,7 +2201,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xAEA",
+          "effect": "0xAEC",
           "text": "Attackers who hit you are shocked.",
           "proc": {
             "on": "hitBy",
@@ -2194,16 +2225,16 @@
       "position": 2,
       "keyword": "0x95C",
       "stones": [
-        "0xAEB",
-        "0xAEC",
         "0xAED",
         "0xAEE",
-        "0xAEF"
+        "0xAEF",
+        "0xAF0",
+        "0xAF1"
       ],
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xAF0",
+          "effect": "0xAF2",
           "text": "One hit in four chains lightning to a second enemy.",
           "proc": {
             "on": "hit",
@@ -2222,7 +2253,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xAF1",
+          "effect": "0xAF3",
           "text": "One arrow in four chains lightning to a second enemy.",
           "proc": {
             "on": "hit",
@@ -2241,7 +2272,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xAF2",
+          "effect": "0xAF4",
           "text": "In rain, magicka regenerates \u003Cmag\u003E% faster.",
           "m": [
             10,
@@ -2266,16 +2297,16 @@
       "position": 0,
       "keyword": "0x95D",
       "stones": [
-        "0xAFA",
-        "0xAFB",
         "0xAFC",
         "0xAFD",
-        "0xAFE"
+        "0xAFE",
+        "0xAFF",
+        "0xB00"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xAFF",
+          "effect": "0xB01",
           "text": "One hit in ten slows the target by \u003Cmag\u003E% for \u003Cdur\u003E seconds.",
           "m": [
             10,
@@ -2294,7 +2325,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xB00",
+          "effect": "0xB02",
           "text": "One shot in ten slows the target by \u003Cmag\u003E% for \u003Cdur\u003E seconds.",
           "m": [
             10,
@@ -2313,7 +2344,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xB01",
+          "effect": "0xB03",
           "text": "The cooldowns of your soul stone effects are shorter.",
           "proc": {
             "on": "cooldown",
@@ -2334,18 +2365,18 @@
       "position": 1,
       "keyword": "0x95E",
       "stones": [
-        "0xB02",
-        "0xB03",
         "0xB04",
         "0xB05",
-        "0xB06"
+        "0xB06",
+        "0xB07",
+        "0xB08"
       ],
       "hosts": {
         "melee": {
           "kind": "perk",
-          "effect": "0xB07",
+          "effect": "0xB09",
           "text": "Power attacks cost less stamina.",
-          "perk": "0xB08",
+          "perk": "0xB0A",
           "value": [
             0.9,
             0.8,
@@ -2356,9 +2387,9 @@
         },
         "ranged": {
           "kind": "self",
-          "effect": "0xB09",
+          "effect": "0xB0B",
           "text": "You draw the bow \u003Cmag\u003E faster.",
-          "ability": "0xB0A",
+          "ability": "0xB0C",
           "value": [
             0.05,
             0.1,
@@ -2369,9 +2400,9 @@
         },
         "armour": {
           "kind": "perk",
-          "effect": "0xB0C",
+          "effect": "0xB0E",
           "text": "Power attacks cost less stamina.",
-          "perk": "0xB0D",
+          "perk": "0xB0F",
           "value": [
             0.9,
             0.8,
@@ -2388,27 +2419,27 @@
       "position": 2,
       "keyword": "0x95F",
       "stones": [
-        "0xB0E",
-        "0xB0F",
         "0xB10",
         "0xB11",
-        "0xB12"
+        "0xB12",
+        "0xB13",
+        "0xB14"
       ],
       "hosts": {
         "melee": {
           "kind": "stub",
-          "effect": "0xB13",
-          "text": "The weapon wears slower."
+          "effect": "0xB15",
+          "text": "The weapon wears slower. (dormant)"
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xB14",
-          "text": "The bow wears slower."
+          "effect": "0xB16",
+          "text": "The bow wears slower. (dormant)"
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xB15",
-          "text": "The armour wears slower."
+          "effect": "0xB17",
+          "text": "The armour wears slower. (dormant)"
         }
       }
     },
@@ -2418,16 +2449,16 @@
       "position": 0,
       "keyword": "0x960",
       "stones": [
-        "0xB19",
-        "0xB1A",
         "0xB1B",
         "0xB1C",
-        "0xB1D"
+        "0xB1D",
+        "0xB1E",
+        "0xB1F"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xB1E",
+          "effect": "0xB20",
           "text": "In clear weather, strikes deal \u003Cmag\u003E extra damage.",
           "m": [
             3,
@@ -2446,12 +2477,12 @@
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xB1F",
-          "text": "Arrows are untouched by wind: no sway outdoors."
+          "effect": "0xB21",
+          "text": "Arrows are untouched by wind: no sway outdoors. (dormant)"
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xB20",
+          "effect": "0xB22",
           "text": "Resist shock \u003Cmag\u003E%.",
           "m": [
             10,
@@ -2476,16 +2507,16 @@
       "position": 1,
       "keyword": "0x961",
       "stones": [
-        "0xB21",
-        "0xB22",
         "0xB23",
         "0xB24",
-        "0xB25"
+        "0xB25",
+        "0xB26",
+        "0xB27"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xB26",
+          "effect": "0xB28",
           "text": "Hits restore \u003Cmag\u003E stamina.",
           "m": [
             2,
@@ -2504,7 +2535,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xB27",
+          "effect": "0xB29",
           "text": "Arrow hits restore \u003Cmag\u003E stamina.",
           "m": [
             2,
@@ -2523,7 +2554,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xB28",
+          "effect": "0xB2A",
           "text": "Health regenerates \u003Cmag\u003E% faster.",
           "m": [
             10,
@@ -2548,16 +2579,16 @@
       "position": 2,
       "keyword": "0x962",
       "stones": [
-        "0xB29",
-        "0xB2A",
         "0xB2B",
         "0xB2C",
-        "0xB2D"
+        "0xB2D",
+        "0xB2E",
+        "0xB2F"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xB2E",
+          "effect": "0xB30",
           "text": "In clear weather, strikes burn for \u003Cmag\u003E fire damage.",
           "m": [
             5,
@@ -2576,7 +2607,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xB2F",
+          "effect": "0xB31",
           "text": "In clear weather, arrows burn for \u003Cmag\u003E fire damage.",
           "m": [
             5,
@@ -2595,7 +2626,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xB30",
+          "effect": "0xB32",
           "text": "Resist fire \u003Cmag\u003E%.",
           "m": [
             10,
@@ -2620,16 +2651,16 @@
       "position": 0,
       "keyword": "0x963",
       "stones": [
-        "0xB38",
-        "0xB39",
         "0xB3A",
         "0xB3B",
-        "0xB3C"
+        "0xB3C",
+        "0xB3D",
+        "0xB3E"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xB3D",
+          "effect": "0xB3F",
           "text": "One hit in ten frightens the target (up to level \u003Cmag\u003E).",
           "m": [
             10,
@@ -2648,7 +2679,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xB3E",
+          "effect": "0xB40",
           "text": "One arrow in ten frightens the target (up to level \u003Cmag\u003E).",
           "m": [
             10,
@@ -2667,8 +2698,8 @@
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xB3F",
-          "text": "You resist fear."
+          "effect": "0xB41",
+          "text": "You resist fear. (dormant)"
         }
       }
     },
@@ -2678,16 +2709,16 @@
       "position": 1,
       "keyword": "0x964",
       "stones": [
-        "0xB40",
-        "0xB41",
         "0xB42",
         "0xB43",
-        "0xB44"
+        "0xB44",
+        "0xB45",
+        "0xB46"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xB45",
+          "effect": "0xB47",
           "text": "One hit in seven makes the target flee for a moment (up to level \u003Cmag\u003E).",
           "m": [
             5,
@@ -2706,7 +2737,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xB46",
+          "effect": "0xB48",
           "text": "One arrow in seven makes the target run (up to level \u003Cmag\u003E).",
           "m": [
             5,
@@ -2725,7 +2756,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xB47",
+          "effect": "0xB49",
           "text": "Below 30% health you move \u003Cmag\u003E% faster.",
           "m": [
             10,
@@ -2750,16 +2781,16 @@
       "position": 2,
       "keyword": "0x965",
       "stones": [
-        "0xB48",
-        "0xB49",
         "0xB4A",
         "0xB4B",
-        "0xB4C"
+        "0xB4C",
+        "0xB4D",
+        "0xB4E"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xB4D",
+          "effect": "0xB4F",
           "text": "Enemies below 30% health flee when hit (up to level \u003Cmag\u003E).",
           "m": [
             20,
@@ -2778,7 +2809,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xB4E",
+          "effect": "0xB50",
           "text": "Wounded targets flee when shot (up to level \u003Cmag\u003E).",
           "m": [
             20,
@@ -2797,7 +2828,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xB4F",
+          "effect": "0xB51",
           "text": "Attackers who hit you may flee.",
           "proc": {
             "on": "hitBy",
@@ -2815,16 +2846,16 @@
       "position": 0,
       "keyword": "0x966",
       "stones": [
-        "0xB53",
-        "0xB54",
         "0xB55",
         "0xB56",
-        "0xB57"
+        "0xB57",
+        "0xB58",
+        "0xB59"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xB58",
+          "effect": "0xB5A",
           "text": "Strikes absorb \u003Cmag\u003E health.",
           "m": [
             1,
@@ -2843,7 +2874,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xB59",
+          "effect": "0xB5B",
           "text": "Arrows absorb \u003Cmag\u003E health.",
           "m": [
             1,
@@ -2862,7 +2893,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xB5A",
+          "effect": "0xB5C",
           "text": "You absorb health from attackers who hit you.",
           "proc": {
             "on": "hitBy",
@@ -2886,16 +2917,16 @@
       "position": 1,
       "keyword": "0x967",
       "stones": [
-        "0xB5B",
-        "0xB5C",
         "0xB5D",
         "0xB5E",
-        "0xB5F"
+        "0xB5F",
+        "0xB60",
+        "0xB61"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xB60",
+          "effect": "0xB62",
           "text": "Strikes absorb \u003Cmag\u003E magicka.",
           "m": [
             2,
@@ -2914,7 +2945,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xB61",
+          "effect": "0xB63",
           "text": "Arrows absorb \u003Cmag\u003E magicka.",
           "m": [
             2,
@@ -2933,7 +2964,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xB62",
+          "effect": "0xB64",
           "text": "Magicka regenerates \u003Cmag\u003E% faster.",
           "m": [
             10,
@@ -2958,16 +2989,16 @@
       "position": 2,
       "keyword": "0x968",
       "stones": [
-        "0xB63",
-        "0xB64",
         "0xB65",
         "0xB66",
-        "0xB67"
+        "0xB67",
+        "0xB68",
+        "0xB69"
       ],
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xB68",
+          "effect": "0xB6A",
           "text": "A kill can raise the victim to fight for you.",
           "proc": {
             "on": "kill",
@@ -2979,7 +3010,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xB69",
+          "effect": "0xB6B",
           "text": "A killing shot can raise the victim to fight for you.",
           "proc": {
             "on": "kill",
@@ -2991,8 +3022,8 @@
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xB6A",
-          "text": "The dead near you rise to fight for you once."
+          "effect": "0xB6C",
+          "text": "The dead near you rise to fight for you once. (dormant)"
         }
       }
     },
@@ -3002,16 +3033,16 @@
       "position": 0,
       "keyword": "0x969",
       "stones": [
-        "0xB72",
-        "0xB73",
         "0xB74",
         "0xB75",
-        "0xB76"
+        "0xB76",
+        "0xB77",
+        "0xB78"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xB77",
+          "effect": "0xB79",
           "text": "Hits stagger an already staggered target harder (strength \u003Cmag\u003E).",
           "m": [
             0.5,
@@ -3030,7 +3061,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xB78",
+          "effect": "0xB7A",
           "text": "Arrows knock down a staggered target (strength \u003Cmag\u003E).",
           "m": [
             0.5,
@@ -3049,9 +3080,9 @@
         },
         "armour": {
           "kind": "perk",
-          "effect": "0xB79",
+          "effect": "0xB7B",
           "text": "Stagger taken is reduced.",
-          "perk": "0xB7A",
+          "perk": "0xB7C",
           "value": [
             0.9,
             0.8,
@@ -3068,16 +3099,16 @@
       "position": 1,
       "keyword": "0x96A",
       "stones": [
-        "0xB7B",
-        "0xB7C",
         "0xB7D",
         "0xB7E",
-        "0xB7F"
+        "0xB7F",
+        "0xB80",
+        "0xB81"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xB80",
+          "effect": "0xB82",
           "text": "One hit in twenty drives the target into a frenzy (up to level \u003Cmag\u003E).",
           "m": [
             10,
@@ -3096,7 +3127,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xB81",
+          "effect": "0xB83",
           "text": "One arrow in twenty drives the target into a frenzy (up to level \u003Cmag\u003E).",
           "m": [
             10,
@@ -3115,9 +3146,9 @@
         },
         "armour": {
           "kind": "perk",
-          "effect": "0xB82",
+          "effect": "0xB84",
           "text": "Illusion spells are stronger.",
-          "perk": "0xB83",
+          "perk": "0xB85",
           "value": [
             1.1,
             1.2,
@@ -3134,18 +3165,18 @@
       "position": 2,
       "keyword": "0x96B",
       "stones": [
-        "0xB84",
-        "0xB85",
         "0xB86",
         "0xB87",
-        "0xB88"
+        "0xB88",
+        "0xB89",
+        "0xB8A"
       ],
       "hosts": {
         "melee": {
           "kind": "perk",
-          "effect": "0xB89",
+          "effect": "0xB8B",
           "text": "Extra damage to dragons.",
-          "perk": "0xB8A",
+          "perk": "0xB8C",
           "value": [
             1.1,
             1.2,
@@ -3156,9 +3187,9 @@
         },
         "ranged": {
           "kind": "perk",
-          "effect": "0xB8B",
+          "effect": "0xB8D",
           "text": "Arrows deal extra damage to dragons.",
-          "perk": "0xB8C",
+          "perk": "0xB8E",
           "value": [
             1.1,
             1.2,
@@ -3169,9 +3200,9 @@
         },
         "armour": {
           "kind": "perk",
-          "effect": "0xB8D",
+          "effect": "0xB8F",
           "text": "Dragon breath harms you less.",
-          "perk": "0xB8E",
+          "perk": "0xB90",
           "value": [
             0.9,
             0.8,
@@ -3188,18 +3219,18 @@
       "position": 0,
       "keyword": "0x96C",
       "stones": [
-        "0xB96",
-        "0xB97",
         "0xB98",
         "0xB99",
-        "0xB9A"
+        "0xB9A",
+        "0xB9B",
+        "0xB9C"
       ],
       "hosts": {
         "melee": {
           "kind": "perk",
-          "effect": "0xB9B",
+          "effect": "0xB9D",
           "text": "Power attacks deal more damage.",
-          "perk": "0xB9C",
+          "perk": "0xB9E",
           "value": [
             1.1,
             1.2,
@@ -3210,9 +3241,9 @@
         },
         "ranged": {
           "kind": "perk",
-          "effect": "0xB9D",
+          "effect": "0xB9F",
           "text": "Bow damage is increased.",
-          "perk": "0xB9E",
+          "perk": "0xBA0",
           "value": [
             1.05,
             1.1,
@@ -3223,7 +3254,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xB9F",
+          "effect": "0xBA1",
           "text": "Carry weight \u002B\u003Cmag\u003E.",
           "m": [
             10,
@@ -3248,16 +3279,16 @@
       "position": 1,
       "keyword": "0x96D",
       "stones": [
-        "0xBA0",
-        "0xBA1",
         "0xBA2",
         "0xBA3",
-        "0xBA4"
+        "0xBA4",
+        "0xBA5",
+        "0xBA6"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xBA5",
+          "effect": "0xBA7",
           "text": "Hits chip \u003Cmag\u003E from the target\u0027s armour for \u003Cdur\u003E seconds.",
           "m": [
             10,
@@ -3276,7 +3307,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xBA6",
+          "effect": "0xBA8",
           "text": "Arrows chip \u003Cmag\u003E from the target\u0027s armour for \u003Cdur\u003E seconds.",
           "m": [
             10,
@@ -3295,7 +3326,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xBA7",
+          "effect": "0xBA9",
           "text": "Armour rating \u002B\u003Cmag\u003E.",
           "m": [
             10,
@@ -3320,18 +3351,18 @@
       "position": 2,
       "keyword": "0x96E",
       "stones": [
-        "0xBA8",
-        "0xBA9",
         "0xBAA",
         "0xBAB",
-        "0xBAC"
+        "0xBAC",
+        "0xBAD",
+        "0xBAE"
       ],
       "hosts": {
         "melee": {
           "kind": "self",
-          "effect": "0xBAD",
+          "effect": "0xBAF",
           "text": "While the weapon is drawn, Shout cooldowns are \u003Cmag\u003E shorter.",
-          "ability": "0xBAE",
+          "ability": "0xBB0",
           "value": [
             0.05,
             0.1,
@@ -3342,9 +3373,9 @@
         },
         "ranged": {
           "kind": "self",
-          "effect": "0xBB0",
+          "effect": "0xBB2",
           "text": "While the bow is drawn, Shout cooldowns are \u003Cmag\u003E shorter.",
-          "ability": "0xBB1",
+          "ability": "0xBB3",
           "value": [
             0.05,
             0.1,
@@ -3355,7 +3386,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xBB3",
+          "effect": "0xBB5",
           "text": "Shout cooldowns are \u003Cmag\u003E shorter.",
           "m": [
             0.05,
@@ -3380,26 +3411,26 @@
       "position": 0,
       "keyword": "0x96F",
       "stones": [
-        "0xBB7",
-        "0xBB8",
         "0xBB9",
         "0xBBA",
-        "0xBBB"
+        "0xBBB",
+        "0xBBC",
+        "0xBBD"
       ],
       "hosts": {
         "melee": {
           "kind": "stub",
-          "effect": "0xBBC",
-          "text": "Hits heal your followers a little."
+          "effect": "0xBBE",
+          "text": "Hits heal your followers a little. (dormant)"
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xBBD",
-          "text": "Arrow kills heal your followers."
+          "effect": "0xBBF",
+          "text": "Arrow kills heal your followers. (dormant)"
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xBBE",
+          "effect": "0xBC0",
           "text": "Health regenerates \u003Cmag\u003E% faster.",
           "m": [
             10,
@@ -3424,27 +3455,27 @@
       "position": 1,
       "keyword": "0x970",
       "stones": [
-        "0xBBF",
-        "0xBC0",
         "0xBC1",
         "0xBC2",
-        "0xBC3"
+        "0xBC3",
+        "0xBC4",
+        "0xBC5"
       ],
       "hosts": {
         "melee": {
           "kind": "stub",
-          "effect": "0xBC4",
-          "text": "Followers deal more damage while you fight."
+          "effect": "0xBC6",
+          "text": "Followers deal more damage while you fight. (dormant)"
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xBC5",
-          "text": "Followers deal more ranged damage."
+          "effect": "0xBC7",
+          "text": "Followers deal more ranged damage. (dormant)"
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xBC6",
-          "text": "Followers take less damage."
+          "effect": "0xBC8",
+          "text": "Followers take less damage. (dormant)"
         }
       }
     },
@@ -3454,26 +3485,26 @@
       "position": 2,
       "keyword": "0x971",
       "stones": [
-        "0xBC7",
-        "0xBC8",
         "0xBC9",
         "0xBCA",
-        "0xBCB"
+        "0xBCB",
+        "0xBCC",
+        "0xBCD"
       ],
       "hosts": {
         "melee": {
           "kind": "stub",
-          "effect": "0xBCC",
-          "text": "Kills raise nearby allies\u0027 morale."
+          "effect": "0xBCE",
+          "text": "Kills raise nearby allies\u0027 morale. (dormant)"
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xBCD",
-          "text": "Kill shots rally allies."
+          "effect": "0xBCF",
+          "text": "Kill shots rally allies. (dormant)"
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xBCE",
+          "effect": "0xBD0",
           "text": "Speech \u002B\u003Cmag\u003E.",
           "m": [
             5,
@@ -3498,16 +3529,16 @@
       "position": 0,
       "keyword": "0x972",
       "stones": [
-        "0xBD6",
-        "0xBD7",
         "0xBD8",
         "0xBD9",
-        "0xBDA"
+        "0xBDA",
+        "0xBDB",
+        "0xBDC"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xBDB",
+          "effect": "0xBDD",
           "text": "Strikes reduce the target\u0027s armour by \u003Cmag\u003E for \u003Cdur\u003E seconds.",
           "m": [
             10,
@@ -3526,7 +3557,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xBDC",
+          "effect": "0xBDE",
           "text": "Arrows reduce the target\u0027s armour by \u003Cmag\u003E for \u003Cdur\u003E seconds.",
           "m": [
             10,
@@ -3545,8 +3576,8 @@
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xBDD",
-          "text": "Your armour cannot be reduced."
+          "effect": "0xBDF",
+          "text": "Your armour cannot be reduced. (dormant)"
         }
       }
     },
@@ -3556,16 +3587,16 @@
       "position": 1,
       "keyword": "0x973",
       "stones": [
-        "0xBDE",
-        "0xBDF",
         "0xBE0",
         "0xBE1",
-        "0xBE2"
+        "0xBE2",
+        "0xBE3",
+        "0xBE4"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xBE3",
+          "effect": "0xBE5",
           "text": "Strikes drain \u003Cmag\u003E health per second for \u003Cdur\u003E seconds.",
           "m": [
             1,
@@ -3584,7 +3615,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xBE4",
+          "effect": "0xBE6",
           "text": "Arrows drain \u003Cmag\u003E health per second for \u003Cdur\u003E seconds.",
           "m": [
             1,
@@ -3603,7 +3634,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xBE5",
+          "effect": "0xBE7",
           "text": "Attackers who hit you are drained.",
           "proc": {
             "on": "hitBy",
@@ -3627,16 +3658,16 @@
       "position": 2,
       "keyword": "0x974",
       "stones": [
-        "0xBE6",
-        "0xBE7",
         "0xBE8",
         "0xBE9",
-        "0xBEA"
+        "0xBEA",
+        "0xBEB",
+        "0xBEC"
       ],
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xBEB",
+          "effect": "0xBED",
           "text": "Struck targets suffer \u003Cmag\u003E damage per second for \u003Cdur\u003E seconds.",
           "m": [
             2,
@@ -3655,7 +3686,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xBEC",
+          "effect": "0xBEE",
           "text": "Arrows poison for \u003Cmag\u003E damage per second for \u003Cdur\u003E seconds.",
           "m": [
             2,
@@ -3674,7 +3705,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xBED",
+          "effect": "0xBEF",
           "text": "Resist poison \u003Cmag\u003E%.",
           "m": [
             10,
@@ -3716,7 +3747,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0x9B2",
+          "effect": "0x9B4",
           "text": "Fus Ro Dah: power attacks throw light enemies.",
           "proc": {
             "on": "hit",
@@ -3728,7 +3759,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0x9B3",
+          "effect": "0x9B5",
           "text": "Fus Ro Dah: one shot in four throws the target.",
           "proc": {
             "on": "hit",
@@ -3740,7 +3771,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0x9B4",
+          "effect": "0x9B6",
           "text": "Fus Ro Dah: hit below 30% health, a shockwave throws your attackers back (every 60 s).",
           "proc": {
             "on": "hitBy",
@@ -3773,7 +3804,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0x9CF",
+          "effect": "0x9D1",
           "text": "Yol Toor Shul: one hit in four sets the target ablaze.",
           "proc": {
             "on": "hit",
@@ -3792,7 +3823,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0x9D0",
+          "effect": "0x9D2",
           "text": "Yol Toor Shul: one arrow in four bursts into a fireball.",
           "proc": {
             "on": "hit",
@@ -3804,7 +3835,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0x9D1",
+          "effect": "0x9D3",
           "text": "Yol Toor Shul: hit below 30% health, you burst into flame that burns attackers (every 60 s).",
           "proc": {
             "on": "hitBy",
@@ -3837,7 +3868,7 @@
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0x9EA",
+          "effect": "0x9EC",
           "text": "Fo Krah Diin: frozen targets shatter for \u003Cmag\u003E extra damage.",
           "m": [
             30,
@@ -3856,7 +3887,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0x9EB",
+          "effect": "0x9ED",
           "text": "Fo Krah Diin: a frozen target hit again shatters for \u003Cmag\u003E damage.",
           "m": [
             30,
@@ -3875,7 +3906,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0x9EC",
+          "effect": "0x9EE",
           "text": "Fo Krah Diin: hit below 30% health, a frost wave freezes your attackers (every 60 s).",
           "proc": {
             "on": "hitBy",
@@ -3908,7 +3939,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xA06",
+          "effect": "0xA08",
           "text": "Iiz Slen Nus: power attacks encase the target in ice.",
           "proc": {
             "on": "hit",
@@ -3920,7 +3951,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xA07",
+          "effect": "0xA09",
           "text": "Iiz Slen Nus: one shot in four encases the target in ice.",
           "proc": {
             "on": "hit",
@@ -3932,7 +3963,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xA08",
+          "effect": "0xA0A",
           "text": "Iiz Slen Nus: blocking a power attack freezes the attacker.",
           "proc": {
             "on": "hitBy",
@@ -3966,7 +3997,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xA24",
+          "effect": "0xA26",
           "text": "Feim Zii Gron: a hit while below 30% health makes you briefly ethereal (every 90 s).",
           "proc": {
             "on": "hit",
@@ -3978,7 +4009,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xA25",
+          "effect": "0xA27",
           "text": "Feim Zii Gron: a killing shot makes you briefly ethereal (every 60 s).",
           "proc": {
             "on": "kill",
@@ -3989,7 +4020,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xA26",
+          "effect": "0xA28",
           "text": "Feim Zii Gron: hit below 30% health, you become ethereal (every 90 s).",
           "proc": {
             "on": "hitBy",
@@ -4022,12 +4053,12 @@
       "hosts": {
         "melee": {
           "kind": "stub",
-          "effect": "0xA43",
-          "text": "Zun Haal Viik: disarmed targets drop their shield too."
+          "effect": "0xA45",
+          "text": "Zun Haal Viik: disarmed targets drop their shield too. (dormant)"
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xA44",
+          "effect": "0xA46",
           "text": "Zun Haal Viik: one arrow in ten disarms outright.",
           "proc": {
             "on": "hit",
@@ -4039,7 +4070,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xA45",
+          "effect": "0xA47",
           "text": "Zun Haal Viik: attackers who hit you may drop their weapon.",
           "proc": {
             "on": "hitBy",
@@ -4072,7 +4103,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xA5F",
+          "effect": "0xA61",
           "text": "Kaan Drem Ov: a kill calms the animals around you.",
           "proc": {
             "on": "kill",
@@ -4083,7 +4114,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xA60",
+          "effect": "0xA62",
           "text": "Kaan Drem Ov: arrows pacify the animals they strike.",
           "proc": {
             "on": "hit",
@@ -4094,8 +4125,8 @@
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xA61",
-          "text": "Kaan Drem Ov: animals ignore you."
+          "effect": "0xA63",
+          "text": "Kaan Drem Ov: animals ignore you. (dormant)"
         }
       }
     },
@@ -4120,7 +4151,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xA7C",
+          "effect": "0xA7E",
           "text": "Laas Yah Nir: a sneak attack reveals every enemy nearby.",
           "proc": {
             "on": "hit",
@@ -4132,7 +4163,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xA7D",
+          "effect": "0xA7F",
           "text": "Laas Yah Nir: a sneak shot reveals every enemy nearby.",
           "proc": {
             "on": "hit",
@@ -4144,7 +4175,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xA7E",
+          "effect": "0xA80",
           "text": "Laas Yah Nir: while sneaking you sense everything living and dead around you.",
           "m": [
             250,
@@ -4184,7 +4215,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xA9A",
+          "effect": "0xA9C",
           "text": "Od Ah Viing: killing an animal restores stamina.",
           "proc": {
             "on": "kill",
@@ -4198,18 +4229,18 @@
               50
             ],
             "cd": 1,
-            "spell": "0x993"
+            "spell": "0x995"
           }
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xA9B",
-          "text": "Od Ah Viing: arrows pierce through one target."
+          "effect": "0xA9D",
+          "text": "Od Ah Viing: arrows pierce through one target. (dormant)"
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xA9C",
-          "text": "Od Ah Viing: you glide a little when falling."
+          "effect": "0xA9E",
+          "text": "Od Ah Viing: you glide a little when falling. (dormant)"
         }
       }
     },
@@ -4234,18 +4265,18 @@
       "hosts": {
         "melee": {
           "kind": "stub",
-          "effect": "0xAB7",
-          "text": "Wuld Nah Kest: a sprinting power attack closes the gap with a dash."
+          "effect": "0xAB9",
+          "text": "Wuld Nah Kest: a sprinting power attack closes the gap with a dash. (dormant)"
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xAB8",
-          "text": "Wuld Nah Kest: a shot fired after a sprint dash has no sway."
+          "effect": "0xABA",
+          "text": "Wuld Nah Kest: a shot fired after a sprint dash has no sway. (dormant)"
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xAB9",
-          "text": "Wuld Nah Kest: a short dash when a sprint begins (every 20 s)."
+          "effect": "0xABB",
+          "text": "Wuld Nah Kest: a short dash when a sprint begins (every 20 s). (dormant)"
         }
       }
     },
@@ -4270,7 +4301,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xAD8",
+          "effect": "0xADA",
           "text": "Su Grah Dun: every fourth hit in a row strikes twice.",
           "proc": {
             "on": "hit",
@@ -4283,7 +4314,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xAD9",
+          "effect": "0xADB",
           "text": "Su Grah Dun: every fourth arrow in a row counts twice.",
           "proc": {
             "on": "hit",
@@ -4296,8 +4327,8 @@
         },
         "armour": {
           "kind": "stub",
-          "effect": "0xADA",
-          "text": "Su Grah Dun: you move at full speed while drawing or blocking."
+          "effect": "0xADC",
+          "text": "Su Grah Dun: you move at full speed while drawing or blocking. (dormant)"
         }
       }
     },
@@ -4322,7 +4353,7 @@
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xAF3",
+          "effect": "0xAF5",
           "text": "Strun Bah Qo: in rain or snow, strikes deal \u003Cmag\u003E extra shock damage.",
           "m": [
             15,
@@ -4341,7 +4372,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xAF4",
+          "effect": "0xAF6",
           "text": "Strun Bah Qo: one arrow in four calls lightning down where it lands.",
           "proc": {
             "on": "hit",
@@ -4353,16 +4384,16 @@
         },
         "armour": {
           "kind": "grant",
-          "effect": "0xAF5",
+          "effect": "0xAF7",
           "text": "Strun Bah Qo: grants Storm Call as a Shout."
         }
       },
       "grant": {
-        "shout": "0xAF6",
+        "shout": "0xAF8",
         "words": [
-          "0xAF7",
-          "0xAF8",
-          "0xAF9"
+          "0xAF9",
+          "0xAFA",
+          "0xAFB"
         ]
       }
     },
@@ -4387,7 +4418,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xB16",
+          "effect": "0xB18",
           "text": "Tiid Klo Ul: one power attack in four slows time briefly (every 30 s).",
           "proc": {
             "on": "hit",
@@ -4400,7 +4431,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xB17",
+          "effect": "0xB19",
           "text": "Tiid Klo Ul: one shot in five slows time briefly (every 30 s).",
           "proc": {
             "on": "hit",
@@ -4412,7 +4443,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xB18",
+          "effect": "0xB1A",
           "text": "Tiid Klo Ul: hit below 30% health, time slows (every 90 s).",
           "proc": {
             "on": "hitBy",
@@ -4445,7 +4476,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xB31",
+          "effect": "0xB33",
           "text": "Lok Vah Koor: a kill in a storm clears the skies (every 60 s).",
           "proc": {
             "on": "kill",
@@ -4457,7 +4488,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xB32",
+          "effect": "0xB34",
           "text": "Lok Vah Koor: a shot in a storm clears the skies (every 60 s).",
           "proc": {
             "on": "hit",
@@ -4469,16 +4500,16 @@
         },
         "armour": {
           "kind": "grant",
-          "effect": "0xB33",
+          "effect": "0xB35",
           "text": "Lok Vah Koor: grants Clear Skies as a Shout."
         }
       },
       "grant": {
-        "shout": "0xB34",
+        "shout": "0xB36",
         "words": [
-          "0xB35",
-          "0xB36",
-          "0xB37"
+          "0xB37",
+          "0xB38",
+          "0xB39"
         ]
       }
     },
@@ -4503,7 +4534,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xB50",
+          "effect": "0xB52",
           "text": "Faas Ru Maar: a kill frightens the victim\u0027s allies.",
           "proc": {
             "on": "kill",
@@ -4514,7 +4545,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xB51",
+          "effect": "0xB53",
           "text": "Faas Ru Maar: a killing shot scatters the victim\u0027s allies.",
           "proc": {
             "on": "kill",
@@ -4525,7 +4556,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xB52",
+          "effect": "0xB54",
           "text": "Faas Ru Maar: hit below 30% health, your attackers flee (every 90 s).",
           "proc": {
             "on": "hitBy",
@@ -4558,7 +4589,7 @@
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xB6B",
+          "effect": "0xB6D",
           "text": "Rii Vaaz Zol: struck targets are soul trapped for \u003Cdur\u003E seconds.",
           "m": [
             1,
@@ -4577,7 +4608,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xB6C",
+          "effect": "0xB6E",
           "text": "Rii Vaaz Zol: shot targets are soul trapped for \u003Cdur\u003E seconds.",
           "m": [
             1,
@@ -4596,16 +4627,16 @@
         },
         "armour": {
           "kind": "grant",
-          "effect": "0xB6D",
+          "effect": "0xB6F",
           "text": "Rii Vaaz Zol: grants Soul Tear as a Shout."
         }
       },
       "grant": {
-        "shout": "0xB6E",
+        "shout": "0xB70",
         "words": [
-          "0xB6F",
-          "0xB70",
-          "0xB71"
+          "0xB71",
+          "0xB72",
+          "0xB73"
         ]
       }
     },
@@ -4630,7 +4661,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xB8F",
+          "effect": "0xB91",
           "text": "Gol Hah Dov: a hit on a dragon grounds it sooner.",
           "proc": {
             "on": "hit",
@@ -4643,7 +4674,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xB90",
+          "effect": "0xB92",
           "text": "Gol Hah Dov: arrows ground dragons sooner.",
           "proc": {
             "on": "hit",
@@ -4656,16 +4687,16 @@
         },
         "armour": {
           "kind": "grant",
-          "effect": "0xB91",
+          "effect": "0xB93",
           "text": "Gol Hah Dov: grants Bend Will as a Shout."
         }
       },
       "grant": {
-        "shout": "0xB92",
+        "shout": "0xB94",
         "words": [
-          "0xB93",
-          "0xB94",
-          "0xB95"
+          "0xB95",
+          "0xB96",
+          "0xB97"
         ]
       }
     },
@@ -4690,7 +4721,7 @@
       "hosts": {
         "melee": {
           "kind": "proc",
-          "effect": "0xBB4",
+          "effect": "0xBB6",
           "text": "Mul Qah Diiv: power attacks wreathe the blade in dragon fire.",
           "proc": {
             "on": "hit",
@@ -4702,7 +4733,7 @@
         },
         "ranged": {
           "kind": "proc",
-          "effect": "0xBB5",
+          "effect": "0xBB7",
           "text": "Mul Qah Diiv: one shot in four carries dragon fire.",
           "proc": {
             "on": "hit",
@@ -4714,7 +4745,7 @@
         },
         "armour": {
           "kind": "rec",
-          "effect": "0xBB6",
+          "effect": "0xBB8",
           "text": "Mul Qah Diiv: Dragon Aspect\u0027s armour, always on: armour rating \u002B\u003Cmag\u003E.",
           "m": [
             100,
@@ -4754,26 +4785,26 @@
       "hosts": {
         "melee": {
           "kind": "stub",
-          "effect": "0xBCF",
-          "text": "Hun Kaal Zoor: a killing blow rallies nearby allies."
+          "effect": "0xBD1",
+          "text": "Hun Kaal Zoor: a killing blow rallies nearby allies. (dormant)"
         },
         "ranged": {
           "kind": "stub",
-          "effect": "0xBD0",
-          "text": "Hun Kaal Zoor: a kill shot rallies nearby allies."
+          "effect": "0xBD2",
+          "text": "Hun Kaal Zoor: a kill shot rallies nearby allies. (dormant)"
         },
         "armour": {
           "kind": "grant",
-          "effect": "0xBD1",
+          "effect": "0xBD3",
           "text": "Hun Kaal Zoor: grants Call of Valor as a Shout."
         }
       },
       "grant": {
-        "shout": "0xBD2",
+        "shout": "0xBD4",
         "words": [
-          "0xBD3",
-          "0xBD4",
-          "0xBD5"
+          "0xBD5",
+          "0xBD6",
+          "0xBD7"
         ]
       }
     },
@@ -4798,7 +4829,7 @@
       "hosts": {
         "melee": {
           "kind": "rec",
-          "effect": "0xBEE",
+          "effect": "0xBF0",
           "text": "Krii Lun Aus: each hit lowers the target\u0027s armour by another \u003Cmag\u003E.",
           "m": [
             15,
@@ -4817,7 +4848,7 @@
         },
         "ranged": {
           "kind": "rec",
-          "effect": "0xBEF",
+          "effect": "0xBF1",
           "text": "Krii Lun Aus: each arrow drains \u003Cmag\u003E health per second for \u003Cdur\u003E seconds.",
           "m": [
             2,
@@ -4836,7 +4867,7 @@
         },
         "armour": {
           "kind": "proc",
-          "effect": "0xBF0",
+          "effect": "0xBF2",
           "text": "Krii Lun Aus: your attacker is marked for death.",
           "proc": {
             "on": "hitBy",

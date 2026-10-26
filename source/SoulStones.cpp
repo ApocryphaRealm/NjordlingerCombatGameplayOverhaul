@@ -46,6 +46,7 @@ namespace SoulStones
 			RE::BGSKeyword* targetKeyword = nullptr;
 			int chance = 0;
 			int every = 0;
+			int stack = 0;               // each qualifying hit within the window adds one stack, up to this many
 			float window = 3.0F;
 			float damage = 0.0F;
 			std::string at = "target";
@@ -170,6 +171,9 @@ namespace SoulStones
 			RE::FormID socketInfo = 0;
 			RE::TESGlobal* learned = nullptr;
 			float radius = 1500.0F;
+			RE::FormID homeCell = 0;
+			RE::NiPoint3 homePos{};
+			float homeAngleZ = 0.0F;
 		};
 		Runesmith g_rs;
 		std::function<void(bool)> g_windowOpener;   // the settings page's runesmith window (UI registers it)
@@ -265,6 +269,7 @@ namespace SoulStones
 				c.proc.storm = p.value("storm", false);
 				c.proc.chance = p.value("chance", 0);
 				c.proc.every = p.value("every", 0);
+				c.proc.stack = p.value("stack", 0);
 				c.proc.window = p.value("window", 3.0F);
 				c.proc.damage = p.value("damage", 0.0F);
 				c.proc.at = p.value("at", std::string("target"));
@@ -1253,6 +1258,14 @@ namespace SoulStones
 				if (it != g_cooldowns.end() && now - it->second < cd) { return; }
 				g_cooldowns[a_key] = now;
 			}
+			float mag = pr.hasMag ? pr.mag[std::clamp(a_tier, 0, kTiers - 1)] : 0.0F;
+			if (pr.stack > 0)
+			{
+				auto& [n, last] = g_streaks[a_key];
+				n = (now - last) <= std::chrono::duration<float>(pr.window) ? std::min(n + 1, pr.stack) : 1;
+				last = now;
+				mag *= static_cast<float>(n);
+			}
 			std::vector<RE::Actor*> targets;
 			if (pr.at == "self") { targets.push_back(p); }
 			else if (pr.at == "nearby") { targets = Hostiles(p, 1024.0F, nullptr); }
@@ -1270,7 +1283,6 @@ namespace SoulStones
 				if (pr.damage > 0.0F) { Damage(t, pr.damage); }
 				if (pr.spell && caster)
 				{
-					const float mag = pr.hasMag ? pr.mag[std::clamp(a_tier, 0, kTiers - 1)] : 0.0F;
 					caster->CastSpellImmediate(pr.spell, false, t, 1.0F, false, mag, p);
 				}
 			}
@@ -1401,7 +1413,25 @@ namespace SoulStones
 			{
 				std::this_thread::sleep_for(std::chrono::milliseconds(250));
 				static int ticks = 0;
-				if (g_service && g_rs.loaded && ++ticks % 4 == 0)
+				++ticks;
+				if (g_rs.loaded && g_rs.homeCell && ticks % 4 == 0)
+				{
+					Queue([]() {
+						// Q67 (Fable 14:20): no override of the inn's CELL record - he is brought in the first time the player
+						// is there, and stays (a persistent reference: the save keeps where he is)
+						auto* p = Player();
+						auto* ref = RE::TESForm::LookupByID<RE::TESObjectREFR>(g_rs.npcRef);
+						auto* pc = p ? p->GetParentCell() : nullptr;
+						if (!p || !ref || !pc || pc->GetFormID() != g_rs.homeCell) { return; }
+						auto* rc = ref->GetParentCell();
+						if (rc && rc->GetFormID() == g_rs.homeCell) { return; }
+						ref->MoveTo(p);
+						ref->SetPosition(g_rs.homePos);
+						ref->data.angle.z = g_rs.homeAngleZ;
+						logger::info("soul stones: the runesmith is brought to his place in the inn ({:.0f}, {:.0f}, {:.0f})", g_rs.homePos.x, g_rs.homePos.y, g_rs.homePos.z);
+					});
+				}
+				if (g_service && g_rs.loaded && ticks % 4 == 0)
 				{
 					Queue([]() {
 						auto* p = Player();
@@ -1529,6 +1559,12 @@ namespace SoulStones
 				auto* info = Form<RE::TESForm>(r.value("socketInfo", nlohmann::json()), "runesmith line");
 				g_rs.learned = Form<RE::TESGlobal>(r.value("learnedGlobal", nlohmann::json()), "runesmith global");
 				g_rs.radius = r.value("serviceRadius", 1500.0F);
+				if (auto* cell = Form<RE::TESForm>(r.value("homeCell", nlohmann::json()), "runesmith's inn")) { g_rs.homeCell = cell->GetFormID(); }
+				if (r.contains("homePos") && r["homePos"].is_array() && r["homePos"].size() == 3)
+				{
+					g_rs.homePos = { r["homePos"][0].get<float>(), r["homePos"][1].get<float>(), r["homePos"][2].get<float>() };
+				}
+				g_rs.homeAngleZ = r.value("homeAngleZ", 0.0F);
 				g_rs.npcRef = ref ? ref->GetFormID() : 0;
 				g_rs.socketInfo = info ? info->GetFormID() : 0;
 				g_rs.loaded = ref && info && g_rs.learned;
