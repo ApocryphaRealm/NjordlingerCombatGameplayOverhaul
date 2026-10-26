@@ -69,6 +69,29 @@ namespace UI
 			"Alteration", "Conjuration", "Destruction", "Illusion", "Restoration", "Enchanting"
 		};
 		static_assert(sizeof(kSkillKeys) / sizeof(kSkillKeys[0]) == static_cast<std::size_t>(skilllist::kCount));
+
+		// A skill's name as the running game calls it (its actor value's own name - a mod that repurposes a skill, such as
+		// Hand to Hand for Lockpicking, renames it there), else our translated label.
+		const char* SkillName(int a_i)
+		{
+			static std::array<std::string, skilllist::kCount> s_names;
+			static bool s_read = false;
+			if (!s_read)
+			{
+				s_read = true;
+				if (auto* list = RE::ActorValueList::GetSingleton())
+				{
+					for (int i = 0; i < skilllist::kCount; ++i)
+					{
+						auto* info = list->actorValues[static_cast<int>(RE::ActorValue::kOneHanded) + i];
+						const char* n = info ? info->GetFullName() : nullptr;
+						if (n && *n) { s_names[static_cast<std::size_t>(i)] = n; }
+					}
+				}
+			}
+			return s_names[static_cast<std::size_t>(a_i)].empty() ? strings::TR(kSkillKeys[a_i], kSkillLabels[a_i]) : s_names[static_cast<std::size_t>(a_i)].c_str();
+		}
+
 		constexpr const char* const kGroupKeys[] = { "NJ_Group_Warrior", "NJ_Group_Magic", "NJ_Group_Covert" };
 		constexpr const char* const kGroupLabels[] = { "Warrior", "Magic", "Covert" };
 
@@ -311,7 +334,7 @@ namespace UI
 		for (int i = 0; i < skilllist::kCount; ++i)
 		{
 			ImGuiMCP::PushID(kSkillKeys[i]);
-			const char* name = strings::TR(kSkillKeys[i], kSkillLabels[i]);
+			const char* name = SkillName(i);
 			ImGuiMCP::Text("%s", name);
 			if (ss.readable)
 			{
@@ -404,7 +427,7 @@ namespace UI
 			for (int i = 0; i < skilllist::kCount; ++i)
 			{
 				if (s.held[i]) { continue; }
-				ImGuiMCP::TextDisabled(strings::TR("NJ_LockedSkill", "%s - locked at %.0f"), strings::TR(kSkillKeys[i], kSkillLabels[i]), s.lockedCap[i]);
+				ImGuiMCP::TextDisabled(strings::TR("NJ_LockedSkill", "%s - locked at %.0f"), SkillName(i), s.lockedCap[i]);
 			}
 		}
 
@@ -612,7 +635,7 @@ namespace UI
 				if (ImGuiMCP::Selectable(label.c_str(), targetSlot == k)) { targetSlot = k; }
 				if (st.word >= 0)
 				{
-					ImGuiMCP::TextDisabled("    %s", ::SoulStones::CellText(st.word, sel->host).c_str());
+					ImGuiMCP::TextDisabled("    %s", ::SoulStones::CellText(st.word, sel->host, st.tier).c_str());
 					if (s.serviceOpen)
 					{
 						ImGuiMCP::SameLine();
@@ -648,8 +671,8 @@ namespace UI
 				const std::string b = std::string(strings::TR("NJ_SS_Set", "Set")) + "##set" + std::to_string(v.word) + "_" + std::to_string(v.tier);
 				if (ImGuiMCP::SmallButton(b.c_str())) { ::SoulStones::RequestSocket(sel->key, targetSlot, v.word, v.tier); }
 				ImGuiMCP::SameLine();
-				if (continues) { ImGuiMCP::TextColored(known, "%s (%s) x%d - %s", s.words[v.word].c_str(), tierName(v.tier), v.count, ::SoulStones::CellText(v.word, sel->host).c_str()); }
-				else { ImGuiMCP::Text("%s (%s) x%d - %s", s.words[v.word].c_str(), tierName(v.tier), v.count, ::SoulStones::CellText(v.word, sel->host).c_str()); }
+				if (continues) { ImGuiMCP::TextColored(known, "%s (%s) x%d - %s", s.words[v.word].c_str(), tierName(v.tier), v.count, ::SoulStones::CellText(v.word, sel->host, v.tier).c_str()); }
+				else { ImGuiMCP::Text("%s (%s) x%d - %s", s.words[v.word].c_str(), tierName(v.tier), v.count, ::SoulStones::CellText(v.word, sel->host, v.tier).c_str()); }
 			}
 		}
 		if (!s.lastResult.empty()) { ImGuiMCP::TextWrapped("%s", s.lastResult.c_str()); }

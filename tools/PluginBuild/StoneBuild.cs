@@ -116,7 +116,9 @@ static class StoneBuild
             mg.Archetype = new MagicEffectArchetype(MagicEffectArchetype.TypeEnum.Script);
             mg.CastType = CastType.FireAndForget;
             mg.TargetType = TargetType.Touch;
-            mg.Flags = MagicEffect.Flag.NoArea | MagicEffect.Flag.NoDuration | MagicEffect.Flag.NoMagnitude | MagicEffect.Flag.HideInUI | MagicEffect.Flag.NoHitEvent | MagicEffect.Flag.NoHitEffect | MagicEffect.Flag.Painless;
+            mg.Flags = MagicEffect.Flag.NoArea | MagicEffect.Flag.NoDuration | MagicEffect.Flag.HideInUI | MagicEffect.Flag.NoHitEvent | MagicEffect.Flag.NoHitEffect | MagicEffect.Flag.Painless;
+            if (glowSrc.Flags.HasFlag(MagicEffect.Flag.FXPersist)) { mg.Flags |= MagicEffect.Flag.FXPersist; }
+            mg.BaseCost = 10000f;   // aed2: the game draws ONE effect's enchant shader on a weapon - the costliest
             mg.MagicSkill = ActorValue.None;
             mg.ResistValue = ActorValue.None;
             mg.SecondActorValue = ActorValue.None;
@@ -496,8 +498,8 @@ static class StoneBuild
         {
             i4Rules.Add(new JsonObject
             {
-                ["match"] = new JsonObject { ["formType"] = "Misc", ["keywords"] = new JsonArray("NJCGO_StoneTier_" + tiers[t]) },
-                ["assign"] = new JsonObject { ["iconLabel"] = "misc_soulgem", ["iconColor"] = cfg["tierColour"]![t]!.GetValue<string>() }
+                ["match"] = new JsonObject { ["formType"] = "MiscItem", ["keywords"] = new JsonArray("NJCGO_StoneTier_" + tiers[t]) },
+                ["assign"] = new JsonObject { ["iconSource"] = "skyui/icons_item_psychosteve.swf", ["iconLabel"] = "soulgem_full", ["iconColor"] = cfg["tierColour"]![t]!.GetValue<string>() }
             });
         }
         var i4 = new JsonObject { ["$schema"] = "https://raw.githubusercontent.com/Exit-9B/InventoryInjector/main/docs/InventoryInjector.schema.json", ["rules"] = i4Rules };

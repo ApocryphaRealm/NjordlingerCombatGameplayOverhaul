@@ -8,6 +8,7 @@
     "(config/class-content.json) with no new class name; Legendary is a title instead when the character has earned one",
     "that fits its lineage (titles below).",
     "groups: the skill groups the class holds; a hybrid's second group opens when it is chosen and never closes again.",
+    "2026-10-26 (Hand to Hand - An Adamant Addon in the list): the Lockpicking skill IS Hand to Hand there, so it moved from the covert group to the warrior group, and the Monk holds it as an extra skill; lockpicking itself lives in Pickpocket's tree (Security), still covert.",
     "extraSkills: single skills held outside the groups; they are inherited along the lineage (an Archer's Archery stays",
     "with the Scout or Witchhunter it becomes, and with nothing else).",
     "next: the two options at the next upgrade. A class reachable from two parents is one record."
@@ -20,7 +21,8 @@
       "Block",
       "HeavyArmor",
       "Smithing",
-      "Archery"
+      "Archery",
+      "Lockpicking"
     ],
     "magic": [
       "Alteration",
@@ -32,7 +34,6 @@
     ],
     "covert": [
       "Sneak",
-      "Lockpicking",
       "Pickpocket",
       "Speech",
       "LightArmor",
@@ -517,6 +518,9 @@
       "groups": [
         "magic",
         "covert"
+      ],
+      "extraSkills": [
+        "Lockpicking"
       ],
       "description": "The open hand. Opens the covert skills. +100 armour while unarmed, and unarmed strikes stagger.",
       "ranks": {

@@ -135,5 +135,5 @@ namespace SoulStones
 	const std::vector<std::string>& TierNames();
 	int PhraseOfWord(int a_word);
 	std::string PhraseName(int a_phrase);
-	std::string CellText(int a_word, Host a_host);       // the item-card line of a word in a host (English, from the plugin)
+	std::string CellText(int a_word, Host a_host, int a_tier);   // a word's line in a host at a tier, <mag>/<dur> filled (English, from the plugin)
 }

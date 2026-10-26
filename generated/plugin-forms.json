@@ -419,32 +419,32 @@
   },
   "runesmith": {
     "npc": "0xC02",
-    "npcRef": "0xC03",
-    "quest": "0xC04",
+    "npcRef": "0xC04",
+    "quest": "0xC05",
     "learnedGlobal": "0xBFC",
     "faction": "0xC01",
     "chest": "0xBFE",
     "chestRef": "0xC00",
     "topics": {
       "Meet": {
-        "topic": "0xC05",
-        "info": "0xC07"
+        "topic": "0xC06",
+        "info": "0xC08"
       },
       "Where": {
-        "topic": "0xC08",
-        "info": "0xC0A"
+        "topic": "0xC09",
+        "info": "0xC0B"
       },
       "Learned": {
-        "topic": "0xC0B",
-        "info": "0xC0D"
+        "topic": "0xC0C",
+        "info": "0xC0E"
       },
       "Socket": {
-        "topic": "0xC0E",
-        "info": "0xC10"
+        "topic": "0xC0F",
+        "info": "0xC11"
       },
       "Barter": {
-        "topic": "0xC11",
-        "info": "0xC13"
+        "topic": "0xC12",
+        "info": "0xC14"
       }
     },
     "home": "RiverwoodSleepingGiantInn at -314,4,13 (near XMarkerHeading)",

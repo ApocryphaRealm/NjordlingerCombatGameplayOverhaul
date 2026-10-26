@@ -8,15 +8,16 @@
     "(config/class-content.json) with no new class name; Legendary is a title instead when the character has earned one",
     "that fits its lineage (titles below).",
     "groups: the skill groups the class holds; a hybrid's second group opens when it is chosen and never closes again.",
+    "2026-10-26 (Hand to Hand - An Adamant Addon in the list): the Lockpicking skill IS Hand to Hand there, so it moved from the covert group to the warrior group, and the Monk holds it as an extra skill; lockpicking itself lives in Pickpocket's tree (Security), still covert.",
     "extraSkills: single skills held outside the groups; they are inherited along the lineage (an Archer's Archery stays",
     "with the Scout or Witchhunter it becomes, and with nothing else).",
     "next: the two options at the next upgrade. A class reachable from two parents is one record."
   ],
   "version": 2,
   "groups": {
-    "warrior": [ "OneHanded", "TwoHanded", "Block", "HeavyArmor", "Smithing", "Archery" ],
+    "warrior": [ "OneHanded", "TwoHanded", "Block", "HeavyArmor", "Smithing", "Archery", "Lockpicking" ],
     "magic": [ "Alteration", "Conjuration", "Destruction", "Illusion", "Restoration", "Enchanting" ],
-    "covert": [ "Sneak", "Lockpicking", "Pickpocket", "Speech", "LightArmor", "Alchemy" ]
+    "covert": [ "Sneak", "Pickpocket", "Speech", "LightArmor", "Alchemy" ]
   },
   "crafts": { "warrior": "Smithing", "magic": "Enchanting", "covert": "Alchemy" },
   "classes": [
@@ -54,7 +55,7 @@
       "description": "Shadow and spell. Holds the magic and covert skills. Illusion spells are twice as strong while you sneak." },
     { "id": "witchhunter", "name": "Witchhunter", "tier": 2, "groups": [ "magic", "covert" ],
       "description": "Hunter of the unnatural. Holds the magic and covert skills. Your poisons last 50% more hits." },
-    { "id": "monk", "name": "Monk", "tier": 2, "groups": [ "magic", "covert" ],
+    { "id": "monk", "name": "Monk", "tier": 2, "groups": [ "magic", "covert" ], "extraSkills": [ "Lockpicking" ],
       "description": "The open hand. Opens the covert skills. +100 armour while unarmed, and unarmed strikes stagger." },
     { "id": "agent", "name": "Agent", "tier": 2, "groups": [ "covert", "magic" ],
       "description": "Words and poison. Opens the magic skills. Your poisons last 50% more hits." }

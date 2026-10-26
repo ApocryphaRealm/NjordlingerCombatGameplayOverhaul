@@ -56,6 +56,7 @@ static class RunesmithBuild
             chest.Items.Add(new ContainerEntry { Item = new ContainerItem { Item = new FormLink<IItemGetter>(vendorList), Count = 1 } });
         }
         chest.Flags = Container.Flag.Respawns;
+        chest.Items.Add(new ContainerEntry { Item = new ContainerItem { Item = new FormLink<IItemGetter>(ByEdid<IMiscItemGetter>("Gold001").FormKey), Count = 500 } });
 
         // a storage cell of our own for the chest (a new cell - nothing of the master is overridden for it)
         var storage = new Cell(mod) { EditorID = "NJCGO_RunesmithStorage", Name = "Runesmith storage", Flags = Cell.Flag.IsInteriorCell };
@@ -70,6 +71,7 @@ static class RunesmithBuild
         faction.VendorBuySellList.SetTo(buySell);
         faction.MerchantContainer.SetTo(chestRef);
         faction.VendorValues = new VendorValues { StartHour = 0, EndHour = 24, Radius = 0 };
+        { var fb = new LocationFallback(); var tp = fb.GetType().GetProperty("Type")!; tp.SetValue(fb, Enum.Parse(tp.PropertyType, "NearSelf")); faction.VendorLocation = new LocationTargetRadius { Target = fb, Radius = 0 }; }
 
         var npc = mod.Npcs.AddNew("NJCGO_Runesmith");
         npc.Name = n["name"]!.GetValue<string>();
@@ -87,7 +89,10 @@ static class RunesmithBuild
         npc.AIData.Responsibility = Responsibility.NoCrime;
         // Fable 14:25: his AI must keep him where the plugin puts him (the inn), never pull him back to the storage cell
         // he is placed in - the game's own "sandbox around where I am now" package, never one by editor location.
-        npc.Packages.Add(ByEdid<IPackageGetter>("DefaultSandboxCurrentLocation256").ToLink());
+        var sandboxSrc = ByEdid<IPackageGetter>("DefaultSandboxLinkCustom02512");
+        var sandbox = mod.Packages.DuplicateInAsNewRecord(sandboxSrc, "NJCGO_RunesmithSandbox256");
+        foreach (var d in sandbox.Data.Values) { if (d is PackageDataLocation loc) { loc.Location.Radius = 256; } }
+        npc.Packages.Add(sandbox.ToLink());
 
         // his place: the inn's interior cell, overridden as a whole copy of the master's record
         var home = cfg["home"]!;
@@ -102,6 +107,8 @@ static class RunesmithBuild
             Placement = new Placement { Position = new P3Float(0, 64, 0), Rotation = new P3Float(0, 0, 0) }
         };
         npcRef.MajorRecordFlagsRaw |= 0x400;
+        // the sandbox's centre: the inn's marker his spot is taken from (LinkCustom02, as the vanilla package reads it)
+        npcRef.LinkedReferences.Add(new LinkedReferences { KeywordOrReference = new FormLink<IKeywordLinkedReferenceGetter>(ByEdid<IKeywordGetter>("LinkCustom02").FormKey), Reference = new FormLink<IPlacedGetter>(spot.refKey) });
         storage.Persistent.Add(npcRef);
 
         // ---- the quest and its dialogue -------------------------------------------------------------------------------
@@ -208,7 +215,7 @@ static class RunesmithBuild
     }
 
     // A spot inside the cell: the first reference whose base's editor ID contains one of a_near (in that order).
-    static (P3Float pos, P3Float rot, string what) FindSpot(ICellGetter a_cell, ILinkCache a_cache, string[] a_near)
+    static (P3Float pos, P3Float rot, string what, FormKey refKey) FindSpot(ICellGetter a_cell, ILinkCache a_cache, string[] a_near)
     {
         var refs = a_cell.Persistent.Concat(a_cell.Temporary).OfType<IPlacedObjectGetter>().ToList();
         foreach (var want in a_near)
@@ -217,7 +224,7 @@ static class RunesmithBuild
             {
                 if (r.Placement == null) { continue; }
                 if (!a_cache.TryResolve(r.Base.FormKey, out var b) || b.EditorID == null) { continue; }
-                if (b.EditorID.Contains(want, StringComparison.OrdinalIgnoreCase)) { return (r.Placement.Position, r.Placement.Rotation, b.EditorID); }
+                if (b.EditorID.Contains(want, StringComparison.OrdinalIgnoreCase)) { return (r.Placement.Position, r.Placement.Rotation, b.EditorID, r.FormKey); }
             }
         }
         throw new InvalidOperationException($"runesmith: no reference near which to stand in {a_cell.EditorID}");

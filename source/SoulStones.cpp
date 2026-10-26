@@ -497,7 +497,7 @@ namespace SoulStones
 			}
 			if (weapon && any && settings::stones::weaponGlow && bestTier >= 0 && g_t.tiers[bestTier].glow)
 			{
-				out.insert(out.begin(), Want{ g_t.tiers[bestTier].glow, 0.0F, 0, 0 });   // first AND costliest: whichever the game reads
+				out.insert(out.begin(), Want{ g_t.tiers[bestTier].glow, 1.0F, 0, 0 });   // first AND costliest: whichever the game reads
 			}
 			return out;
 		}
@@ -551,7 +551,18 @@ namespace SoulStones
 		{
 			auto* p = Player();
 			auto* em = RE::ActorEquipManager::GetSingleton();
-			if (!p || !em || !a_obj || !a_x || !Worn(a_x) || !a_obj->Is(RE::FormType::Armor)) { return; }
+			bool left = false;
+			if (!p || !em || !a_obj || !a_x || !Worn(a_x, &left)) { return; }
+			if (a_obj->Is(RE::FormType::Weapon))
+			{
+				// the hand slots of Skyrim.esm (EQUP RightHand 013F42, LeftHand 013F43)
+				auto* slot = RE::TESForm::LookupByID<RE::BGSEquipSlot>(left ? 0x00013F43 : 0x00013F42);
+				em->UnequipObject(p, a_obj, a_x, 1, slot, false, false, false, true);
+				em->EquipObject(p, a_obj, a_x, 1, slot, false, false, false, true);
+				logger::debug("soul stones: {} put back in the {} hand so its new enchantment shows", a_obj->GetName(), left ? "left" : "right");
+				return;
+			}
+			if (!a_obj->Is(RE::FormType::Armor)) { return; }
 			// a worn armour applies its enchantment when it is equipped, so a changed one is put on again (same extra list:
 			// nothing is removed from the inventory, so the pointer stays the game's own)
 			em->UnequipObject(p, a_obj, a_x, 1, nullptr, false, false, false, true);
@@ -880,6 +891,12 @@ namespace SoulStones
 						if (k < level) { w->formFlags |= (kWordLearned | kWordUnlocked); }
 						else { w->formFlags &= ~(kWordLearned | kWordUnlocked); }
 					}
+				}
+				static std::array<int, 32> s_levels{};
+				if (i < s_levels.size() && s_levels[i] != level)
+				{
+					logger::info("soul stones: Shout {} level {} -> {}", ph.shout, s_levels[i], level);
+					s_levels[i] = level;
 				}
 				const bool has = p->HasShout(ph.clone);
 				if (level > 0 && !has) { p->AddShout(ph.clone); logger::info("soul stones: Shout {} granted at level {}", ph.clone->GetName(), level); }
@@ -1770,10 +1787,21 @@ namespace SoulStones
 		const auto& ph = g_t.phrases[a_phrase];
 		return fmt::format("{} {} {}", g_t.words[ph.words[0]].name, g_t.words[ph.words[1]].name, g_t.words[ph.words[2]].name);
 	}
-	std::string CellText(int a_word, Host a_host)
+	std::string CellText(int a_word, Host a_host, int a_tier)
 	{
 		if (a_word < 0 || a_word >= static_cast<int>(g_t.words.size()) || a_host == Host::kNone) { return {}; }
-		return g_t.words[a_word].hosts[static_cast<int>(a_host)].text;
+		const auto& c = g_t.words[a_word].hosts[static_cast<int>(a_host)];
+		std::string text = c.text;
+		const int t = std::clamp(a_tier, 0, kTiers - 1);
+		auto fill = [&text](const char* a_tag, float a_v) {
+			for (std::size_t at = text.find(a_tag); at != std::string::npos; at = text.find(a_tag))
+			{
+				text.replace(at, std::strlen(a_tag), fmt::format("{:g}", std::round(a_v * 100.0F) / 100.0F));
+			}
+		};
+		fill("<mag>", c.kind == "self" ? c.value[t] : c.m[t]);
+		fill("<dur>", c.dur[t]);
+		return text;
 	}
 
 	std::string WordsJson()
