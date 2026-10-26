@@ -111,6 +111,13 @@ static class StoneBuild
             sh.FillColorKey2 = colours[t];
             sh.FillColorKey3 = colours[t];
             sh.EdgeColor = colours[t];
+            // aed2 / aa48: the copied frost shader takes its membrane colour from a palette texture (GradFrostEnch.dds), so
+            // the fill keys alone did nothing; the palette is dropped and every colour of the shader is the tier's
+            sh.MembranePaletteTexture = null;
+            sh.EdgeEffectColor = Color.FromArgb(255, colours[t]);
+            sh.ColorKey1 = colours[t];
+            sh.ColorKey2 = colours[t];
+            sh.ColorKey3 = colours[t];
             var mg = mod.MagicEffects.AddNew($"NJCGO_StoneGlow_{tiers[t]}");
             mg.Name = $"Soul stone glow ({tiers[t]})";
             mg.Archetype = new MagicEffectArchetype(MagicEffectArchetype.TypeEnum.Script);

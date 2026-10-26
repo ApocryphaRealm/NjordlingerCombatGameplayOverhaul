@@ -163,6 +163,9 @@ namespace SoulStones
 		std::atomic<bool> g_knowledgeDirty{ false };
 		std::atomic<bool> g_running{ false };
 		std::atomic<std::uint32_t> g_procsFired{ 0 };
+		std::atomic<std::int64_t> g_selfEquipUntil{ 0 };        // steady-clock ms until which equip events are ours
+
+		std::int64_t NowMs() { return std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now().time_since_epoch()).count(); }
 
 		// ---- the runesmith (runesmith.json; PLAN.md phase 4 step 3, D22) ------------------------------------------------
 		struct Runesmith
@@ -553,13 +556,14 @@ namespace SoulStones
 			auto* em = RE::ActorEquipManager::GetSingleton();
 			bool left = false;
 			if (!p || !em || !a_obj || !a_x || !Worn(a_x, &left)) { return; }
+			g_selfEquipUntil = NowMs() + 1500;
 			if (a_obj->Is(RE::FormType::Weapon))
 			{
 				// the hand slots of Skyrim.esm (EQUP RightHand 013F42, LeftHand 013F43)
 				auto* slot = RE::TESForm::LookupByID<RE::BGSEquipSlot>(left ? 0x00013F43 : 0x00013F42);
 				em->UnequipObject(p, a_obj, a_x, 1, slot, false, false, false, true);
 				em->EquipObject(p, a_obj, a_x, 1, slot, false, false, false, true);
-				logger::debug("soul stones: {} put back in the {} hand so its new enchantment shows", a_obj->GetName(), left ? "left" : "right");
+				logger::info("soul stones: {} put back in the {} hand so its new enchantment shows", a_obj->GetName(), left ? "left" : "right");
 				return;
 			}
 			if (!a_obj->Is(RE::FormType::Armor)) { return; }
@@ -614,6 +618,26 @@ namespace SoulStones
 		}
 
 		// Builds and assigns the instance's enchantment and name; false when nothing had to change.
+		struct Composed
+		{
+			std::size_t signature = 0;
+			RE::EnchantmentItem* enchantment = nullptr;
+		};
+		std::unordered_map<std::string, Composed> g_composed;   // per instance key, this session
+
+		std::size_t Signature(const std::vector<Want>& a_want, bool a_name)
+		{
+			std::size_t h = 1469598103934665603ULL ^ static_cast<std::size_t>(a_name);
+			for (const auto& w : a_want)
+			{
+				h = (h ^ reinterpret_cast<std::uintptr_t>(w.effect)) * 1099511628211ULL;
+				h = (h ^ static_cast<std::size_t>(std::lround(w.magnitude * 1000.0F))) * 1099511628211ULL;
+				h = (h ^ w.duration) * 1099511628211ULL;
+				h = (h ^ w.area) * 1099511628211ULL;
+			}
+			return h;
+		}
+
 		bool Compose(RE::TESBoundObject* a_obj, RE::ExtraDataList* a_x, Entry& a_e)
 		{
 			const Host host = HostOf(a_obj);
@@ -654,7 +678,20 @@ namespace SoulStones
 				return changed;
 			}
 			const auto want = WantedEffects(a_obj, a_e, host);
-			if (!xe || !SameEffects(xe->enchantment, want))
+			std::string ckey;
+			KeyOf(a_obj, a_x, ckey);
+			const auto sig = Signature(want, settings::stones::nameSlots && settings::stones::nameDragonLetters);
+			if (auto it = g_composed.find(ckey); it != g_composed.end() && it->second.signature == sig && xe && xe->enchantment == it->second.enchantment)
+			{
+				return false;   // composed this session and nothing about it changed (the game's normalised copy is ours)
+			}
+			if (xe && SameEffects(xe->enchantment, want))
+			{
+				g_composed[ckey] = { sig, xe->enchantment };
+				UpdateName(a_obj, a_x, a_e, true);
+				return false;
+			}
+			// make it anew
 			{
 				auto* ench = Create(want, weapon);
 				if (!ench)
@@ -697,7 +734,8 @@ namespace SoulStones
 				}
 				++g_composes;
 				changed = true;
-				logger::debug("soul stones: composed {} - {} effects", a_obj->GetName(), want.size());
+				logger::info("soul stones: composed {} - {} effects", a_obj->GetName(), want.size());
+				if (auto* now = a_x->GetByType<RE::ExtraEnchantment>()) { g_composed[ckey] = { sig, now->enchantment }; }
 			}
 			UpdateName(a_obj, a_x, a_e, true);
 			return changed;
@@ -961,7 +999,9 @@ namespace SoulStones
 				bool left = false;
 				if (Worn(x, &left))
 				{
-					if (changed) { reequip.emplace_back(e->object, x); }
+					// a hard stop on top of the signature: one re-equip per instance per 10 s, whatever happens
+					static std::unordered_map<std::string, std::int64_t> s_lastReequip;
+					if (changed && NowMs() - s_lastReequip[key] > 10000) { s_lastReequip[key] = NowMs(); reequip.emplace_back(e->object, x); }
 					Equipped eq;
 					eq.host = HostOf(e->object);
 					eq.base = e->object->GetFormID();
@@ -1395,7 +1435,7 @@ namespace SoulStones
 		public:
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESEquipEvent* a_e, RE::BSTEventSource<RE::TESEquipEvent>*) override
 			{
-				if (a_e && a_e->actor && a_e->actor.get() == Player()) { g_dirty = true; }
+				if (a_e && a_e->actor && a_e->actor.get() == Player() && NowMs() >= g_selfEquipUntil.load()) { g_dirty = true; }
 				return RE::BSEventNotifyControl::kContinue;
 			}
 		};
@@ -1634,6 +1674,7 @@ namespace SoulStones
 		g_service = false;
 		g_cooldowns.clear();
 		g_streaks.clear();
+		g_composed.clear();
 		for (auto* w : g_t.phrases[0].real)
 		{
 			if (w) { logger::info("soul stones: at load, word {:08X} flags {:08X} (learned {}, unlocked {})", w->GetFormID(), w->formFlags, Learned(w), Unlocked(w)); }
