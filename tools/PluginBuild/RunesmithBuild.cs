@@ -85,6 +85,9 @@ static class RunesmithBuild
         npc.AIData.Confidence = Confidence.Average;
         npc.AIData.Aggression = Aggression.Unaggressive;
         npc.AIData.Responsibility = Responsibility.NoCrime;
+        // Fable 14:25: his AI must keep him where the plugin puts him (the inn), never pull him back to the storage cell
+        // he is placed in - the game's own "sandbox around where I am now" package, never one by editor location.
+        npc.Packages.Add(ByEdid<IPackageGetter>("DefaultSandboxCurrentLocation256").ToLink());
 
         // his place: the inn's interior cell, overridden as a whole copy of the master's record
         var home = cfg["home"]!;
