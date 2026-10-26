@@ -14,6 +14,7 @@
 #include "RaceMenuClass.h"
 #include "Settings.h"
 #include "SkillExperience.h"
+#include "StatsMenuClass.h"
 #include "Skills.h"
 #include "UI.h"
 
@@ -44,6 +45,7 @@ namespace
 			Lockouts::Install();
 			QuestRewards::Install();
 			RaceMenuClass::Install();
+			StatsMenuClass::Install();
 			UI::Register();
 			DevBenchTool::Init(true);
 			break;

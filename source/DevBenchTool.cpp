@@ -9,6 +9,7 @@
 #include "Patches.h"
 #include "QuestRewards.h"
 #include "RaceMenuClass.h"
+#include "StatsMenuClass.h"
 #include "Settings.h"
 #include "UI.h"
 
@@ -53,6 +54,14 @@ namespace DevBenchTool
 				Write(a_sink, a_write, { { "ok", ok }, { "op", op }, { "why", why } });
 				return;
 			}
+			if (op == "evolvebox")
+			{
+				// presses button <index> of the Stats Menu's open evolution box (the last button is Later)
+				const int index = args.value("index", -1);
+				if (auto* tasks = SKSE::GetTaskInterface()) { tasks->AddTask([index]() { StatsMenuClass::RequestPick(index); }); }
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true } });
+				return;
+			}
 			if (op == "xp")
 			{
 				Classes::RequestGrantXp(args.value("amount", 10.0F));
@@ -83,6 +92,7 @@ namespace DevBenchTool
 			j["classes"] = nlohmann::json::parse(Classes::StatusJson(), nullptr, false);
 			j["questRewards"] = nlohmann::json::parse(QuestRewards::StatusJson(), nullptr, false);
 			j["raceMenu"] = nlohmann::json::parse(RaceMenuClass::StatusJson(), nullptr, false);
+			j["statsMenu"] = nlohmann::json::parse(StatsMenuClass::StatusJson(), nullptr, false);
 			const auto lug = LevelUpGains::GetState();
 			j["levelUp"] = { { "control", settings::levelup::overrideRewards }, { "perks", settings::levelup::PerksTableText() },
 							 { "gains", { settings::levelup::healthPerLevel, settings::levelup::magickaPerLevel, settings::levelup::staminaPerLevel } },
@@ -113,7 +123,7 @@ namespace DevBenchTool
 			"{"
 			"\"description\":\"Njordlinger Combat Gameplay Overhaul live state: the class (line, tier, level, experience, the upgrade on offer, held and locked skills), "
 			"quest-reward rows, the race-menu class category, level-up gains and the attribute-pick skip, the perk lock and crafting gate counts, the engine patches. "
-			"op=choose class=<id> picks the starting class; op=upgrade index=<n> takes option n of the upgrade on offer; op=xp amount=<n> adds class experience; "
+			"op=choose class=<id> picks the starting class; op=upgrade index=<n> takes option n of the upgrade on offer; op=evolvebox index=<n> presses button n of the Stats Menu evolution box (the last is Later); op=xp amount=<n> adds class experience; "
 			"op=quest quest=<editorID> pays that quest's row as if it had completed; op=reload re-reads the INI; op=strings reports the active language.\","
 			"\"inputSchema\":{\"type\":\"object\",\"properties\":{\"op\":{\"type\":\"string\"},\"class\":{\"type\":\"string\"},\"index\":{\"type\":\"integer\"},"
 			"\"amount\":{\"type\":\"number\"},\"quest\":{\"type\":\"string\"}}},"
