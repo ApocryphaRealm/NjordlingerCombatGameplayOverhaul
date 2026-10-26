@@ -13,6 +13,7 @@
 #include "RaceMenuClass.h"
 #include "StatsMenuClass.h"
 #include "Settings.h"
+#include "SoulStones.h"
 #include "UI.h"
 
 #include "utils/Logger.h"
@@ -109,6 +110,56 @@ namespace DevBenchTool
 				if (args.contains("setStrength")) { settings::gear::setStrength = std::clamp(args.value("setStrength", 1.0F), 0.25F, 2.0F); }
 				if (args.contains("uniqueStrength")) { settings::gear::uniqueStrength = std::clamp(args.value("uniqueStrength", 1.0F), 0.25F, 2.0F); }
 				Gear::RequestApply();
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true } });
+				return;
+			}
+			// ---- soul stones (phase 4): the socketing page's buttons, and a test switch for the runesmith's service ----
+			if (op == "stones")
+			{
+				if (args.value("refresh", false)) { SoulStones::RequestRefresh(); }
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "stones", nlohmann::json::parse(SoulStones::StatusJson(), nullptr, false) } });
+				return;
+			}
+			if (op == "stonesservice")
+			{
+				SoulStones::SetServiceOpen(args.value("open", true));
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "open", SoulStones::IsServiceOpen() } });
+				return;
+			}
+			auto wordIndex = [&]() {
+				const auto w = args.value("word", std::string());
+				const auto& names = SoulStones::WordNames();
+				for (int i = 0; i < static_cast<int>(names.size()); ++i) { if (_stricmp(names[i].c_str(), w.c_str()) == 0) { return i; } }
+				return -1;
+			};
+			auto tierIndex = [&]() {
+				const auto t = args.value("tier", std::string("Petty"));
+				const auto& names = SoulStones::TierNames();
+				for (int i = 0; i < static_cast<int>(names.size()); ++i) { if (_stricmp(names[i].c_str(), t.c_str()) == 0) { return i; } }
+				return -1;
+			};
+			if (op == "stonesgive")
+			{
+				SoulStones::RequestGiveForTest(wordIndex(), tierIndex(), std::clamp(args.value("count", 1), 1, 20));
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true }, { "note", "read stones.lastResult with op=stones a moment later" } });
+				return;
+			}
+			if (op == "stonessocket" || op == "stonesunsocket")
+			{
+				const auto item = args.value("item", std::string());
+				const int slot = args.value("slot", 1) - 1;
+				if (op == "stonessocket") { SoulStones::RequestSocket(item, slot, wordIndex(), tierIndex()); }
+				else { SoulStones::RequestUnsocket(item, slot); }
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true }, { "note", "read stones.lastResult with op=stones a moment later" } });
+				return;
+			}
+			if (op == "stonesset")
+			{
+				if (args.contains("enabled")) { settings::stones::enabled = args.value("enabled", true); }
+				if (args.contains("nameSlots")) { settings::stones::nameSlots = args.value("nameSlots", true); }
+				if (args.contains("nameDragonLetters")) { settings::stones::nameDragonLetters = args.value("nameDragonLetters", false); }
+				if (args.contains("weaponGlow")) { settings::stones::weaponGlow = args.value("weaponGlow", true); }
+				SoulStones::RequestRecompose();
 				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true } });
 				return;
 			}

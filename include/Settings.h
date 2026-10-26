@@ -86,6 +86,15 @@ namespace settings
 		inline float uniqueStrength = 1.0F;                // fUniqueStrength:Gear - 0.25 to 2.00
 	}
 
+	// Soul Stones (PLAN.md phase 4, D17-D22): the module switch and the display choices.
+	namespace stones
+	{
+		inline bool enabled = true;                        // bEnableSoulStones:SoulStones - stone effects, phrases, granted Shouts
+		inline bool nameSlots = true;                      // bNameSlots:SoulStones - the socketed words after the item's name
+		inline bool nameDragonLetters = false;             // bNameDragonLetters:SoulStones - the words in dragon letters (font-tag test)
+		inline bool weaponGlow = true;                     // bWeaponGlow:SoulStones - a drawn weapon glows in its best stone's tier colour
+	}
+
 	void Init(const std::string& a_iniFileName);
 	bool Reload();
 	bool Save();

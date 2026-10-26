@@ -1,7 +1,8 @@
 // Njordlinger Combat Gameplay Overhaul - GPL-3.0-or-later. Phase 2 of the plan (Njordlinger 1.0): the Progression
 // module (copied and trimmed from Character Progression Control, ApocryphaRealm, GPL-3.0-or-later - see NOTICE.md),
 // the Classes module, the class lock-outs, quest rewards, the race-menu class category and the settings page; phase 3
-// (Njordlinger 1.1): the Gear module - set bonuses by piece count, unique effects, the unique tier's no-enchanting.
+// (Njordlinger 1.1): the Gear module - set bonuses by piece count, unique effects, the unique tier's no-enchanting;
+// phase 4 (Njordlinger 2.0): the Soul Stones module - stones by instance, composed enchantments, phrases, granted Shouts.
 #include "PCH.h"
 
 #include "ClassEffects.h"
@@ -19,6 +20,7 @@
 #include "SkillExperience.h"
 #include "StatsMenuClass.h"
 #include "Skills.h"
+#include "SoulStones.h"
 #include "UI.h"
 
 #include "utils/AddressLibraryGuard.h"
@@ -48,6 +50,7 @@ namespace
 			Lockouts::Install();
 			ClassEffects::Install();
 			Gear::Install();
+			SoulStones::Install();
 			QuestRewards::Install();
 			RaceMenuClass::Install();
 			StatsMenuClass::Install();
@@ -58,6 +61,7 @@ namespace
 		case SKSE::MessagingInterface::kNewGame:
 			Classes::OnGameLoaded();
 			Gear::OnGameLoaded();
+			SoulStones::OnGameLoaded();
 			break;
 		default:
 			break;
@@ -69,6 +73,7 @@ namespace
 		Classes::OnSave(a_intfc);
 		ClassEffects::OnSave(a_intfc);
 		QuestRewards::OnSave(a_intfc);
+		SoulStones::OnSave(a_intfc);
 	}
 
 	void LoadCallback(SKSE::SerializationInterface* a_intfc)
@@ -81,6 +86,7 @@ namespace
 			case Classes::kRecord: Classes::ReadRecord(a_intfc, version, length); break;
 			case QuestRewards::kRecord: QuestRewards::ReadRecord(a_intfc, version, length); break;
 			case ClassEffects::kRecord: ClassEffects::ReadRecord(a_intfc, version, length); break;
+			case SoulStones::kRecord: SoulStones::ReadRecord(a_intfc, version, length); break;
 			default: logger::warn("co-save: unknown record {:08X} (version {}, {} bytes) skipped", type, version, length); break;
 			}
 		}
@@ -91,6 +97,7 @@ namespace
 		Classes::OnRevert();
 		ClassEffects::OnRevert();
 		QuestRewards::OnRevert();
+		SoulStones::OnRevert();
 	}
 }
 
