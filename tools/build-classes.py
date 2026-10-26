@@ -8,7 +8,9 @@ r"""Write the phase 2 data files of Njordlinger Combat Gameplay Overhaul from th
    the group globals at run time.
 2. data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul/quest-rewards.json - config/quest-rewards.json (the rows the data
    build generates from the main-quest and Miraak records).
-3. data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul.ini - the shipped INI, written from the same defaults the DLL
+3. data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul/gear.json - the Gear module's forms (phase 3: set keywords and
+   abilities, unique keywords, perks and abilities, the two switch globals) from the plugin build's form list.
+4. data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul.ini - the shipped INI, written from the same defaults the DLL
    compiles in (source/Settings.cpp SetDefaults; rule 16). The values are listed once below; check_defaults() reads
    Settings.cpp and refuses to write when the two disagree.
 No machine path is written into any file (rule 4).
@@ -41,6 +43,10 @@ DEFAULTS = [
     ("Classes", "bCraftingGate", "1", "classes::craftingGate", ""),
     ("Classes", "bRaceMenuClass", "1", "classes::raceMenuClass", "the Class category in the race menu"),
     ("QuestRewards", "bEnableQuestRewards", "1", "questrewards::enabled", "rows: quest-rewards.json; a row you change is kept under [QuestRewardRows] as <EditorID>=<points>"),
+    ("Gear", "bSetBonuses", "1", "gear::sets", "unique armour sets: a bonus at two worn pieces and another at four"),
+    ("Gear", "bUniqueEffects", "1", "gear::uniques", "named unique items carry an effect of their own"),
+    ("Gear", "fSetStrength", "1.00", "gear::setStrength", "0.25 to 2.00 - scales every set bonus from the value in the plugin (1.00 = as written)"),
+    ("Gear", "fUniqueStrength", "1.00", "gear::uniqueStrength", "0.25 to 2.00 - scales every unique effect"),
 ]
 
 
@@ -127,6 +133,19 @@ def write_classes(forms_path):
     return path, bool(forms)
 
 
+def write_gear(forms_path):
+    if not forms_path or not os.path.exists(forms_path):
+        return None, 0, 0
+    gear = json.load(open(forms_path, encoding="utf-8")).get("gear")
+    if not gear:
+        return None, 0, 0
+    path = os.path.join(OUT, "NjordlingerCombatGameplayOverhaul", "gear.json")
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(gear, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    return path, len(gear.get("sets", [])), len(gear.get("uniques", []))
+
+
 def write_quest_rows():
     src = os.path.join(REPO, "config", "quest-rewards.json")
     data = json.load(open(src, encoding="utf-8"))
@@ -150,6 +169,12 @@ def main(argv):
     print("wrote", os.path.relpath(write_ini(), REPO))
     path, filled = write_classes(a.forms)
     print("wrote", os.path.relpath(path, REPO), "(form IDs filled from the plugin build)" if filled else "(no plugin form list - classes carry no forms)")
+    path, ns, nu = write_gear(a.forms)
+    if path:
+        print("wrote", os.path.relpath(path, REPO), f"({ns} sets, {nu} uniques)")
+    else:
+        print("no gear forms in the plugin form list - gear.json not written")
+        return 1
     path, n = write_quest_rows()
     print("wrote", os.path.relpath(path, REPO), f"({n} rows)")
     return 0

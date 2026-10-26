@@ -1,0 +1,291 @@
+{
+  "_comment": [
+    "PLAN.md phase 3 (Njordlinger 1.1: Gear) - the set bonuses (D14) and the unique effects (D15). Defaults set by the build",
+    "session on 2026-10-26 while the owner slept; EVERY number is TUNE and the five sets are the PROPOSED ones of",
+    "config/sets.json (Q7). The reasoning, per set and per unique, is 4. plans/njordlinger-combat-gameplay-overhaul/GEAR-CONTENT.md.",
+    "Built into NjordlingerCombatGameplayOverhaul.esp by tools/PluginBuild (after every class record, so no earlier form ID moves).",
+    "Effect kinds are class-content.json's: {av, add, if} a constant effect on an ability spell (shown in Active Effects under the",
+    "ability's name); {ep, mult|add, if} a perk entry point. 'kw' names a keyword of the 'keywords' list below, or '@unique' for",
+    "the unique's own keyword. The builder ADDS the gating conditions itself, so 'if' holds only the trigger:",
+    "  set ability (2 / 4 pieces): GetGlobalValue(NJCGO_Gear_SetsOn)==1 AND WornHasKeyword(set);",
+    "  set perk entry (SPID, every actor): the same AND HasSpell(the 2- or 4-piece ability) - the SKSE plugin counts the pieces",
+    "  and adds / removes the two abilities;",
+    "  unique ability and perk entry (SPID perk, every actor): GetGlobalValue(NJCGO_Gear_UniquesOn)==1 AND WornHasKeyword(unique)."
+  ],
+  "keywords": {
+    "ActorTypeUndead": "0x013796",
+    "ActorTypeAnimal": "0x013798",
+    "WeapTypeDagger": "0x01E713",
+    "WeapTypeBow": "0x01E715"
+  },
+  "sets": {
+    "Nightingale": {
+      "trigger": "sneaking in shadow",
+      "2": {
+        "name": "Nightingale - Shadow's Embrace",
+        "description": "Two pieces: while sneaking, Sneak +15.",
+        "effects": [ { "av": "Sneak", "add": 15, "if": [ { "f": "IsSneaking" } ] } ]
+      },
+      "4": {
+        "name": "Nightingale - Nocturnal's Veil",
+        "description": "Four pieces: while sneaking, Sneak +10 more; sneaking in shadow (light under 50), 20% less damage taken; sneak attacks 25% stronger.",
+        "effects": [
+          { "av": "Sneak", "add": 10, "if": [ { "f": "IsSneaking" } ] },
+          { "ep": "ModIncomingDamage", "mult": 0.8, "if": [ { "f": "IsSneaking" }, { "f": "GetLightLevel", "op": "<", "v": 50 } ] },
+          { "ep": "ModSneakAttackMult", "mult": 1.25 }
+        ]
+      }
+    },
+    "Ancient Shrouded": {
+      "trigger": "dagger sneak attacks and poison",
+      "2": {
+        "name": "Ancient Shrouded - The Silent Hand",
+        "description": "Two pieces: while sneaking, Sneak +10; sneak attacks with a dagger 20% stronger.",
+        "effects": [
+          { "av": "Sneak", "add": 10, "if": [ { "f": "IsSneaking" } ] },
+          { "ep": "ModSneakAttackMult", "mult": 1.2, "if": [ { "f": "HasKeyword", "kw": "WeapTypeDagger", "tab": 1 } ] }
+        ]
+      },
+      "4": {
+        "name": "Ancient Shrouded - Sithis' Dose",
+        "description": "Four pieces: poison resistance +50; a poison holds two more doses; dagger sneak attacks 15% stronger again.",
+        "effects": [
+          { "av": "PoisonResist", "add": 50 },
+          { "ep": "ModPoisonDoseCount", "add": 2 },
+          { "ep": "ModSneakAttackMult", "mult": 1.15, "if": [ { "f": "HasKeyword", "kw": "WeapTypeDagger", "tab": 1 } ] }
+        ]
+      }
+    },
+    "Guild Master's": {
+      "trigger": "the thief's trade (locks, pockets, bribes)",
+      "2": {
+        "name": "Guild Master's - Light Fingers",
+        "description": "Two pieces: Lockpicking +10, Pickpocket +10; the lock's sweet spot 25% wider.",
+        "effects": [
+          { "av": "Lockpicking", "add": 10 },
+          { "av": "Pickpocket", "add": 10 },
+          { "ep": "ModLockpickSweetSpot", "mult": 1.25 }
+        ]
+      },
+      "4": {
+        "name": "Guild Master's - Silver Tongue",
+        "description": "Four pieces: Speech +10; pickpocket chance 25% better; bribes cost 25% less.",
+        "effects": [
+          { "av": "Speech", "add": 10 },
+          { "ep": "ModPickpocketChance", "mult": 1.25 },
+          { "ep": "ModBribeAmount", "mult": 0.75 }
+        ]
+      }
+    },
+    "Deathbrand": {
+      "trigger": "power attacks",
+      "2": {
+        "name": "Deathbrand - Stalhrim Hide",
+        "description": "Two pieces: frost resistance +25; power attacks cost 25% less stamina.",
+        "effects": [
+          { "av": "ResistFrost", "add": 25 },
+          { "ep": "ModPowerAttackStamina", "mult": 0.75 }
+        ]
+      },
+      "4": {
+        "name": "Deathbrand - Haknir's Fury",
+        "description": "Four pieces: stamina regenerates 25% faster; power attacks 20% stronger.",
+        "effects": [
+          { "av": "StaminaRateMult", "add": 25 },
+          { "ep": "ModPowerAttackDamage", "mult": 1.2 }
+        ]
+      }
+    },
+    "Linwe's": {
+      "trigger": "a bow while sneaking",
+      "2": {
+        "name": "Linwe's - Hunter's Patience",
+        "description": "Two pieces: while sneaking, Archery +10.",
+        "effects": [ { "av": "Archery", "add": 10, "if": [ { "f": "IsSneaking" } ] } ]
+      },
+      "4": {
+        "name": "Linwe's - Unseen Arrow",
+        "description": "Four pieces: you make 25% less noise moving; bow attacks while sneaking 20% stronger.",
+        "effects": [
+          { "av": "MovementNoiseMult", "add": -0.25 },
+          { "ep": "ModAttackDamage", "mult": 1.2, "if": [ { "f": "IsSneaking" }, { "f": "HasKeyword", "kw": "WeapTypeBow", "tab": 1 } ] }
+        ]
+      }
+    }
+  },
+  "uniques": [
+    {
+      "id": "Dawnbreaker", "name": "Dawnbreaker", "type": "Weapon", "forms": [ "Skyrim.esm|4E4EE" ],
+      "description": "Meridia's light: fire resistance +15; 25% more damage against the undead.",
+      "effects": [
+        { "av": "ResistFire", "add": 15 },
+        { "ep": "ModAttackDamage", "mult": 1.25, "if": [ { "f": "HasKeyword", "kw": "@unique", "tab": 1 }, { "f": "HasKeyword", "kw": "ActorTypeUndead", "tab": 2 } ] }
+      ]
+    },
+    {
+      "id": "EbonyBlade", "name": "Ebony Blade", "type": "Weapon", "forms": [ "Skyrim.esm|4A38F", "Skyrim.esm|EA29C" ],
+      "description": "Mephala's whisper: Sneak +10; 20% more damage while your health is under half.",
+      "effects": [
+        { "av": "Sneak", "add": 10 },
+        { "ep": "ModAttackDamage", "mult": 1.2, "if": [ { "f": "GetHealthPercentage", "op": "<", "v": 0.5 }, { "f": "HasKeyword", "kw": "@unique", "tab": 1 } ] }
+      ]
+    },
+    {
+      "id": "Volendrung", "name": "Volendrung", "type": "Weapon", "forms": [ "Skyrim.esm|2ACD2" ],
+      "description": "Malacath's endurance: carry weight +25; power attacks with it cost 25% less stamina.",
+      "effects": [
+        { "av": "CarryWeight", "add": 25 },
+        { "ep": "ModPowerAttackStamina", "mult": 0.75, "if": [ { "f": "HasKeyword", "kw": "@unique", "tab": 1 } ] }
+      ]
+    },
+    {
+      "id": "MaceOfMolagBal", "name": "Mace of Molag Bal", "type": "Weapon", "forms": [ "Skyrim.esm|233E3" ],
+      "description": "The Lord of Domination: magicka +25; 20% more damage against a fleeing foe.",
+      "effects": [
+        { "av": "Magicka", "add": 25 },
+        { "ep": "ModAttackDamage", "mult": 1.2, "if": [ { "f": "HasKeyword", "kw": "@unique", "tab": 1 }, { "f": "IsFleeing", "tab": 2 } ] }
+      ]
+    },
+    {
+      "id": "MehrunesRazor", "name": "Mehrunes' Razor", "type": "Weapon", "forms": [ "Skyrim.esm|240D2" ],
+      "description": "The Prince of Plots: you move 5% faster; sneak attacks with it 25% stronger.",
+      "effects": [
+        { "av": "SpeedMult", "add": 5 },
+        { "ep": "ModSneakAttackMult", "mult": 1.25, "if": [ { "f": "HasKeyword", "kw": "@unique", "tab": 1 } ] }
+      ]
+    },
+    {
+      "id": "Wuuthrad", "name": "Wuuthrad", "type": "Weapon", "forms": [ "Skyrim.esm|956B5" ],
+      "description": "Ysgramor's axe: health +25; power attacks with it 20% stronger.",
+      "effects": [
+        { "av": "Health", "add": 25 },
+        { "ep": "ModPowerAttackDamage", "mult": 1.2, "if": [ { "f": "HasKeyword", "kw": "@unique", "tab": 1 } ] }
+      ]
+    },
+    {
+      "id": "Windshear", "name": "Windshear", "type": "Weapon", "forms": [ "Skyrim.esm|6EA8B" ],
+      "description": "The storm's edge: stamina regenerates 25% faster; 15% more damage against a staggered foe.",
+      "effects": [
+        { "av": "StaminaRateMult", "add": 25 },
+        { "ep": "ModAttackDamage", "mult": 1.15, "if": [ { "f": "HasKeyword", "kw": "@unique", "tab": 1 }, { "f": "IsStaggered", "tab": 2 } ] }
+      ]
+    },
+    {
+      "id": "Keening", "name": "Keening", "type": "Weapon", "forms": [ "Skyrim.esm|6A13C" ],
+      "description": "Kagrenac's tool: magicka regenerates 25% faster; spells cost 10% less.",
+      "effects": [
+        { "av": "MagickaRateMult", "add": 25 },
+        { "ep": "ModSpellCost", "mult": 0.9 }
+      ]
+    },
+    {
+      "id": "NightingaleBlade", "name": "Nightingale Blade", "type": "Weapon",
+      "forms": [ "Skyrim.esm|7A917", "Skyrim.esm|F6524", "Skyrim.esm|F6525", "Skyrim.esm|F6526", "Skyrim.esm|F6527" ],
+      "description": "Nocturnal's edge: Sneak +10; sneak attacks with it 15% stronger.",
+      "effects": [
+        { "av": "Sneak", "add": 10 },
+        { "ep": "ModSneakAttackMult", "mult": 1.15, "if": [ { "f": "HasKeyword", "kw": "@unique", "tab": 1 } ] }
+      ]
+    },
+    {
+      "id": "BladeOfWoe", "name": "Blade of Woe", "type": "Weapon", "forms": [ "Skyrim.esm|964C9", "Skyrim.esm|9CCDC" ],
+      "description": "The Brotherhood's blade: you make 20% less noise moving; sneak attacks with it 25% stronger.",
+      "effects": [
+        { "av": "MovementNoiseMult", "add": -0.2 },
+        { "ep": "ModSneakAttackMult", "mult": 1.25, "if": [ { "f": "HasKeyword", "kw": "@unique", "tab": 1 } ] }
+      ]
+    },
+    {
+      "id": "Chillrend", "name": "Chillrend", "type": "Weapon", "forms": [ "Skyrim.esm|F8313" ],
+      "description": "Mercer's prize: frost resistance +25; 15% more damage while sneaking.",
+      "effects": [
+        { "av": "ResistFrost", "add": 25 },
+        { "ep": "ModAttackDamage", "mult": 1.15, "if": [ { "f": "IsSneaking" }, { "f": "HasKeyword", "kw": "@unique", "tab": 1 } ] }
+      ]
+    },
+    {
+      "id": "BloodskalBlade", "name": "Bloodskal Blade", "type": "Weapon", "forms": [ "Dragonborn.esm|1AEA4" ],
+      "description": "The Bloodskal blade: stamina regenerates 20% faster; power attacks with it 15% stronger.",
+      "effects": [
+        { "av": "StaminaRateMult", "add": 20 },
+        { "ep": "ModPowerAttackDamage", "mult": 1.15, "if": [ { "f": "HasKeyword", "kw": "@unique", "tab": 1 } ] }
+      ]
+    },
+    {
+      "id": "AurielsBow", "name": "Auriel's Bow", "type": "Weapon", "forms": [ "Dawnguard.esm|800" ],
+      "description": "Auriel's light: Archery +10; 25% more damage against the undead.",
+      "effects": [
+        { "av": "Archery", "add": 10 },
+        { "ep": "ModAttackDamage", "mult": 1.25, "if": [ { "f": "HasKeyword", "kw": "@unique", "tab": 1 }, { "f": "HasKeyword", "kw": "ActorTypeUndead", "tab": 2 } ] }
+      ]
+    },
+    {
+      "id": "MiraaksSword", "name": "Miraak's Sword", "type": "Weapon",
+      "forms": [ "Dragonborn.esm|397F6", "Dragonborn.esm|39FB1", "Dragonborn.esm|39FB4" ],
+      "description": "The First Dragonborn's blade: Shouts recover 15% faster; 10% more damage.",
+      "effects": [
+        { "av": "ShoutRecoveryMult", "add": -0.15 },
+        { "ep": "ModAttackDamage", "mult": 1.1, "if": [ { "f": "HasKeyword", "kw": "@unique", "tab": 1 } ] }
+      ]
+    },
+    {
+      "id": "ShieldOfYsgramor", "name": "Shield of Ysgramor", "type": "Armor", "forms": [ "Skyrim.esm|E41D8" ],
+      "description": "The Companions' heirloom: health +20; 15% less damage taken while blocking.",
+      "effects": [
+        { "av": "Health", "add": 20 },
+        { "ep": "ModIncomingDamage", "mult": 0.85, "if": [ { "f": "IsBlocking" } ] }
+      ]
+    },
+    {
+      "id": "Spellbreaker", "name": "Spellbreaker", "type": "Armor", "forms": [ "Skyrim.esm|45F96" ],
+      "description": "Peryite's ward: magic resistance +10; spells hit 15% weaker while blocking.",
+      "effects": [
+        { "av": "ResistMagic", "add": 10 },
+        { "ep": "ModIncomingSpellMagnitude", "mult": 0.85, "if": [ { "f": "IsBlocking" } ] }
+      ]
+    },
+    {
+      "id": "SaviorsHide", "name": "Savior's Hide", "type": "Armor", "forms": [ "Skyrim.esm|2AC61" ],
+      "description": "Hircine's gift: poison resistance +25, disease resistance +50.",
+      "effects": [
+        { "av": "PoisonResist", "add": 25 },
+        { "av": "ResistDisease", "add": 50 }
+      ]
+    },
+    {
+      "id": "MasqueOfClavicusVile", "name": "Masque of Clavicus Vile", "type": "Armor", "forms": [ "Skyrim.esm|D2846" ],
+      "description": "The Prince of Bargains: Speech +10; bribes cost 25% less.",
+      "effects": [
+        { "av": "Speech", "add": 10 },
+        { "ep": "ModBribeAmount", "mult": 0.75 }
+      ]
+    },
+    {
+      "id": "RingOfNamira", "name": "Ring of Namira", "type": "Armor", "forms": [ "Skyrim.esm|2C37B" ],
+      "description": "Namira's hunger: health regenerates 25% faster.",
+      "effects": [ { "av": "HealRateMult", "add": 25 } ]
+    },
+    {
+      "id": "RingOfHircine", "name": "Ring of Hircine", "type": "Armor", "forms": [ "Skyrim.esm|2AC60", "Skyrim.esm|F82FE" ],
+      "description": "The Huntsman's ring: you move 5% faster; 10% more damage against animals.",
+      "effects": [
+        { "av": "SpeedMult", "add": 5 },
+        { "ep": "ModAttackDamage", "mult": 1.1, "if": [ { "f": "HasKeyword", "kw": "ActorTypeAnimal", "tab": 2 } ] }
+      ]
+    },
+    {
+      "id": "GauldurAmulet", "name": "The Gauldur Amulet", "type": "Armor", "forms": [ "Skyrim.esm|2D773" ],
+      "description": "Gauldur made whole: health, magicka and stamina +15.",
+      "effects": [
+        { "av": "Health", "add": 15 },
+        { "av": "Magicka", "add": 15 },
+        { "av": "Stamina", "add": 15 }
+      ]
+    },
+    {
+      "id": "SavosArensAmulet", "name": "Savos Aren's Amulet", "type": "Armor", "forms": [ "Skyrim.esm|F1B33" ],
+      "description": "The Arch-Mage's amulet: magicka regenerates 25% faster.",
+      "effects": [ { "av": "MagickaRateMult", "add": 25 } ]
+    }
+  ]
+}

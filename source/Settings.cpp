@@ -122,6 +122,10 @@ namespace settings
 			classes::raceMenuClass = true;
 			questrewards::enabled = true;
 			questrewards::overrides.clear();
+			gear::sets = true;
+			gear::uniques = true;
+			gear::setStrength = 1.0F;
+			gear::uniqueStrength = 1.0F;
 		}
 
 		void Clamp()
@@ -139,6 +143,8 @@ namespace settings
 			classes::xpPerIncrease = std::clamp(classes::xpPerIncrease, 0.0F, 10.0F);
 			classes::xpBase = std::clamp(classes::xpBase, 0.1F, 50.0F);
 			classes::xpPerLevel = std::clamp(classes::xpPerLevel, 0.0F, 10.0F);
+			gear::setStrength = std::clamp(gear::setStrength, 0.25F, 2.0F);
+			gear::uniqueStrength = std::clamp(gear::uniqueStrength, 0.25F, 2.0F);
 		}
 
 		bool LoadFileValues(const std::string& a_path)
@@ -186,6 +192,10 @@ namespace settings
 			get("bracemenuclass:classes", classes::raceMenuClass, ParseBool);
 
 			get("benablequestrewards:questrewards", questrewards::enabled, ParseBool);
+			get("bsetbonuses:gear", gear::sets, ParseBool);
+			get("buniqueeffects:gear", gear::uniques, ParseBool);
+			get("fsetstrength:gear", gear::setStrength, ParseFloat);
+			get("funiquestrength:gear", gear::uniqueStrength, ParseFloat);
 			questrewards::overrides.clear();
 			for (const auto& [id, value] : f.rows)
 			{
@@ -291,6 +301,10 @@ namespace settings
 		ok &= WriteKey(lines, "Classes", "bCraftingGate", classes::craftingGate ? "1" : "0");
 		ok &= WriteKey(lines, "Classes", "bRaceMenuClass", classes::raceMenuClass ? "1" : "0");
 		ok &= WriteKey(lines, "QuestRewards", "bEnableQuestRewards", questrewards::enabled ? "1" : "0");
+		ok &= WriteKey(lines, "Gear", "bSetBonuses", gear::sets ? "1" : "0");
+		ok &= WriteKey(lines, "Gear", "bUniqueEffects", gear::uniques ? "1" : "0");
+		ok &= WriteKey(lines, "Gear", "fSetStrength", FormatFloat(gear::setStrength));
+		ok &= WriteKey(lines, "Gear", "fUniqueStrength", FormatFloat(gear::uniqueStrength));
 		for (const auto& [id, points] : questrewards::overrides) { ok &= WriteKey(lines, "QuestRewardRows", id.c_str(), std::to_string(points)); }
 
 		std::ofstream out(iniPath, std::ios::trunc);

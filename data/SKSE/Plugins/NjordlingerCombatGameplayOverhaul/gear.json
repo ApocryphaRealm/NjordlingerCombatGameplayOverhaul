@@ -1,0 +1,203 @@
+{
+  "globals": {
+    "setsOn": "0x8B1",
+    "uniquesOn": "0x8B2"
+  },
+  "keywords": {
+    "tierUnique": "0x8B3",
+    "noEnchant": "0x8B4"
+  },
+  "sets": [
+    {
+      "name": "Nightingale",
+      "keyword": "0x8B5",
+      "ability2": "0x8B6",
+      "ability4": "0x8B8",
+      "perk": "0x8BA"
+    },
+    {
+      "name": "Ancient Shrouded",
+      "keyword": "0x8BB",
+      "ability2": "0x8BC",
+      "ability4": "0x8BE",
+      "perk": "0x8C0"
+    },
+    {
+      "name": "Guild Master's",
+      "keyword": "0x8C1",
+      "ability2": "0x8C2",
+      "ability4": "0x8C5",
+      "perk": "0x8C7"
+    },
+    {
+      "name": "Deathbrand",
+      "keyword": "0x8C8",
+      "ability2": "0x8C9",
+      "ability4": "0x8CB",
+      "perk": "0x8CD"
+    },
+    {
+      "name": "Linwe's",
+      "keyword": "0x8CE",
+      "ability2": "0x8CF",
+      "ability4": "0x8D1",
+      "perk": "0x8D3"
+    }
+  ],
+  "uniques": [
+    {
+      "id": "Dawnbreaker",
+      "name": "Dawnbreaker",
+      "keyword": "0x8D4",
+      "perk": "0x8D7",
+      "ability": "0x8D5"
+    },
+    {
+      "id": "EbonyBlade",
+      "name": "Ebony Blade",
+      "keyword": "0x8D8",
+      "perk": "0x8DB",
+      "ability": "0x8D9"
+    },
+    {
+      "id": "Volendrung",
+      "name": "Volendrung",
+      "keyword": "0x8DC",
+      "perk": "0x8DF",
+      "ability": "0x8DD"
+    },
+    {
+      "id": "MaceOfMolagBal",
+      "name": "Mace of Molag Bal",
+      "keyword": "0x8E0",
+      "perk": "0x8E3",
+      "ability": "0x8E1"
+    },
+    {
+      "id": "MehrunesRazor",
+      "name": "Mehrunes' Razor",
+      "keyword": "0x8E4",
+      "perk": "0x8E7",
+      "ability": "0x8E5"
+    },
+    {
+      "id": "Wuuthrad",
+      "name": "Wuuthrad",
+      "keyword": "0x8E8",
+      "perk": "0x8EB",
+      "ability": "0x8E9"
+    },
+    {
+      "id": "Windshear",
+      "name": "Windshear",
+      "keyword": "0x8EC",
+      "perk": "0x8EF",
+      "ability": "0x8ED"
+    },
+    {
+      "id": "Keening",
+      "name": "Keening",
+      "keyword": "0x8F0",
+      "perk": "0x8F3",
+      "ability": "0x8F1"
+    },
+    {
+      "id": "NightingaleBlade",
+      "name": "Nightingale Blade",
+      "keyword": "0x8F4",
+      "perk": "0x8F7",
+      "ability": "0x8F5"
+    },
+    {
+      "id": "BladeOfWoe",
+      "name": "Blade of Woe",
+      "keyword": "0x8F8",
+      "perk": "0x8FB",
+      "ability": "0x8F9"
+    },
+    {
+      "id": "Chillrend",
+      "name": "Chillrend",
+      "keyword": "0x8FC",
+      "perk": "0x8FF",
+      "ability": "0x8FD"
+    },
+    {
+      "id": "BloodskalBlade",
+      "name": "Bloodskal Blade",
+      "keyword": "0x900",
+      "perk": "0x903",
+      "ability": "0x901"
+    },
+    {
+      "id": "AurielsBow",
+      "name": "Auriel's Bow",
+      "keyword": "0x904",
+      "perk": "0x907",
+      "ability": "0x905"
+    },
+    {
+      "id": "MiraaksSword",
+      "name": "Miraak's Sword",
+      "keyword": "0x908",
+      "perk": "0x90B",
+      "ability": "0x909"
+    },
+    {
+      "id": "ShieldOfYsgramor",
+      "name": "Shield of Ysgramor",
+      "keyword": "0x90C",
+      "perk": "0x90F",
+      "ability": "0x90D"
+    },
+    {
+      "id": "Spellbreaker",
+      "name": "Spellbreaker",
+      "keyword": "0x910",
+      "perk": "0x913",
+      "ability": "0x911"
+    },
+    {
+      "id": "SaviorsHide",
+      "name": "Savior's Hide",
+      "keyword": "0x914",
+      "perk": "0x918",
+      "ability": "0x915"
+    },
+    {
+      "id": "MasqueOfClavicusVile",
+      "name": "Masque of Clavicus Vile",
+      "keyword": "0x919",
+      "perk": "0x91C",
+      "ability": "0x91A"
+    },
+    {
+      "id": "RingOfNamira",
+      "name": "Ring of Namira",
+      "keyword": "0x91D",
+      "perk": "0x920",
+      "ability": "0x91E"
+    },
+    {
+      "id": "RingOfHircine",
+      "name": "Ring of Hircine",
+      "keyword": "0x921",
+      "perk": "0x924",
+      "ability": "0x922"
+    },
+    {
+      "id": "GauldurAmulet",
+      "name": "The Gauldur Amulet",
+      "keyword": "0x925",
+      "perk": "0x92A",
+      "ability": "0x926"
+    },
+    {
+      "id": "SavosArensAmulet",
+      "name": "Savos Aren's Amulet",
+      "keyword": "0x92B",
+      "perk": "0x92E",
+      "ability": "0x92C"
+    }
+  ]
+}

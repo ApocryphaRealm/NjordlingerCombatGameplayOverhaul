@@ -76,6 +76,16 @@ namespace settings
 		inline std::map<std::string, int> overrides;       // [QuestRewardRows] <EditorID>=<points>
 	}
 
+	// Gear (PLAN.md phase 3, D14 / D15): the module switches and strengths. A strength scales every gear effect and
+	// entry point from the value in the plugin (1.00 = as authored).
+	namespace gear
+	{
+		inline bool sets = true;                           // bSetBonuses:Gear
+		inline bool uniques = true;                        // bUniqueEffects:Gear
+		inline float setStrength = 1.0F;                   // fSetStrength:Gear - 0.25 to 2.00
+		inline float uniqueStrength = 1.0F;                // fUniqueStrength:Gear - 0.25 to 2.00
+	}
+
 	void Init(const std::string& a_iniFileName);
 	bool Reload();
 	bool Save();

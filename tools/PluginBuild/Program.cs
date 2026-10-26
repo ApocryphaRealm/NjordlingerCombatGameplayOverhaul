@@ -44,6 +44,9 @@ foreach (var g in content["helpers"]?["globals"]?.AsArray() ?? new JsonArray())
     mod.Globals.Add(glob);
     helperGlobals[name] = glob;
 }
+// Phase 3 (gear): the plugin's own keywords by editor ID, and the keyword '@unique' stands for while a unique is built.
+var ownKeywords = new Dictionary<string, FormKey>();
+string? currentUniqueKeyword = null;
 var dllDone = new List<string>();
 var stubs = new List<string>();
 var approx = new List<string>();
@@ -67,7 +70,9 @@ Condition MakeCondition(JsonNode c, string owner)
     IFormLinkGetter<IKeywordGetter> Kw()
     {
         var name = c["kw"]!.GetValue<string>();
-        if (!keywords.TryGetValue(name, out var fk)) { throw new InvalidOperationException($"{owner}: keyword {name} is not in class-content.json's keyword list"); }
+        if (name == "@unique") { name = currentUniqueKeyword ?? throw new InvalidOperationException($"{owner}: @unique used outside a unique"); }
+        if (ownKeywords.TryGetValue(name, out var own)) { return new FormLink<IKeywordGetter>(own); }
+        if (!keywords.TryGetValue(name, out var fk)) { throw new InvalidOperationException($"{owner}: keyword {name} is not in class-content.json's or gear-content.json's keyword list"); }
         return new FormLink<IKeywordGetter>(fk);
     }
     ConditionData data = f switch
@@ -90,8 +95,7 @@ Condition MakeCondition(JsonNode c, string owner)
         "SpellHasKeyword" => MakeKeywordData(new EPMagic_SpellHasKeywordConditionData(), Kw()),
         "EPMagic_SpellHasSkill" => new EPMagic_SpellHasSkillConditionData { ActorValue = Enum.Parse<ActorValue>(c["skill"]!.GetValue<string>()) },
         "GetLightLevel" => new GetLightLevelConditionData(),
-        "GetGlobalValue" => SetGlobal(new GetGlobalValueConditionData(), helperGlobals[c["global"]!.GetValue<string>()]),
-        _ => throw new InvalidOperationException($"{owner}: condition {f} is not supported by the plugin build")
+        "GetGlobalValue" => SetGlobal(new GetGlobalValueConditionData(), helperGlobals[c["global"]!.GetValue<string>()]),        _ => throw new InvalidOperationException($"{owner}: condition {f} is not supported by the plugin build")
     };
     data.RunOnType = Condition.RunOnType.Subject;
     var cond = new ConditionFloat { CompareOperator = Op(c["op"]?.GetValue<string>()), ComparisonValue = v, Data = data };
@@ -306,7 +310,207 @@ foreach (var (id, def) in content["helpers"]?["spells"]?.AsObject() ?? new JsonO
     helperForms[id] = Hex(spell);
 }
 forms["helpers"] = helperForms;
-forms["dll"] = new JsonArray(dllDone.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
+
+// ---- Phase 3: Gear (PLAN.md D14 / D15, config/gear-content.json, GEAR-CONTENT.md) ---------------------------------------
+// Built AFTER every class record, so no form ID of phase 2 moves. Records: two module globals (NJCGO_Gear_SetsOn /
+// _UniquesOn, the Gear tab's switches), the five set keywords (the editor IDs KID's set rules already use, so KID finds
+// these instead of creating its own), NJCGO_Tier_Unique (the tier rules' unique keyword, for the same reason) and
+// NJCGO_NoEnchant, one keyword per authored unique; per set two ability spells (2 and 4 pieces - the SKSE plugin adds and
+// removes them by piece count) and one perk of entry points (SPID, every actor); per unique one perk of entry points
+// carrying one ability spell (SPID, every actor). Also writes data/NjordlingerCGO_Gear_DISTR.ini and
+// data/NjordlingerCGO_Uniques_KID.ini.
+var gearPath = Path.Combine(repo, "config", "gear-content.json");
+if (File.Exists(gearPath))
+{
+    var gear = JsonNode.Parse(File.ReadAllText(gearPath))!;
+    var setsCfg = JsonNode.Parse(File.ReadAllText(Path.Combine(repo, "config", "sets.json")), null, new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true })!.AsArray();
+    foreach (var (name, id) in gear["keywords"]!.AsObject())
+    {
+        keywords[name] = new FormKey(skyrim, Convert.ToUInt32(id!.GetValue<string>(), 16));
+    }
+    var setsOn = new GlobalShort(mod) { EditorID = "NJCGO_Gear_SetsOn", Data = 1 };
+    mod.Globals.Add(setsOn);
+    var uniquesOn = new GlobalShort(mod) { EditorID = "NJCGO_Gear_UniquesOn", Data = 1 };
+    mod.Globals.Add(uniquesOn);
+    var tierUnique = mod.Keywords.AddNew("NJCGO_Tier_Unique");
+    var noEnchant = mod.Keywords.AddNew("NJCGO_NoEnchant");
+    ownKeywords["NJCGO_Tier_Unique"] = tierUnique.FormKey;
+    ownKeywords["NJCGO_NoEnchant"] = noEnchant.FormKey;
+
+    // The spell parameter of HasSpell, whichever link type this Mutagen version gives it.
+    ConditionData SetSpell(ConditionData d, FormKey fk)
+    {
+        var prop = d.GetType().GetProperties().First(p => p.Name.Contains("Spell") && p.CanWrite);
+        var current = prop.GetValue(d);
+        if (current is IFormLinkOrIndex<ISpellRecordGetter> a) { a.Link.SetTo(fk); }
+        else if (current is IFormLink<ISpellRecordGetter> b) { b.SetTo(fk); }
+        else if (current is IFormLinkOrIndex<ISpellGetter> c) { c.Link.SetTo(fk); }
+        else if (current is IFormLink<ISpellGetter> e) { e.SetTo(fk); }
+        else { throw new InvalidOperationException("cannot set the spell of " + d.GetType().Name + " (" + current?.GetType().FullName + ")"); }
+        return d;
+    }
+    Condition Gate(ConditionData d) { d.RunOnType = Condition.RunOnType.Subject; return new ConditionFloat { CompareOperator = CompareOperator.EqualTo, ComparisonValue = 1.0f, Data = d }; }
+    Condition GlobalOn(GlobalShort g) => Gate(SetGlobal(new GetGlobalValueConditionData(), g));
+    Condition Worn(FormKey kw) => Gate(MakeKeywordData(new WornHasKeywordConditionData(), new FormLink<IKeywordGetter>(kw)));
+    Condition HasSpellOf(Spell s) => Gate(SetSpell(new HasSpellConditionData(), s.FormKey));
+
+    int gearEntries = 0, gearConstants = 0;
+    // One visible ability (no HideInUI: it shows in Active Effects under its name) of the constant effects in a_effects.
+    Spell GearAbility(string editorId, string name, string description, JsonArray a_effects, Func<List<Condition>> gate)
+    {
+        var spell = MakeAbilitySpell(editorId, name);
+        spell.Description = description;
+        var n = 0;
+        foreach (var e in a_effects.Where(e => e!["av"] != null))
+        {
+            var mgef = mod.MagicEffects.AddNew($"{editorId.Replace("NJCGO_", "NJCGO_GFx_")}_{n++}");
+            mgef.Name = name;
+            mgef.Archetype = new MagicEffectArchetype(MagicEffectArchetype.TypeEnum.ValueModifier) { ActorValue = Enum.Parse<ActorValue>(e!["av"]!.GetValue<string>()) };
+            mgef.CastType = CastType.ConstantEffect;
+            mgef.TargetType = TargetType.Self;
+            mgef.Flags = MagicEffect.Flag.Recover | MagicEffect.Flag.NoArea | MagicEffect.Flag.NoDuration;
+            mgef.MagicSkill = ActorValue.None;
+            mgef.ResistValue = ActorValue.None;
+            mgef.SecondActorValue = ActorValue.None;
+            var effect = new Effect { BaseEffect = mgef.ToNullableLink(), Data = new EffectData { Magnitude = e["add"]!.GetValue<float>(), Area = 0, Duration = 0 } };
+            foreach (var g in gate()) { effect.Conditions.Add(g); }
+            if (e["if"] is JsonArray conds) { foreach (var c in conds) { effect.Conditions.Add(MakeCondition(c!, editorId)); } }
+            spell.Effects.Add(effect);
+            ++gearConstants;
+        }
+        if (n == 0) { throw new InvalidOperationException($"{editorId}: a gear ability needs at least one constant (av) effect - it is what the player sees"); }
+        return spell;
+    }
+    // The entry points of a_effects onto a_perk; tab 0 (the perk owner) gets the gate conditions first.
+    void GearEntries(Perk perk, JsonArray a_effects, Func<List<Condition>> gate, string owner)
+    {
+        foreach (var e in a_effects.Where(e => e!["ep"] != null))
+        {
+            var ep = Enum.Parse<APerkEntryPointEffect.EntryType>(e!["ep"]!.GetValue<string>());
+            var mv = new PerkEntryPointModifyValue
+            {
+                EntryPoint = ep,
+                Modification = e["add"] != null ? PerkEntryPointModifyValue.ModificationType.Add : PerkEntryPointModifyValue.ModificationType.Multiply,
+                Value = e["add"]?.GetValue<float>() ?? e["mult"]!.GetValue<float>(),
+                PerkConditionTabCount = TabCount(ep),
+            };
+            var byTab = new SortedDictionary<int, List<Condition>> { [0] = gate() };
+            if (e["if"] is JsonArray conds)
+            {
+                foreach (var c in conds)
+                {
+                    var tab = c!["tab"]?.GetValue<int>() ?? 0;
+                    if (!byTab.TryGetValue(tab, out var list)) { byTab[tab] = list = new List<Condition>(); }
+                    list.Add(MakeCondition(c, owner));
+                }
+            }
+            foreach (var (tab, list) in byTab)
+            {
+                var pc = new PerkCondition { RunOnTabIndex = (byte)tab };
+                foreach (var c in list) { pc.Conditions.Add(c); }
+                mv.Conditions.Add(pc);
+            }
+            perk.Effects.Add(mv);
+            ++gearEntries;
+        }
+    }
+    Perk GearPerk(string editorId, string name, string description)
+    {
+        var perk = mod.Perks.AddNew(editorId);
+        perk.Name = name;
+        perk.Description = description;
+        perk.Playable = false;
+        perk.Hidden = true;
+        perk.NumRanks = 1;
+        return perk;
+    }
+    string Distr(IMajorRecordGetter r) => $"0x{r.FormKey.ID:X}~{modKey.FileName}";
+
+    var gearForms = new JsonObject
+    {
+        ["globals"] = new JsonObject { ["setsOn"] = Hex(setsOn), ["uniquesOn"] = Hex(uniquesOn) },
+        ["keywords"] = new JsonObject { ["tierUnique"] = Hex(tierUnique), ["noEnchant"] = Hex(noEnchant) },
+    };
+    var distr = new List<string>
+    {
+        "; Njordlinger Combat Gameplay Overhaul - gear effects on actors (GENERATED by tools\\PluginBuild from config\\gear-content.json).",
+        "; PLAN.md D14 / D15 / D16: every actor carries the perks; their conditions (the worn keyword, the module switch, and for a",
+        "; set the 2- or 4-piece ability the SKSE plugin adds by piece count) decide when an effect applies.",
+        ""
+    };
+    var setForms = new JsonArray();
+    foreach (var s in setsCfg)
+    {
+        var setName = s!["name"]!.GetValue<string>();
+        var kwId = s["keyword"]!.GetValue<string>();
+        var def = gear["sets"]?[setName] ?? throw new InvalidOperationException($"gear-content.json has no bonuses for the set {setName}");
+        var kw = mod.Keywords.AddNew(kwId);
+        ownKeywords[kwId] = kw.FormKey;
+        var stem = "NJCGO_Set" + new string(setName.Where(char.IsLetterOrDigit).ToArray());
+        var ab2 = GearAbility(stem + "_2", def["2"]!["name"]!.GetValue<string>(), def["2"]!["description"]!.GetValue<string>(), def["2"]!["effects"]!.AsArray(), () => new() { GlobalOn(setsOn), Worn(kw.FormKey) });
+        var ab4 = GearAbility(stem + "_4", def["4"]!["name"]!.GetValue<string>(), def["4"]!["description"]!.GetValue<string>(), def["4"]!["effects"]!.AsArray(), () => new() { GlobalOn(setsOn), Worn(kw.FormKey) });
+        var perk = GearPerk(stem + "_Perk", setName, $"{def["2"]!["description"]!.GetValue<string>()} {def["4"]!["description"]!.GetValue<string>()}");
+        GearEntries(perk, def["2"]!["effects"]!.AsArray(), () => new() { GlobalOn(setsOn), Worn(kw.FormKey), HasSpellOf(ab2) }, stem + "_2");
+        GearEntries(perk, def["4"]!["effects"]!.AsArray(), () => new() { GlobalOn(setsOn), Worn(kw.FormKey), HasSpellOf(ab4) }, stem + "_4");
+        var entry = new JsonObject { ["name"] = setName, ["keyword"] = Hex(kw), ["ability2"] = Hex(ab2), ["ability4"] = Hex(ab4) };
+        if (perk.Effects.Count > 0)
+        {
+            entry["perk"] = Hex(perk);
+            distr.Add($"; {setName} set ({def["trigger"]?.GetValue<string>() ?? ""}) - entry points at 2 and 4 pieces");
+            distr.Add($"Perk = {Distr(perk)}");
+        }
+        else { mod.Perks.Remove(perk.FormKey); }
+        setForms.Add(entry);
+    }
+    gearForms["sets"] = setForms;
+
+    var kid = new List<string>
+    {
+        "; Njordlinger Combat Gameplay Overhaul - unique items (GENERATED by tools\\PluginBuild from config\\gear-content.json).",
+        "; PLAN.md D15: every unique-tier item cannot be enchanted (NJCGO_NoEnchant and the game's own MagicDisallowEnchanting,",
+        "; given to every item KID's tier rules mark NJCGO_Tier_Unique - the SKSE plugin repeats this at load for any item KID",
+        "; missed); each authored unique gets its own keyword, which its SPID perk's conditions read.",
+        "",
+        "Keyword = NJCGO_NoEnchant|Weapon|NJCGO_Tier_Unique",
+        "Keyword = NJCGO_NoEnchant|Armor|NJCGO_Tier_Unique",
+        "Keyword = MagicDisallowEnchanting|Weapon|NJCGO_Tier_Unique",
+        "Keyword = MagicDisallowEnchanting|Armor|NJCGO_Tier_Unique",
+        ""
+    };
+    distr.Add("");
+    var uniqueForms = new JsonArray();
+    foreach (var u in gear["uniques"]!.AsArray())
+    {
+        var uid = u!["id"]!.GetValue<string>();
+        var uname = u["name"]!.GetValue<string>();
+        var udesc = u["description"]!.GetValue<string>();
+        var kw = mod.Keywords.AddNew("NJCGO_Unique_" + uid);
+        ownKeywords[kw.EditorID!] = kw.FormKey;
+        currentUniqueKeyword = kw.EditorID;
+        var ab = GearAbility("NJCGO_UniAb_" + uid, uname, udesc, u["effects"]!.AsArray(), () => new() { GlobalOn(uniquesOn), Worn(kw.FormKey) });
+        var perk = GearPerk("NJCGO_UniPerk_" + uid, uname, udesc);
+        GearEntries(perk, u["effects"]!.AsArray(), () => new() { GlobalOn(uniquesOn), Worn(kw.FormKey) }, "NJCGO_UniPerk_" + uid);
+        perk.Effects.Add(new PerkAbilityEffect { Ability = ab.ToLink() });
+        currentUniqueKeyword = null;
+        var refs = u["forms"]!.AsArray().Select(f =>
+        {
+            var parts = f!.GetValue<string>().Split('|');
+            return $"0x{Convert.ToUInt32(parts[1], 16):X}~{parts[0]}";
+        });
+        kid.Add($"; {uname}");
+        kid.Add($"Keyword = NJCGO_Unique_{uid}|{u["type"]!.GetValue<string>()}|{string.Join(",", refs)}");
+        distr.Add($"; {uname}");
+        distr.Add($"Perk = {Distr(perk)}");
+        uniqueForms.Add(new JsonObject { ["id"] = uid, ["name"] = uname, ["keyword"] = Hex(kw), ["perk"] = Hex(perk), ["ability"] = Hex(ab) });
+    }
+    gearForms["uniques"] = uniqueForms;
+    forms["gear"] = gearForms;
+    File.WriteAllText(Path.Combine(repo, "data", "NjordlingerCGO_Gear_DISTR.ini"), string.Join("\r\n", distr) + "\r\n");
+    File.WriteAllText(Path.Combine(repo, "data", "NjordlingerCGO_Uniques_KID.ini"), string.Join("\r\n", kid) + "\r\n");
+    Console.WriteLine($"gear: {setForms.Count} sets, {uniqueForms.Count} uniques, {gearEntries} entry points, {gearConstants} constant effects; wrote NjordlingerCGO_Gear_DISTR.ini and NjordlingerCGO_Uniques_KID.ini");
+}
+
+forms["dll"] =new JsonArray(dllDone.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
 forms["stubs"] = new JsonArray(stubs.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
 forms["approximations"] = new JsonArray(approx.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
 

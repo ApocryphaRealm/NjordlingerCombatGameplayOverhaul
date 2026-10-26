@@ -16,16 +16,33 @@ One plugin, one SKSE plugin, one settings page in the Apocrypha Menu Framework, 
 | `SKSE\Plugins\SkyPatcher\npc\NjordlingerCGO\LoreTierLevels.ini` | Enemy levels by lore tier: bandits stay low, dragons and Dwemer machines high. A level-scaled NPC is held inside its tier's band; a fixed-level one above the band is brought down to its top. Named NPCs are never touched. |
 | `SKSE\Plugins\NjordlingerCombatGameplayOverhaul\stone-scheme.json` | The reserved names for soul stones (sixty words, five stone tiers) and the stone slots each item tier gives (0 / 1 / 2 / 3 / 3). |
 
-The keywords need no plugin: Keyword Item Distributor creates them.
+The keywords need no plugin: Keyword Item Distributor creates them (the set keywords and `NJCGO_Tier_Unique` are
+records of the plugin since the gear build, so KID finds them there).
+
+## The gear (phase 3)
+
+| File | What it does |
+|---|---|
+| `NjordlingerCGO_Uniques_KID.ini` | Every unique-tier item gets `NJCGO_NoEnchant` and the game's `MagicDisallowEnchanting` (it cannot be enchanted); each authored unique gets its own `NJCGO_Unique_<id>` keyword. |
+| `NjordlingerCGO_Gear_DISTR.ini` | SPID: every actor carries one perk per set and one per authored unique. Their entry points and abilities hold only while the keyword is worn and the module is switched on. |
+| `NjordlingerCombatGameplayOverhaul.esp` | The set and unique keywords, the 2- and 4-piece abilities, the set and unique perks and abilities, the two switch globals. |
+| `SKSE\Plugins\NjordlingerCombatGameplayOverhaul\gear.json` | The gear records' form IDs for the SKSE plugin. |
+
+No condition can count the pieces of one set, so the SKSE plugin does: on every equip and unequip and whenever an actor
+loads it counts the worn armour carrying each set keyword and adds or removes the set's 2- and 4-piece abilities (the
+set perk's entry points also require them). At the first game load it adds the no-enchant keywords to any unique-tier
+item KID missed. The content (every number a default to tune) is `config\gear-content.json`; `tools\PluginBuild`
+builds the records, both INIs and the form list, and `tools\build-classes.py` writes `gear.json` and the INI.
 
 ## Requirements
 
 - SKSE64 for 1.5.97
 - Keyword Item Distributor (KID) 3.x
 - SkyPatcher 7.x
+- Spell Perk Item Distributor (SPID) 7.x - the gear effects
 - Inventory Interface Information Injector (I4) for Skyrim 1.5 - for the tier colours
 - Arena - An Encounter Zone Overhaul and Open World Loot - the zone and loot halves of "enemies by lore tier"
-- Later builds: Apocrypha Menu Framework, Souls to Perks
+- Apocrypha Menu Framework (the settings pages); later builds: Souls to Perks
 
 ## Building the data files
 

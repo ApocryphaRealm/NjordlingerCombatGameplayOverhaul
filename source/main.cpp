@@ -1,12 +1,14 @@
 // Njordlinger Combat Gameplay Overhaul - GPL-3.0-or-later. Phase 2 of the plan (Njordlinger 1.0): the Progression
 // module (copied and trimmed from Character Progression Control, ApocryphaRealm, GPL-3.0-or-later - see NOTICE.md),
-// the Classes module, the class lock-outs, quest rewards, the race-menu class category and the settings page.
+// the Classes module, the class lock-outs, quest rewards, the race-menu class category and the settings page; phase 3
+// (Njordlinger 1.1): the Gear module - set bonuses by piece count, unique effects, the unique tier's no-enchanting.
 #include "PCH.h"
 
 #include "ClassEffects.h"
 #include "Classes.h"
 #include "Compat.h"
 #include "DevBenchTool.h"
+#include "Gear.h"
 #include "LevelUp.h"
 #include "LevelUpGains.h"
 #include "Lockouts.h"
@@ -45,6 +47,7 @@ namespace
 			Classes::Install();
 			Lockouts::Install();
 			ClassEffects::Install();
+			Gear::Install();
 			QuestRewards::Install();
 			RaceMenuClass::Install();
 			StatsMenuClass::Install();
@@ -54,6 +57,7 @@ namespace
 		case SKSE::MessagingInterface::kPostLoadGame:
 		case SKSE::MessagingInterface::kNewGame:
 			Classes::OnGameLoaded();
+			Gear::OnGameLoaded();
 			break;
 		default:
 			break;

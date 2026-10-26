@@ -18,16 +18,22 @@ WHAT IS IN THIS BUILD
   Nightingale, Dragonborn, Hero of Old) or a last rank perk. Every class you have been keeps its ability. The skills
   menu shows your class line and offers the evolution when it is due.
 - Quest rewards: the main quest and the Miraak line pay perk points once per character (Quest Rewards tab).
+- Gear: five unique armour sets (Nightingale, Ancient Shrouded, Guild Master's, Deathbrand, Linwe's) grant a bonus at
+  two worn pieces and another at four - each bonus shows in Active Effects under its name while it holds. 22 named
+  uniques (Dawnbreaker, Ebony Blade, Volendrung, Wuuthrad, Chillrend, Auriel's Bow, Savior's Hide, the Gauldur Amulet
+  and others) carry an effect of their own beside their enchantment. No unique item can be enchanted. The Gear tab
+  switches sets and unique effects on and off and sets their strength.
 - Item tiers (colours through Inventory Interface Information Injector), unique set keywords and NPC levels by lore
   tier (Keyword Item Distributor, SkyPatcher).
 
 REQUIREMENTS
 SKSE64; Address Library for SKSE Plugins; Apocrypha Menu Framework (the settings pages); Keyword Item Distributor;
-SkyPatcher; Inventory Interface Information Injector for the tier colours. Not with Character Progression Control -
+Spell Perk Item Distributor (the gear effects); SkyPatcher; Inventory Interface Information Injector for the tier
+colours. Not with Character Progression Control -
 this mod replaces it (both change the same game code).
 
 SETTINGS
-In the Apocrypha Menu Framework: Njordlinger Combat Gameplay Overhaul - Progression, Classes, Quest Rewards.
+In the Apocrypha Menu Framework: Njordlinger Combat Gameplay Overhaul - Progression, Classes, Quest Rewards, Gear.
 File: SKSE\Plugins\NjordlingerCombatGameplayOverhaul.ini. Log: Documents\My Games\Skyrim Special Edition\SKSE\
 NjordlingerCombatGameplayOverhaul.log.
 

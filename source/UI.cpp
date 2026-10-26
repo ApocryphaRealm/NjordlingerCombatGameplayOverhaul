@@ -7,6 +7,7 @@
 #include "ClassData.h"
 #include "Classes.h"
 #include "Compat.h"
+#include "Gear.h"
 #include "LevelUpGains.h"
 #include "Lockouts.h"
 #include "Patches.h"
@@ -183,6 +184,7 @@ namespace UI
 					const bool ok = settings::Reload();
 					g_perksTableSeeded = false;
 					Classes::RequestApply();
+					Gear::RequestApply();
 					SetStatus(ok ? strings::TR("NJ_StatusReloaded", "Settings reloaded from the INI.") : strings::TR("NJ_StatusReloadFail", "Could not read the INI. See the log for why."));
 				});
 			}
@@ -194,6 +196,7 @@ namespace UI
 					settings::RestoreDefaults();
 					g_perksTableSeeded = false;
 					Classes::RequestApply();
+					Gear::RequestApply();
 				});
 				SetStatus(strings::TR("NJ_StatusRestored", "Defaults restored. Press Save to keep them."));
 			}
@@ -247,6 +250,7 @@ namespace UI
 		SKSEMenuFramework::AddSectionItem("Progression", Pages::Progression);
 		SKSEMenuFramework::AddSectionItem("Classes", Pages::Classes);
 		SKSEMenuFramework::AddSectionItem("Quest Rewards", Pages::QuestRewards);
+		SKSEMenuFramework::AddSectionItem("Gear", Pages::Gear);
 		logger::info("Registered the settings pages with the menu framework");
 	}
 
@@ -427,6 +431,53 @@ namespace UI
 			ImGuiMCP::TextDisabled("%s%s", r.quest.c_str(), r.paid ? strings::TR("NJ_Paid", " - paid") : "");
 			ImGuiMCP::PopID();
 		}
+		ImGuiMCP::PopItemWidth();
+		RenderButtons();
+	}
+
+	// PLAN.md phase 3 step 4: the Gear tab - set bonuses and unique effects on and off, and their strengths.
+	void __stdcall Pages::Gear()
+	{
+		strings::Tick();
+		using namespace settings;
+		ImGuiMCP::PushItemWidth(260.0F);
+		const auto g = Gear::GetSnapshot();
+		if (!g.loaded)
+		{
+			ImGuiMCP::TextWrapped("%s", strings::TR("NJ_GearNotLoaded", "The gear table could not be read, so set pieces are not counted. See the log."));
+			if (!g.error.empty()) { ImGuiMCP::TextWrapped("%s", g.error.c_str()); }
+		}
+		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_GearIntro", "Unique armour sets grant a bonus at two worn pieces and another at four. Named unique items carry an effect of their own, and no unique item can be enchanted."));
+
+		ImGuiMCP::SeparatorText(strings::TR("NJ_GearSetsTitle", "Set bonuses"));
+		if (ImGuiMCP::Toggle(strings::TR("NJ_GearSets", "Set bonuses"), &gear::sets)) { Gear::RequestApply(); }
+		HelpMarker(strings::TR("NJ_HelpGearSets", "Off: no set grants anything; the bonuses come back as soon as this is switched on again."));
+		if (NudgeableSlider(strings::TR("NJ_GearSetStrength", "Set bonus strength"), &gear::setStrength, 0.25F, 2.0F, "%.2f", 0.01F)) { Gear::RequestApply(); }
+		HelpMarker(strings::TR("NJ_HelpGearStrength", "1.00 is as written. 2.00 doubles each bonus (a 20% bonus becomes 40%); 0.50 halves it."));
+		for (const auto& st : g.sets)
+		{
+			ImGuiMCP::Text("%s", st.name.c_str());
+			ImGuiMCP::SameLine();
+			if (!st.resolved) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_GearSetMissing", "- not in the plugin")); continue; }
+			ImGuiMCP::TextDisabled(strings::TR("NJ_GearSetLine", "- %d of 4 worn - two pieces: %s - four pieces: %s"), st.pieces,
+								   st.has2 ? strings::TR("NJ_GearActive", "active") : strings::TR("NJ_GearInactive", "inactive"),
+								   st.has4 ? strings::TR("NJ_GearActive", "active") : strings::TR("NJ_GearInactive", "inactive"));
+		}
+
+		ImGuiMCP::SeparatorText(strings::TR("NJ_GearUniquesTitle", "Unique effects"));
+		if (ImGuiMCP::Toggle(strings::TR("NJ_GearUniques", "Unique effects"), &gear::uniques)) { Gear::RequestApply(); }
+		HelpMarker(strings::TR("NJ_HelpGearUniques", "Off: named unique items lose their own effects (their enchantments stay). Uniques still cannot be enchanted."));
+		if (NudgeableSlider(strings::TR("NJ_GearUniqueStrength", "Unique effect strength"), &gear::uniqueStrength, 0.25F, 2.0F, "%.2f", 0.01F)) { Gear::RequestApply(); }
+		HelpMarker(strings::TR("NJ_HelpGearStrength", "1.00 is as written. 2.00 doubles each bonus (a 20% bonus becomes 40%); 0.50 halves it."));
+		int worn = 0;
+		for (const auto& u : g.uniques)
+		{
+			if (!u.worn) { continue; }
+			++worn;
+			ImGuiMCP::Text(strings::TR("NJ_GearUniqueWorn", "Worn: %s"), u.name.c_str());
+		}
+		if (worn == 0) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_GearNoUniqueWorn", "No unique with an effect of its own is worn.")); }
+		ImGuiMCP::TextDisabled(strings::TR("NJ_GearNoEnchantLine", "Unique items that cannot be enchanted: %u"), g.uniqueTierItems);
 		ImGuiMCP::PopItemWidth();
 		RenderButtons();
 	}

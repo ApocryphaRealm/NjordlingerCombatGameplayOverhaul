@@ -4,6 +4,7 @@
 
 #include "ClassEffects.h"
 #include "Classes.h"
+#include "Gear.h"
 #include "DevBench/DevBenchAPI.h"
 #include "LevelUpGains.h"
 #include "Lockouts.h"
@@ -19,6 +20,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include <algorithm>
 #include <string>
 
 // rules 31 and 64: the live state of every module, and the buttons of the Classes tab, driven over DevBench.
@@ -82,6 +84,28 @@ namespace DevBenchTool
 				Write(a_sink, a_write, { { "ok", ok }, { "op", op } });
 				return;
 			}
+			if (op == "gear")
+			{
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "gear", nlohmann::json::parse(Gear::StatusJson(), nullptr, false) } });
+				return;
+			}
+			if (op == "gearrecount")
+			{
+				Gear::RequestRecountPlayer();
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true } });
+				return;
+			}
+			if (op == "gearset")
+			{
+				// the Gear tab's switches and strengths, as the page sets them (kept for the session; the page's Save writes them)
+				if (args.contains("sets")) { settings::gear::sets = args.value("sets", true); }
+				if (args.contains("uniques")) { settings::gear::uniques = args.value("uniques", true); }
+				if (args.contains("setStrength")) { settings::gear::setStrength = std::clamp(args.value("setStrength", 1.0F), 0.25F, 2.0F); }
+				if (args.contains("uniqueStrength")) { settings::gear::uniqueStrength = std::clamp(args.value("uniqueStrength", 1.0F), 0.25F, 2.0F); }
+				Gear::RequestApply();
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true } });
+				return;
+			}
 			if (op == "strings")
 			{
 				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "strings", nlohmann::json::parse(strings::StatusJson(), nullptr, false) } });
@@ -95,6 +119,7 @@ namespace DevBenchTool
 			j["raceMenu"] = nlohmann::json::parse(RaceMenuClass::StatusJson(), nullptr, false);
 			j["statsMenu"] = nlohmann::json::parse(StatsMenuClass::StatusJson(), nullptr, false);
 			j["effects"] = nlohmann::json::parse(ClassEffects::StatusJson(), nullptr, false);
+			j["gear"] = nlohmann::json::parse(Gear::StatusJson(), nullptr, false);
 			const auto lug = LevelUpGains::GetState();
 			j["levelUp"] = { { "control", settings::levelup::overrideRewards }, { "perks", settings::levelup::PerksTableText() },
 							 { "gains", { settings::levelup::healthPerLevel, settings::levelup::magickaPerLevel, settings::levelup::staminaPerLevel } },
@@ -126,9 +151,11 @@ namespace DevBenchTool
 			"\"description\":\"Njordlinger Combat Gameplay Overhaul live state: the class (line, tier, level, experience, the upgrade on offer, held and locked skills), "
 			"quest-reward rows, the race-menu class category, level-up gains and the attribute-pick skip, the perk lock and crafting gate counts, the engine patches. "
 			"op=choose class=<id> picks the starting class; op=upgrade index=<n> takes option n of the upgrade on offer; op=evolvebox index=<n> presses button n of the Stats Menu evolution box (the last is Later); op=xp amount=<n> adds class experience; "
-			"op=quest quest=<editorID> pays that quest's row as if it had completed; op=reload re-reads the INI; op=strings reports the active language.\","
+			"op=quest quest=<editorID> pays that quest's row as if it had completed; op=reload re-reads the INI; op=strings reports the active language; "
+			"op=gear reports the Gear module (the player's pieces per set, the 2- and 4-piece abilities held, uniques worn, the no-enchant pass); op=gearrecount recounts the player's pieces; op=gearset sets=<bool> uniques=<bool> setStrength=<0.25-2> uniqueStrength=<0.25-2> sets the Gear tab's switches and strengths.\","
 			"\"inputSchema\":{\"type\":\"object\",\"properties\":{\"op\":{\"type\":\"string\"},\"class\":{\"type\":\"string\"},\"index\":{\"type\":\"integer\"},"
-			"\"amount\":{\"type\":\"number\"},\"quest\":{\"type\":\"string\"}}},"
+			"\"amount\":{\"type\":\"number\"},\"quest\":{\"type\":\"string\"},"
+			"\"sets\":{\"type\":\"boolean\"},\"uniques\":{\"type\":\"boolean\"},\"setStrength\":{\"type\":\"number\"},\"uniqueStrength\":{\"type\":\"number\"}}},"
 			"\"readOnly\":false"
 			"}";
 		if (devBench->RegisterTool("njcgo.control", descriptor, &ControlTool, nullptr))

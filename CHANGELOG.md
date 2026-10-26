@@ -67,3 +67,6 @@
 - **The soul stone keyword scheme** and the slots per item tier (0, 1, 2, 3, 3), for the later soul stone module.
 - `tools/build-data.py` and `tools/TierBuild`: the build step that writes the tier, set and level files from a
   profile's load order and verifies every form they name.
+
+### Added
+- Gear (phase 3, PLAN.md Njordlinger 1.1): five unique armour sets - Nightingale, Ancient Shrouded, Guild Master's, Deathbrand, Linwe's - grant a bonus at two worn pieces and another at four (the SKSE plugin counts the pieces on every equip and when an actor loads, and adds or removes the two abilities; perks on every actor through SPID do the rest); 22 named uniques (Dawnbreaker, Ebony Blade, Volendrung, Wuuthrad, Chillrend, Auriel's Bow, Savior's Hide, the Gauldur Amulet and more) carry an effect of their own; no unique-tier item can be enchanted (NJCGO_NoEnchant and MagicDisallowEnchanting through KID, repeated by the plugin at load); a Gear tab with the two switches and a strength for each (0.25 to 2.00); DevBench ops gear, gearrecount, gearset. Every number is a default to tune (GEAR-CONTENT.md).
