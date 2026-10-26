@@ -40,6 +40,7 @@ namespace StatsMenuClass
 		std::atomic<bool> g_boxOpen{ false };
 		std::atomic<std::uint32_t> g_lineShown{ 0 };
 		std::atomic<std::uint32_t> g_boxesOpened{ 0 };
+		std::atomic<std::uint32_t> g_treesHidden{ 0 };
 		std::mutex g_lock;
 		std::string g_lastLine;
 		std::string g_lastProblem;
@@ -161,6 +162,47 @@ namespace StatsMenuClass
 			logger::info("stats menu: evolution box opened with {} option(s)", ids.size());
 		}
 
+		// PLAN.md phase 5 step 2: the skills menu per class. The ring of skill names is the movie's
+		// AnimatingSkillTextInstance with one clip per tree, SkillText0..17, in the order of the menu's own skillTrees
+		// array (statsmenu.swf's AnimatedSkillText, read with FFDec from Norden UI - Black and the same in vanilla). A tree
+		// the class locks has its name hidden from the ring; its perks already cannot be taken (Lockouts). The
+		// constellation itself still turns past - removing it from the rotation is engine work, not done here.
+		void HideLockedTrees(std::uint32_t a_session)
+		{
+			if (!g_open.load() || g_session.load() != a_session) { return; }
+			auto* ui = RE::UI::GetSingleton();
+			auto menu = ui ? ui->GetMenu<RE::StatsMenu>() : nullptr;
+			if (!menu || !menu->uiMovie) { return; }
+			RE::GFxMovieView* movie = menu->uiMovie.get();
+			const auto snap = Classes::GetSnapshot();
+			const bool want = settings::classes::hideLockedTrees && snap.enabled && snap.chosen;
+			const auto& trees = menu->GetRuntimeData().skillTrees;
+			static std::atomic<bool> s_asked{ false };
+			std::uint32_t hidden = 0;
+			for (std::uint32_t i = 0; i < trees.size() && i < static_cast<std::uint32_t>(skilllist::kCount); ++i)
+			{
+				const int skill = static_cast<int>(trees[i]) - static_cast<int>(RE::ActorValue::kOneHanded);
+				const bool locked = want && skill >= 0 && skill < skilllist::kCount && !snap.held[static_cast<std::size_t>(skill)];
+				RE::GFxValue clip;
+				const auto path = fmt::format("_root.StatsMenuBaseInstance.AnimatingSkillTextInstance.SkillText{}", i);
+				if (!movie->GetVariable(&clip, path.c_str()) || !clip.IsDisplayObject())
+				{
+					if (!s_asked.exchange(true)) { logger::warn("stats menu: {} is not in this statsmenu.swf - locked trees are not hidden (rule 30)", path); }
+					return;
+				}
+				RE::GFxValue::DisplayInfo info;
+				clip.GetDisplayInfo(&info);
+				if (info.GetVisible() == locked)
+				{
+					info.SetVisible(!locked);
+					clip.SetDisplayInfo(info);
+				}
+				hidden += locked ? 1 : 0;
+			}
+			if (!s_asked.exchange(true)) { logger::info("stats menu: the ring holds {} trees; {} hidden by the class", trees.size(), hidden); }
+			g_treesHidden = hidden;
+		}
+
 		void Worker(std::uint32_t a_session)
 		{
 			// The menu's movie lays itself out after it opens; poll a few times, then keep the line current while it is open.
@@ -168,7 +210,7 @@ namespace StatsMenuClass
 			{
 				if (auto* tasks = SKSE::GetTaskInterface())
 				{
-					tasks->AddUITask([a_session]() { ShowLine(a_session); });
+					tasks->AddUITask([a_session]() { ShowLine(a_session); HideLockedTrees(a_session); });
 					if (i == 4) { tasks->AddTask([]() { OpenBox(); }); }
 				}
 				std::this_thread::sleep_for(std::chrono::milliseconds(i < 8 ? 125 : 500));
@@ -231,6 +273,7 @@ namespace StatsMenuClass
 	{
 		nlohmann::json j;
 		j["menuOpen"] = g_open.load();
+		j["treesHidden"] = g_treesHidden.load();
 		j["boxOpen"] = g_boxOpen.load();
 		j["linesShown"] = g_lineShown.load();
 		j["boxesOpened"] = g_boxesOpened.load();

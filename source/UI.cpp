@@ -422,6 +422,8 @@ namespace UI
 		ImGuiMCP::Toggle(strings::TR("NJ_CraftingGate", "Crafting follows the group"), &classes::craftingGate);
 		HelpMarker(strings::TR("NJ_HelpCraftingGate", "The forge, grindstone and workbench need the warrior group, the enchanting table magic, the alchemy lab covert."));
 		ImGuiMCP::Toggle(strings::TR("NJ_RaceMenuClass", "Class category in the race menu"), &classes::raceMenuClass);
+		ImGuiMCP::Toggle(strings::TR("NJ_HideLockedTrees", "Hide locked trees in the skills menu"), &classes::hideLockedTrees);
+		HelpMarker(strings::TR("NJ_HelpHideLockedTrees", "The skills menu's ring of skill names leaves out the trees your class locks. Their perks cannot be taken either way."));
 		const auto lk = Lockouts::GetState();
 		ImGuiMCP::TextDisabled(strings::TR("NJ_LockReadout", "Perks conditioned: %u (entry points %u) - crafting refusals this session: %u"), lk.perksConditioned, lk.entriesConditioned, lk.craftingRefusals);
 		ImGuiMCP::PopItemWidth();
