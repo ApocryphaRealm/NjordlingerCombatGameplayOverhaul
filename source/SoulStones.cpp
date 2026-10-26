@@ -185,6 +185,7 @@ namespace SoulStones
 		Runesmith g_rs;
 		std::function<void(bool)> g_windowOpener;   // the settings page's runesmith window (UI registers it)
 		std::atomic<bool> g_checkDistance{ false };
+		std::atomic<bool> g_windowPending{ false };   // the runesmith opened his service: show the window once the dialogue closes
 
 		RE::PlayerCharacter* Player() { return RE::PlayerCharacter::GetSingleton(); }
 
@@ -1470,6 +1471,10 @@ namespace SoulStones
 			{
 				// a word learned at a wall or unlocked in the magic menu: the next pass sees the knowledge change
 				if (a_e && !a_e->opening) { g_knowledgeDirty = true; }
+				if (a_e && !a_e->opening && a_e->menuName == RE::DialogueMenu::MENU_NAME && g_windowPending.exchange(false))
+				{
+					Queue([]() { if (g_service && g_windowOpener) { g_windowOpener(true); } });
+				}
 				return RE::BSEventNotifyControl::kContinue;
 			}
 		};
@@ -1487,7 +1492,9 @@ namespace SoulStones
 					g_service = true;
 					logger::info("soul stones: the runesmith opens his service");
 					BuildSnapshot();
-					if (g_windowOpener) { g_windowOpener(true); }
+					// ed4e: a window opened during dialogue would not close on its X while the Dialogue Menu was up - it opens
+					// when the conversation ends
+					g_windowPending = true;
 				});
 				return RE::BSEventNotifyControl::kContinue;
 			}

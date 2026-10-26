@@ -127,7 +127,9 @@ static class StoneBuild
             sh.EdgeColor = colours[t];
             // aed2 / aa48: the copied frost shader takes its membrane colour from a palette texture (GradFrostEnch.dds), so
             // the fill keys alone did nothing; the palette is dropped and every colour of the shader is the tier's
-            sh.MembranePaletteTexture = null;
+            // ed4e: still pale (the grey flame texture lit the colour keys to near white) - a palette of the tier colour
+            // (tools/make-glow-palettes.py, our own DDS) maps the texture's brightness to saturated tier colours
+            sh.MembranePaletteTexture = $@"Effects\NjordlingerCGO\StoneGlow_{tiers[t]}.dds";
             sh.EdgeEffectColor = Color.FromArgb(255, colours[t]);
             sh.ColorKey1 = colours[t];
             sh.ColorKey2 = colours[t];

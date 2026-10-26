@@ -18,6 +18,7 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+#include <regex>
 #include <unordered_set>
 
 namespace Lockouts
@@ -129,22 +130,21 @@ namespace Lockouts
 					RE::TESGlobal* global = group >= 0 ? table.groupGlobal[group] : nullptr;
 					if (!file || !global) { logger::info("perk lock: custom tree {} ({}) - {}", t.value("skill", std::string()), plugin, !file ? "plugin not loaded" : "unknown group"); continue; }
 					std::uint32_t n = 0;
-					std::ifstream tf(std::filesystem::path("Data") / t.value("perkTree", std::string()));
-					const auto tree = tf ? nlohmann::json::parse(tf, nullptr, false) : nlohmann::json();
-					for (const auto& skill : tree.is_object() ? tree.value("skills", nlohmann::json::array()) : nlohmann::json::array())
+					// ed4e: the Necromancer tree's perktree.json is not valid JSON (a brace closes the object early), so a JSON
+					// parser reads nothing. The file is read as text and every "perk": "<plugin>|<id>" in it is taken - the tree's
+					// nodes, in any shape the framework accepts.
+					std::ifstream tf(std::filesystem::path("Data") / t.value("perkTree", std::string()), std::ios::binary);
+					const std::string text = tf ? std::string((std::istreambuf_iterator<char>(tf)), std::istreambuf_iterator<char>()) : std::string();
+					static const std::regex kPerk(R"re("perk"\s*:\s*"([^"|]+)\|([0-9A-Fa-fxX]+)")re");
+					for (auto it = std::sregex_iterator(text.begin(), text.end(), kPerk); it != std::sregex_iterator(); ++it)
 					{
-						for (const auto& node : skill.value("nodes", nlohmann::json::array()))
-						{
-							const auto ref = node.value("perk", std::string());
-							const auto bar = ref.find('|');
-							if (bar == std::string::npos) { continue; }
-							std::uint32_t local = 0;
-							try { local = static_cast<std::uint32_t>(std::stoul(ref.substr(bar + 1), nullptr, 16)); } catch (...) { continue; }
-							auto* first = handler->LookupForm<RE::BGSPerk>(local & 0xFFFFFF, ref.substr(0, bar));
-							for (auto* perk = first; perk && seen.insert(perk).second; perk = perk->nextPerk) { ConditionPerk(perk, global, player); ++n; }
-						}
+						std::uint32_t local = 0;
+						try { local = static_cast<std::uint32_t>(std::stoul((*it)[2].str(), nullptr, 16)); } catch (...) { continue; }
+						auto* first = handler->LookupForm<RE::BGSPerk>(local & 0xFFFFFF, (*it)[1].str());
+						if (!first) { logger::warn("perk lock: custom tree {} - perk {}|{} not found", t.value("skill", std::string()), (*it)[1].str(), (*it)[2].str()); }
+						for (auto* perk = first; perk && seen.insert(perk).second; perk = perk->nextPerk) { ConditionPerk(perk, global, player); ++n; }
 					}
-					if (!tree.is_object()) { logger::warn("perk lock: custom tree {} - its tree file {} could not be read; nothing gated", t.value("skill", std::string()), t.value("perkTree", std::string())); }
+					if (text.empty()) { logger::warn("perk lock: custom tree {} - its tree file {} could not be read; nothing gated", t.value("skill", std::string()), t.value("perkTree", std::string())); }
 					logger::info("perk lock: custom tree {} - {} perks of {} conditioned on the {} group", t.value("skill", std::string()), n, plugin, groupId);
 				}
 			}
