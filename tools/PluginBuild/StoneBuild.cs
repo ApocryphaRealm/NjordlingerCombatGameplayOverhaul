@@ -160,9 +160,10 @@ static class StoneBuild
         }
 
         // Q66 (Fable 14:20): a cell not built yet never reads as active - "<line> (dormant)" on the card and the page.
-        string CardText(JsonNode cell)
+        string CardText(JsonNode cell, bool forCard = true)
         {
             var d = cell["d"]!.GetValue<string>();
+            if (!forCard) { return d + (cell["k"]?.GetValue<string>() == "stub" ? " (dormant)" : ""); }   // 6616: the page fills the tier's own value
             // efc8: a fraction shown as a percent (AttackDamageMult 0.2 = 20% less) - the engine prints the magnitude as a whole
             // number ("0%"), so the card names the tier range instead; the page fills the tier's own value
             if (d.Contains("<mag>%") && cell["m"] is JsonArray ma && ma.Count == 2 && ma.All(v => v!.GetValue<double>() <= 1.0))
@@ -389,7 +390,7 @@ static class StoneBuild
         {
             var kind = cell["k"]!.GetValue<string>();
             var mg = CellEffect(edid, name, host, cell);
-            var o = new JsonObject { ["kind"] = kind, ["effect"] = Hex(mg), ["text"] = CardText(cell) };
+            var o = new JsonObject { ["kind"] = kind, ["effect"] = Hex(mg), ["text"] = CardText(cell, false) };
             if (kind == "rec")
             {
                 o["m"] = phrase ? new JsonArray(Enumerable.Range(0, tiers.Length).Select(_ => (JsonNode)JsonValue.Create(Lerp(cell["m"], 0, 1))!).ToArray()) : ByTier(cell["m"], 1);
@@ -709,12 +710,16 @@ static class StoneBuild
             if (q == null) { throw new InvalidOperationException($"shouting: no quest named '{qname}' in the masters"); }
             var done = q.Stages.Where(st => st.LogEntries.Any(le => le.Flags is QuestLogEntry.Flag fl && fl.HasFlag(QuestLogEntry.Flag.CompleteQuest))).Select(st => (int)st.Index).DefaultIfEmpty(-1).Min();
             if (done < 0) { throw new InvalidOperationException($"shouting: quest {q.EditorID} has no completion stage"); }
+            // 6616: a start-game-enabled quest runs at stage 0 from the new game on, so the window starts where the quest has
+            // actually begun for the player - its first stage with a journal entry (MQ105: arriving at High Hrothgar)
+            var begun = q.Stages.Where(st => st.Index > 0 && st.LogEntries.Any(le => !string.IsNullOrWhiteSpace(le.Entry?.String))).Select(st => (int)st.Index).DefaultIfEmpty(1).Min();
+            Console.WriteLine($"shouting: {q.EditorID} journal: {string.Join(" | ", q.Stages.Where(st => st.LogEntries.Any(le => !string.IsNullOrWhiteSpace(le.Entry?.String))).Take(6).Select(st => st.Index + ": " + (st.LogEntries.First(le => !string.IsNullOrWhiteSpace(le.Entry?.String)).Entry!.String!.Length > 60 ? st.LogEntries.First(le => !string.IsNullOrWhiteSpace(le.Entry?.String)).Entry!.String![..60] : st.LogEntries.First(le => !string.IsNullOrWhiteSpace(le.Entry?.String)).Entry!.String)))}");
             shoutOut.Add(new JsonObject
             {
-                ["quest"] = Ref(q), ["questEditorId"] = q.EditorID, ["questName"] = qname, ["from"] = 0, ["to"] = done - 1,
+                ["quest"] = Ref(q), ["questEditorId"] = q.EditorID, ["questName"] = qname, ["from"] = begun, ["to"] = done - 1,
                 ["shout"] = Ref(ShoutNamed(sname)), ["shoutName"] = sname, ["reserveSoul"] = reserve
             });
-            Console.WriteLine($"shouting: {sname} exempt while {q.EditorID} ({qname}) is below stage {done}{(reserve ? "; souls reserved until it completes" : "")}");
+            Console.WriteLine($"shouting: {sname} exempt while {q.EditorID} ({qname}) is at stage {begun} to {done - 1}{(reserve ? "; souls reserved until it completes" : "")}");
         }
         var shoutingTable = new JsonObject
         {

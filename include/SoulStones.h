@@ -157,6 +157,8 @@ namespace SoulStones
 	void ForceNextDrop(bool a_force);
 	// ENCHANTING-OFF.md 7: the runesmith adds one stone slot to an item (both modes; up to three). Safe from any thread.
 	void RequestAddSlot(const std::string& a_itemKey);
+	// DevBench op=stonesitem: one instance's own and base enchantment effects (lastResult).
+	void RequestItemDiag(const std::string& a_itemKey);
 
 	// The runesmith opens the service (his dialogue after the quest); DevBench may open it for a test.
 	void SetServiceOpen(bool a_open);

@@ -179,6 +179,12 @@ namespace DevBenchTool
 				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true }, { "note", "read stones.lastResult with op=stones a moment later" } });
 				return;
 			}
+			if (op == "stonesitem")
+			{
+				SoulStones::RequestItemDiag(args.value("item", std::string()));
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true }, { "note", "read stones.lastResult with op=stones a moment later" } });
+				return;
+			}
 			if (op == "stonesaddslot")
 			{
 				SoulStones::RequestAddSlot(args.value("item", std::string()));

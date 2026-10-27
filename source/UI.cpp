@@ -25,6 +25,8 @@
 #include "utils/Toggle.h"
 
 #include <algorithm>
+#include <atomic>
+#include <thread>
 #include <chrono>
 #include <functional>
 #include <mutex>
@@ -42,6 +44,8 @@ namespace UI
 		char g_perksTable[128]{};
 		bool g_inRunesmithWindow = false;               // the Soul Stones page drawn inside the runesmith's window
 		int g_runesmithTab = 0;                          // D22 revised: 0 Socket, 1 Grind, 2 Craft
+		std::atomic<std::uint32_t> g_windowAsk{ 0 };      // each open request
+		std::atomic<std::uint32_t> g_windowDrawn{ 0 };    // the request the window last drew for
 		SKSEMenuFramework::Model::WindowInterface* g_runesmithWindow = nullptr;
 		bool g_perksTableSeeded = false;
 
@@ -294,7 +298,30 @@ namespace UI
 		SKSEMenuFramework::AddSectionItem("Soul Stones", Pages::SoulStones);
 		// the runesmith's window: the same socketing page, opened when his "Set my soul stones." line ends
 		g_runesmithWindow = SKSEMenuFramework::AddWindow(RunesmithWindow, true);
-		::SoulStones::SetWindowOpener([](bool a_open) { if (g_runesmithWindow) { g_runesmithWindow->IsOpen = a_open; } });
+		// 6616: on the first line after the window was closed with its X, IsOpen = true did not show it (the second line did).
+		// The opener now checks a moment later that the window really drew, and if not sets it closed and open again.
+		::SoulStones::SetWindowOpener([](bool a_open) {
+			if (!g_runesmithWindow) { return; }
+			g_runesmithWindow->IsOpen = a_open;
+			if (!a_open) { return; }
+			const auto asked = ++g_windowAsk;
+			std::thread([asked]() {
+				for (int attempt = 0; attempt < 3; ++attempt)
+				{
+					std::this_thread::sleep_for(std::chrono::milliseconds(400));
+					if (g_windowAsk.load() != asked || g_windowDrawn.load() >= asked) { return; }
+					if (auto* tasks = SKSE::GetTaskInterface())
+					{
+						tasks->AddTask([asked]() {
+							if (!g_runesmithWindow || g_windowAsk.load() != asked || g_windowDrawn.load() >= asked) { return; }
+							g_runesmithWindow->IsOpen = false;
+							g_runesmithWindow->IsOpen = true;
+							logger::info("runesmith window: it did not draw after the open - opened again");
+						});
+					}
+				}
+			}).detach();
+		});
 		logger::info("Registered the settings pages with the menu framework");
 	}
 
@@ -623,6 +650,7 @@ namespace UI
 	{
 		strings::Tick();
 		bool open = true;
+		g_windowDrawn = g_windowAsk.load();
 		if (const int asked = ::SoulStones::TakeRequestedTab(); asked >= 0) { g_runesmithTab = asked; }
 		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), &open, 0))
 		{
@@ -706,7 +734,7 @@ namespace UI
 			RenderButtons();
 			return;
 		}
-		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_Intro", "A soul stone is a word of the dragon tongue. Magic gear has one slot, epic two, legendary and unique three; staves take none. Each stone acts for the item it sits in, and three stones of one Shout in word order add its phrase once you have unlocked all three words."));
+		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_IntroTier", "A soul stone is a word of the dragon tongue. An item's slots come from its base item's tier - common none, magic one, epic two, legendary and unique three; an enchantment does not change it, and staves take none. The runesmith can add slots up to three. Each stone acts for the item it sits in, and three stones of one Shout in word order add its phrase once you have learned all three words."));
 		if (s.serviceOpen) { ImGuiMCP::TextColored(known, "%s", strings::TR("NJ_SS_ServiceOpen", "The runesmith is at work: set and take out stones below.")); }
 		else { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_ServiceClosedCraft", "Stones are made, set and taken out only by the runesmith. Here you can see what your gear carries.")); }
 		{

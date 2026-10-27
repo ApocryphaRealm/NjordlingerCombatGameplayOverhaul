@@ -132,16 +132,38 @@ namespace Shouting
 			auto* avo = p->AsActorValueOwner();
 			if (!avo) { return; }
 			const int souls = static_cast<int>(avo->GetActorValue(RE::ActorValue::kDragonSouls));
-			const int points = souls / g_soulsPerPoint;
+			int points = souls / g_soulsPerPoint;
 			if (points <= 0) { return; }
 			const int take = points * g_soulsPerPoint;
-			avo->SetActorValue(RE::ActorValue::kDragonSouls, static_cast<float>(souls - take));   // the soul count is a base value; the same call on both build lines
+			// 6616: souls given by modav (and by absorption) sit in the PERMANENT MODIFIER, not the base, so lowering the base
+			// left the total unchanged and the same souls were paid out every second. Take them off the permanent modifier (the
+			// same vfunc on both build lines) and pay only what the total really lost.
+#if RUNTIME_LINE == 17
+			avo->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kDragonSouls, -static_cast<float>(take));
+#else
+			avo->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kDragonSouls, -static_cast<float>(take));
+#endif
+			int after = static_cast<int>(avo->GetActorValue(RE::ActorValue::kDragonSouls));
+			if (souls - after < take)
+			{
+				// the modifier could not hold the whole take (souls in the base): take the rest from the base
+				const float base = avo->GetBaseActorValue(RE::ActorValue::kDragonSouls);
+				avo->SetBaseActorValue(RE::ActorValue::kDragonSouls, std::max(0.0F, base - static_cast<float>(take - (souls - after))));
+				after = static_cast<int>(avo->GetActorValue(RE::ActorValue::kDragonSouls));
+			}
+			const int lost = std::clamp(souls - after, 0, take);
+			points = lost / g_soulsPerPoint;
+			if (points <= 0)
+			{
+				logger::warn("shouting: the dragon soul count did not go down ({} -> {}) - no perk points given", souls, after);
+				return;
+			}
 			auto& stats = p->GetGameStatsData();
 			const int before = static_cast<int>(stats.perkCount);
 			stats.perkCount = static_cast<decltype(stats.perkCount)>(std::clamp(before + points, 0, 127));
-			g_souls += static_cast<std::uint32_t>(take);
+			g_souls += static_cast<std::uint32_t>(points * g_soulsPerPoint);
 			g_points += static_cast<std::uint32_t>(points);
-			logger::info("shouting: {} dragon soul(s) became {} perk point(s) ({} -> {})", take, points, before, static_cast<int>(stats.perkCount));
+			logger::info("shouting: {} dragon soul(s) became {} perk point(s) ({} -> {})", points * g_soulsPerPoint, points, before, static_cast<int>(stats.perkCount));
 			std::string text = strings::TR("NJ_NoticeSoulPoints", "Dragon souls became perk points: {}");
 			try { text = std::vformat(text, std::make_format_args(points)); } catch (...) {}
 			notify::Show(text.c_str());

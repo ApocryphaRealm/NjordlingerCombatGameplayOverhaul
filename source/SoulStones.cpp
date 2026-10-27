@@ -365,6 +365,26 @@ namespace SoulStones
 			return std::min(best, 3);
 		}
 
+		// 6616: real gear only - an item the tier build gave a tier keyword (not a body cover, skin or nameless helper)
+		bool IsTieredGear(RE::TESBoundObject* a_obj)
+		{
+			if (!a_obj || HostOf(a_obj) == Host::kNone) { return false; }
+			const char* n = a_obj->GetName();
+			if (!n || !*n || std::string_view(n).find("Missing Name") != std::string_view::npos) { return false; }
+			auto* kf = a_obj->As<RE::BGSKeywordForm>();
+			if (!kf) { return false; }
+			for (const auto& [kw, slots] : g_t.itemTierSlots) { if (kw && kf->HasKeyword(kw)) { return true; } }
+			return false;
+		}
+
+		// The name without our " [Yol Fo -]" tail (the page draws the slots itself).
+		std::string WithoutTail(std::string a_name)
+		{
+			const auto open = a_name.rfind(" [");
+			if (open != std::string::npos && !a_name.empty() && a_name.back() == ']') { a_name.resize(open); }
+			return a_name;
+		}
+
 		// The tier's slots plus what the runesmith added to this instance, at most three.
 		int SlotsOf(RE::TESBoundObject* a_obj, const Entry& a_e) { return HostOf(a_obj) == Host::kNone ? 0 : std::min(3, SlotsOf(a_obj) + std::max(0, a_e.added)); }
 
@@ -1156,11 +1176,11 @@ namespace SoulStones
 					if (KeyOf(e->object, x, ikey)) { if (auto f = g_entries.find(ikey); f != g_entries.end()) { ent = &f->second; } }
 					const int slots = ent ? SlotsOf(e->object, *ent) : SlotsOf(e->object);
 					const char* dn0 = x->GetDisplayName(e->object);
-					if (slots < 3 && HostOf(e->object) != Host::kNone)
+					if (slots < 3 && IsTieredGear(e->object))
 					{
 						SlotOffer so;
 						so.key = ent || !ikey.empty() ? ikey : fmt::format("{:08X}:list:{:X}", e->object->GetFormID(), reinterpret_cast<std::uintptr_t>(x));
-						so.name = dn0 ? dn0 : e->object->GetName();
+						so.name = WithoutTail(dn0 ? dn0 : e->object->GetName());
 						so.slots = slots;
 						so.added = ent ? ent->added : 0;
 						so.gemTier = std::clamp(so.added, 0, 2);
@@ -1173,7 +1193,7 @@ namespace SoulStones
 					v.equipped = Worn(x);
 					v.count = std::max(1, static_cast<int>(x->GetCount()));
 					const char* dn = x->GetDisplayName(e->object);
-					v.name = dn ? dn : e->object->GetName();
+					v.name = WithoutTail(dn ? dn : e->object->GetName());
 					std::string key;
 					if (KeyOf(e->object, x, key))
 					{
@@ -1200,7 +1220,7 @@ namespace SoulStones
 				}
 				for (const auto& [obj, n] : counts)
 				{
-					if (!obj || n <= 0 || HostOf(obj) == Host::kNone || SlotsOf(obj) >= 3 || n - listed[obj] <= 0) { continue; }
+					if (!obj || n <= 0 || !IsTieredGear(obj) || SlotsOf(obj) >= 3 || n - listed[obj] <= 0) { continue; }
 					SlotOffer so;
 					so.key = fmt::format("{:08X}:plain", obj->GetFormID());
 					so.name = obj->GetName();
@@ -1561,10 +1581,20 @@ namespace SoulStones
 						auto* sh = fx->shouts[i];
 						const auto& ph = g_t.phrases[p];
 						if (!sh || !ph.available) { continue; }
-						if (ph.own == sh || (ph.real[0] && sh->variations[0].word == ph.real[0])) { mine.push_back(p); }
+						const std::string_view shName = sh->GetName() ? sh->GetName() : "";
+						const bool sameName = !shName.empty() && (shName == ph.shout || (ph.own && ph.own->GetName() && shName == ph.own->GetName()));
+						if (ph.own == sh || (ph.real[0] && sh->variations[0].word == ph.real[0]) || sameName) { mine.push_back(p); }
 					}
 				}
-				if (mine.empty()) { logger::info("soul stones: the dragon {} uses no Shout of ours - no set", a_victim->GetName()); return; }
+				if (mine.empty())
+				{
+					// 6616: no Shout on its list maps to a phrase of ours - a set of a random Shout instead
+					for (int p = 0; p < static_cast<int>(g_t.phrases.size()); ++p) { if (g_t.phrases[p].available) { mine.push_back(p); } }
+					std::string names;
+					for (std::uint32_t i = 0; fx && fx->shouts && i < fx->numShouts; ++i) { if (fx->shouts[i]) { names += fmt::format("{}{:08X} '{}'", names.empty() ? "" : ", ", fx->shouts[i]->GetFormID(), fx->shouts[i]->GetName()); } }
+					logger::info("soul stones: the dragon {} uses no Shout of ours (its list: {}) - a random Shout's set", a_victim->GetName(), names.empty() ? std::string("none") : names);
+					if (mine.empty()) { return; }
+				}
 				const int p = mine[rng() % mine.size()];
 				for (const int w : g_t.phrases[p].words) { if (w >= 0) { give(w, tier); } }
 				return;
@@ -2267,6 +2297,40 @@ namespace SoulStones
 	int TakeRequestedTab() { return g_requestedTab.exchange(-1); }
 
 	void ForceNextDrop(bool a_force) { g_forceDrop = a_force; }
+
+	// 6616 (card on an enchanted sword showed only its enchantment line): what the instance and its base carry, effect by
+	// effect, so the card can be compared with the data. The answer lands in lastResult (op=stones a moment later).
+	void RequestItemDiag(const std::string& a_itemKey)
+	{
+		Queue([key = a_itemKey]() {
+			RE::InventoryEntryData* e = nullptr;
+			RE::ExtraDataList* x = nullptr;
+			FindInstance(key, e, x);
+			if (!e || !x) { SetResult("itemdiag: no such instance (use a key from op=stones items)"); BuildSnapshot(); return; }
+			auto fxList = [](RE::EnchantmentItem* a_ench) {
+				nlohmann::json arr = nlohmann::json::array();
+				if (!a_ench) { return arr; }
+				for (auto* fx : a_ench->effects)
+				{
+					if (!fx || !fx->baseEffect) { continue; }
+					auto* mg = fx->baseEffect;
+					arr.push_back({ { "effect", fmt::format("{:08X}", mg->GetFormID()) }, { "name", mg->GetName() }, { "magnitude", fx->effectItem.magnitude },
+						{ "duration", fx->effectItem.duration }, { "hidden", mg->data.flags.any(RE::EffectSetting::EffectSettingData::Flag::kHideInUI) },
+						{ "description", mg->magicItemDescription.c_str() } });
+				}
+				return arr;
+			};
+			auto* xe = x->GetByType<RE::ExtraEnchantment>();
+			auto* base = e->object->As<RE::TESEnchantableForm>();
+			nlohmann::json j{ { "item", e->object->GetName() }, { "base", fmt::format("{:08X}", e->object->GetFormID()) },
+				{ "extraEnchantment", xe && xe->enchantment ? fmt::format("{:08X}", xe->enchantment->GetFormID()) : std::string() },
+				{ "extraEffects", fxList(xe ? xe->enchantment : nullptr) },
+				{ "baseEnchantment", base && base->formEnchanting ? fmt::format("{:08X}", base->formEnchanting->GetFormID()) : std::string() },
+				{ "baseEffects", fxList(base ? base->formEnchanting : nullptr) } };
+			SetResult("itemdiag: " + j.dump());
+			BuildSnapshot();
+		});
+	}
 
 	void RequestAddSlot(const std::string& a_itemKey) { Queue([key = a_itemKey]() { DoAddSlot(key); }); }
 

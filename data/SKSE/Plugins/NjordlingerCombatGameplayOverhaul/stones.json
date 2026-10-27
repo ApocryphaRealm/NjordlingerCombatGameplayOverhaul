@@ -1203,7 +1203,7 @@
         "melee": {
           "kind": "rec",
           "effect": "0xA2E",
-          "text": "Struck targets deal 10-30% less weapon damage for \u003Cdur\u003E seconds (Subdue).",
+          "text": "Struck targets deal \u003Cmag\u003E% less weapon damage for \u003Cdur\u003E seconds (Subdue).",
           "m": [
             0.1,
             0.15,
@@ -1222,7 +1222,7 @@
         "ranged": {
           "kind": "rec",
           "effect": "0xA2F",
-          "text": "Arrows weaken the target\u0027s weapon damage by 10-30% for \u003Cdur\u003E seconds (Subdue).",
+          "text": "Arrows weaken the target\u0027s weapon damage by \u003Cmag\u003E% for \u003Cdur\u003E seconds (Subdue).",
           "m": [
             0.1,
             0.15,
@@ -1261,7 +1261,7 @@
         "melee": {
           "kind": "rec",
           "effect": "0xA36",
-          "text": "Struck targets deal 5-25% less damage for \u003Cdur\u003E seconds.",
+          "text": "Struck targets deal \u003Cmag\u003E% less damage for \u003Cdur\u003E seconds.",
           "m": [
             0.05,
             0.1,
