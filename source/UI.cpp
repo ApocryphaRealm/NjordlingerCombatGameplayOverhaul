@@ -449,6 +449,22 @@ namespace UI
 			ImGuiMCP::TextWrapped("%s", s.tableError.c_str());
 		}
 
+		// bfbb: the routes block sits at the top of the page (the tester could not scroll down to it)
+		ImGuiMCP::SeparatorText(strings::TR("NJ_RoutesTitle", "Guild routes"));
+		// D30: guild routes by class
+		if (ImGuiMCP::Toggle(strings::TR("NJ_RoutesByClass", "Routes by class"), &classes::routes)) { Classes::RequestApply(); }
+		HelpMarker(strings::TR("NJ_HelpRoutesByClass", "Guilds take only classes that hold their group: the College magic, the Companions warrior, the Thieves Guild and the Dark Brotherhood covert. A route opens when an evolution gives your class that group. The Bards, the Dawnguard, the Civil War, the Greybeards, the main and Daedric quests stay open to all."));
+		{
+			const auto snapRoutes = Classes::GetSnapshot();
+			const char* groupKeys[3] = { "NJ_Group_Warrior", "NJ_Group_Magic", "NJ_Group_Covert" };
+			const char* groupEn[3] = { "Warrior", "Magic", "Covert" };
+			for (const auto& r : GuildRoutes::Routes())
+			{
+				const bool ok = r.group < 0 || !snapRoutes.chosen || snapRoutes.groupsHeld[static_cast<std::size_t>(r.group)] || !GuildRoutes::Active();
+				ImGuiMCP::TextDisabled(strings::TR("NJ_RouteLine", "%s - needs %s: %s"), r.name.c_str(), r.group >= 0 ? strings::TR(groupKeys[r.group], groupEn[r.group]) : "-",
+					ok ? strings::TR("NJ_RouteOpen", "open") : strings::TR("NJ_RouteClosed", "closed to your class"));
+			}
+		}
 		ImGuiMCP::SeparatorText(strings::TR("NJ_YourClass", "Your class"));
 		ImGuiMCP::Text("%s", s.line.c_str());
 		if (s.chosen)
@@ -520,20 +536,6 @@ namespace UI
 		ImGuiMCP::Toggle(strings::TR("NJ_RaceMenuClass", "Class category in the race menu"), &classes::raceMenuClass);
 		ImGuiMCP::Toggle(strings::TR("NJ_HideLockedTrees", "Hide locked trees in the skills menu"), &classes::hideLockedTrees);
 		HelpMarker(strings::TR("NJ_HelpHideLockedTrees", "The skills menu's ring of skill names leaves out the trees your class locks. Their perks cannot be taken either way."));
-		// D30: guild routes by class
-		if (ImGuiMCP::Toggle(strings::TR("NJ_RoutesByClass", "Routes by class"), &classes::routes)) { Classes::RequestApply(); }
-		HelpMarker(strings::TR("NJ_HelpRoutesByClass", "Guilds take only classes that hold their group: the College magic, the Companions warrior, the Thieves Guild and the Dark Brotherhood covert. A route opens when an evolution gives your class that group. The Bards, the Dawnguard, the Civil War, the Greybeards, the main and Daedric quests stay open to all."));
-		{
-			const auto snapRoutes = Classes::GetSnapshot();
-			const char* groupKeys[3] = { "NJ_Group_Warrior", "NJ_Group_Magic", "NJ_Group_Covert" };
-			const char* groupEn[3] = { "Warrior", "Magic", "Covert" };
-			for (const auto& r : GuildRoutes::Routes())
-			{
-				const bool ok = r.group < 0 || !snapRoutes.chosen || snapRoutes.groupsHeld[static_cast<std::size_t>(r.group)] || !GuildRoutes::Active();
-				ImGuiMCP::TextDisabled(strings::TR("NJ_RouteLine", "%s - needs %s: %s"), r.name.c_str(), r.group >= 0 ? strings::TR(groupKeys[r.group], groupEn[r.group]) : "-",
-					ok ? strings::TR("NJ_RouteOpen", "open") : strings::TR("NJ_RouteClosed", "closed to your class"));
-			}
-		}
 		const auto lk = Lockouts::GetState();
 		ImGuiMCP::TextDisabled(strings::TR("NJ_LockReadout", "Perks conditioned: %u (entry points %u) - crafting refusals this session: %u"), lk.perksConditioned, lk.entriesConditioned, lk.craftingRefusals);
 		ImGuiMCP::PopItemWidth();

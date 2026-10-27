@@ -321,9 +321,14 @@ namespace StatsMenuClass
 				if (!a_event || a_event->menuName != RE::StatsMenu::MENU_NAME) { return RE::BSEventNotifyControl::kContinue; }
 				if (a_event->opening && g_werebearRace && g_werebearMenu)
 				{
+					// bfbb: the menu the framework opens for the werebear tree is the Stats Menu too - intercepting it again looped
+					// (41 times in 70 s); one hand-off, then the next opening within 5 s is left alone
+					static std::int64_t s_handedOff = 0;
+					const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
-					if (pl && pl->GetRace() == g_werebearRace)
+					if (pl && pl->GetRace() == g_werebearRace && now - s_handedOff > 5000)
 					{
+						s_handedOff = now;
 						if (auto* q = RE::UIMessageQueue::GetSingleton()) { q->AddMessage(RE::StatsMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr); }
 						g_werebearMenu->value = 1.0F;   // the framework opens Berserkyr's werebear tree
 						logger::info("stats menu: werebear form - the werebear tree opens in place of the werewolf tree");

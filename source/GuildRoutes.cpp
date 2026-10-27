@@ -26,6 +26,74 @@ namespace GuildRoutes
 	{
 		RE::TESGlobal* g_on = nullptr;
 		std::vector<Route> g_routes;
+		// bfbb: our refusal responses were never picked - the game keeps the vanilla first response ahead of ours (both have
+		// no previous response; no later plugin in Test overrides these topics - scanned). So the vanilla responses of each
+		// joining topic get, at run time and in memory only, a condition in front: "the class holds the group OR routes are
+		// off". When it fails, the game falls through to our refusal. No record is overridden on disk.
+		struct GateTopic { RE::TESTopic* topic = nullptr; RE::TESGlobal* group = nullptr; };
+		std::vector<GateTopic> g_topics;
+		std::uint32_t g_gated = 0;
+
+		bool Gated(const RE::TESCondition& a_cond, RE::TESGlobal* a_group)
+		{
+			auto* head = a_cond.head;
+			return head && head->data.functionData.function == RE::FUNCTION_DATA::FunctionID::kGetGlobalValue && head->data.functionData.params[0] == a_group;
+		}
+
+		void Gate(RE::TESTopicInfo* a_info, RE::TESGlobal* a_group)
+		{
+			if (!a_info || !g_on || Gated(a_info->objConditions, a_group)) { return; }
+			auto* holds = new RE::TESConditionItem();
+			auto* off = new RE::TESConditionItem();
+			holds->data.object = RE::CONDITIONITEMOBJECT::kSelf;
+			holds->data.functionData.function = RE::FUNCTION_DATA::FunctionID::kGetGlobalValue;
+			holds->data.functionData.params[0] = a_group;
+			holds->data.comparisonValue.f = 1.0F;
+			holds->data.flags.opCode = RE::CONDITION_ITEM_DATA::OpCode::kEqualTo;
+			holds->data.flags.isOR = true;
+			off->data.object = RE::CONDITIONITEMOBJECT::kSelf;
+			off->data.functionData.function = RE::FUNCTION_DATA::FunctionID::kGetGlobalValue;
+			off->data.functionData.params[0] = g_on;
+			off->data.comparisonValue.f = 0.0F;
+			off->data.flags.opCode = RE::CONDITION_ITEM_DATA::OpCode::kEqualTo;
+			off->data.flags.isOR = false;
+			off->next = a_info->objConditions.head;
+			holds->next = off;
+			a_info->objConditions.head = holds;
+			++g_gated;
+		}
+
+		void GateLoadedTopics()
+		{
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			auto* ours = dh ? dh->LookupModByName("NjordlingerCombatGameplayOverhaul.esp") : nullptr;
+			const auto before = g_gated;
+			for (const auto& gt : g_topics)
+			{
+				if (!gt.topic || !gt.topic->topicInfos) { continue; }
+				for (std::uint32_t i = 0; i < gt.topic->numTopicInfos; ++i)
+				{
+					auto* info = gt.topic->topicInfos[i];
+					if (!info || (ours && info->GetFile(0) == ours)) { continue; }   // our refusal stays as it is
+					Gate(info, gt.group);
+				}
+			}
+			if (g_gated != before) { logger::info("guild routes: {} vanilla joining response(s) now wait for the class's group", g_gated - before); }
+		}
+
+		class DialogueSink : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
+		{
+		public:
+			RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* a_e, RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override
+			{
+				if (a_e && a_e->opening && a_e->menuName == RE::DialogueMenu::MENU_NAME)
+				{
+					if (auto* tasks = SKSE::GetTaskInterface()) { tasks->AddTask([]() { GateLoadedTopics(); }); }
+				}
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+		DialogueSink g_dialogue;
 		std::vector<std::pair<RE::TESQuest*, int>> g_stops;   // quest -> group
 
 		RE::TESForm* Resolve(const std::string& a_ref)
@@ -87,6 +155,13 @@ namespace GuildRoutes
 				route.name = r.value("name", std::string());
 				route.group = GroupIndex(r.value("group", std::string()));
 				g_routes.push_back(route);
+				RE::TESGlobal* groupGlobal = nullptr;
+				if (route.group >= 0) { groupGlobal = ClassData::Get().groupGlobal[route.group]; }
+				for (const auto& ref : r.value("refusals", nlohmann::json::array()))
+				{
+					auto* t = Resolve(ref.value("topicForm", std::string())) ? Resolve(ref.value("topicForm", std::string()))->As<RE::TESTopic>() : nullptr;
+					if (t && groupGlobal) { g_topics.push_back({ t, groupGlobal }); }
+				}
 				if (r.contains("stopQuest"))
 				{
 					if (auto* q = Resolve(r["stopQuest"].get<std::string>()) ? Resolve(r["stopQuest"].get<std::string>())->As<RE::TESQuest>() : nullptr) { g_stops.emplace_back(q, route.group); }
@@ -95,7 +170,9 @@ namespace GuildRoutes
 		}
 		catch (const std::exception& e) { logger::warn("guild routes: guild-routes.json is not valid ({}) - every route stays open", e.what()); return; }
 		if (auto* holder = RE::ScriptEventSourceHolder::GetSingleton()) { holder->AddEventSink<RE::TESQuestStartStopEvent>(&g_sink); }
-		logger::info("guild routes: {} routes, global {}, {} quest(s) stopped for a class without the group", g_routes.size(), g_on ? "found" : "MISSING", g_stops.size());
+		if (auto* ui = RE::UI::GetSingleton()) { ui->AddEventSink<RE::MenuOpenCloseEvent>(&g_dialogue); }
+		GateLoadedTopics();   // whatever is loaded already
+		logger::info("guild routes: {} routes, global {}, {} joining topic(s), {} quest(s) stopped for a class without the group", g_routes.size(), g_on ? "found" : "MISSING", g_topics.size(), g_stops.size());
 	}
 
 	void Apply()

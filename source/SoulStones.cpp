@@ -2047,6 +2047,13 @@ namespace SoulStones
 				if (pr.op == "shader" && pr.shader) { t->ApplyEffectShader(pr.shader, pr.shaderDur); }
 				if (pr.op == "calm" && t->IsInCombat()) { t->StopCombat(); }
 				if (pr.damage > 0.0F) { Damage(t, pr.damage); }
+				// bfbb: a tick proc re-cast every second stacked (Elemental Fury's speed 115 -> 265) - a target that still carries
+				// the helper's effect is skipped until it lapses
+				if (pr.on == Proc::On::kTick && pr.spell && !pr.spell->effects.empty() && pr.spell->effects[0] && pr.spell->effects[0]->baseEffect)
+				{
+					auto* mt = t->AsMagicTarget();
+					if (mt && mt->HasMagicEffect(pr.spell->effects[0]->baseEffect)) { continue; }
+				}
 				if (pr.spell && caster)
 				{
 					caster->CastSpellImmediate(pr.spell, false, t, 1.0F, false, mag, p);

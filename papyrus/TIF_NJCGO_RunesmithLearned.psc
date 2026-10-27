@@ -7,6 +7,7 @@ Scriptname TIF_NJCGO_RunesmithLearned Extends TopicInfo Hidden
 Function Fragment_0(ObjectReference akSpeakerRef)
 Actor akSpeaker = akSpeakerRef as Actor
 ;BEGIN CODE
+GetOwningQuest().SetObjectiveDisplayed(10)
 GetOwningQuest().SetObjectiveCompleted(10)
 GetOwningQuest().SetStage(100)
 ;END CODE
