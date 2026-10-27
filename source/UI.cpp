@@ -624,6 +624,7 @@ namespace UI
 	{
 		HoldLooking(a_hold);
 		static bool s_held = false;
+		static bool s_allowWas = true;
 		static float s_saved = 0.0F;
 		auto* ini = RE::INISettingCollection::GetSingleton();
 		auto* setting = ini ? ini->GetSetting("fAutoVanityModeDelay:Camera") : nullptr;
@@ -632,12 +633,23 @@ namespace UI
 		{
 			s_saved = setting->GetFloat();
 			setting->data.f = 1.0e9F;
+			if (auto* cam = RE::PlayerCamera::GetSingleton())
+			{
+				s_allowWas = cam->GetRuntimeData2().allowAutoVanityMode;
+				cam->GetRuntimeData2().allowAutoVanityMode = false;
+			}
 			s_held = true;
 			logger::info("runesmith window: the idle vanity camera is held off (was {:.0f} s)", s_saved);
 		}
 		else if (!a_hold && s_held)
 		{
 			setting->data.f = s_saved;
+			// 1c64: the orbit started at once after the window closed - the idle countdown is wound back to the full delay
+			if (auto* cam = RE::PlayerCamera::GetSingleton())
+			{
+				cam->GetRuntimeData2().idleTimer = s_saved;
+				cam->GetRuntimeData2().allowAutoVanityMode = s_allowWas;
+			}
 			s_held = false;
 			logger::info("runesmith window: the idle vanity camera delay is back to {:.0f} s", s_saved);
 		}
@@ -957,6 +969,7 @@ namespace UI
 					ImGuiMCP::TextDisabled("    %s", ::SoulStones::CellText(st.word, sel->host, st.tier).c_str());
 					if (s.canSocket)
 					{
+						ImGuiMCP::Text("    ");   // 1c64: on its own line - beside the slot text it was cut off at the pane edge
 						ImGuiMCP::SameLine();
 						if (IconButton(fa::kTakeOut, strings::TR("NJ_SS_TakeOut", "Take out"), "out" + std::to_string(k))) { ::SoulStones::RequestUnsocket(sel->key, k); }
 					}

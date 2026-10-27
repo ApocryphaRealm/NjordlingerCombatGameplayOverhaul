@@ -1386,6 +1386,14 @@ namespace SoulStones
 			}
 			std::string key;
 			auto* x = Resolve(a_key, obj, key);
+			if (x && x->GetCount() > 1)
+			{
+				// 1c64: two Iron Swords of Fire shared one extra list - the stone went on both. The game gives an item its own list
+				// when it is worn, so one of the stack is worn once first (this CommonLib cannot construct a list)
+				SetResult(Say("NJ_SS_RPlain", "%s is still part of a plain stack - wear or wield it once, then set the stone.", obj->GetName()));
+				BuildSnapshot();
+				return;
+			}
 			if (!x || !obj)
 			{
 				if (a_key.find(":plain") == std::string::npos) { SetResult(Say("NJ_SS_RNoItem", "The item was not found in your pack.")); }
@@ -1431,6 +1439,12 @@ namespace SoulStones
 			if (!obj || HostOf(obj) == Host::kNone) { SetResult(Say("NJ_SS_RNoItem", "The item was not found in your pack.")); BuildSnapshot(); return; }
 			std::string key;
 			auto* x = Resolve(a_key, obj, key);
+			if (x && x->GetCount() > 1)
+			{
+				SetResult(Say("NJ_SS_RPlain", "%s is still part of a plain stack - wear or wield it once, then set the stone.", obj->GetName()));
+				BuildSnapshot();
+				return;
+			}
 			if (!x) { if (a_key.find(":plain") == std::string::npos) { SetResult(Say("NJ_SS_RNoItem", "The item was not found in your pack.")); } BuildSnapshot(); return; }
 			auto it = g_entries.find(key);
 			const int added = it != g_entries.end() ? it->second.added : 0;
@@ -1897,6 +1911,14 @@ namespace SoulStones
 			constexpr float kOffset = 0.52F;   // radians, ~30 degrees (11b9: 15 left him in the centre third at 1920x1080)
 			const float bearing = std::atan2(d.x, d.y);   // 0 = north (+y), clockwise
 			p->SetHeading(bearing - kOffset);
+			// 1c64: in third person the camera keeps its own yaw (freeRotation) - line it up behind the turned player, and turn
+			// further (the over-shoulder camera sits behind the player, so the same angle lands nearer the centre)
+			if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->currentState && cam->currentState->id == RE::CameraState::kThirdPerson)
+			{
+				auto* tps = static_cast<RE::ThirdPersonState*>(cam->currentState.get());
+				p->SetHeading(bearing - 0.75F);
+				tps->freeRotation.x = 0.0F;
+			}
 			// 11b9: he wandered out of frame - while the service is open he faces the player and his AI holds still
 			if (auto* npc = ref->As<RE::Actor>(); npc && !g_heldRunesmith)
 			{
