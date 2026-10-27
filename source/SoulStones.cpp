@@ -416,6 +416,13 @@ namespace SoulStones
 			}
 		}
 
+		// 54a4: messages name the item as the player sees it ("Iron Sword of Fire" after the template swap, not "Iron Sword")
+		std::string ShownName(RE::TESBoundObject* a_obj, RE::ExtraDataList* a_x)
+		{
+			const char* dn = a_x ? a_x->GetDisplayName(a_obj) : nullptr;
+			return WithoutTail(dn && *dn ? dn : (a_obj ? a_obj->GetName() : ""));
+		}
+
 		// The tier's slots plus what the runesmith added to this instance, at most three.
 		int SlotsOf(RE::TESBoundObject* a_obj, const Entry& a_e) { return HostOf(a_obj) == Host::kNone ? 0 : std::min(3, SlotsOf(a_obj) + std::max(0, a_e.added)); }
 
@@ -1441,6 +1448,7 @@ namespace SoulStones
 			bool left = false;
 			const bool wasWorn = Worn(a_x, &left);
 			const float health = a_x->GetByType<RE::ExtraHealth>() ? a_x->GetByType<RE::ExtraHealth>()->health : 1.0F;
+			const float oldCharge = a_x->GetByType<RE::ExtraCharge>() ? a_x->GetByType<RE::ExtraCharge>()->charge : static_cast<float>(ef->amountofEnchantment);
 			const char* dn = a_x->GetDisplayName(a_obj);
 			const std::string shownName = dn && *dn ? dn : a_obj->GetName();
 			auto* slot = weapon ? RE::TESForm::LookupByID<RE::BGSEquipSlot>(left ? 0x00013F43 : 0x00013F42) : nullptr;
@@ -1479,6 +1487,13 @@ namespace SoulStones
 			}
 			changes->SetUniqueID(nx, nullptr, tmpl);
 			if (health != 1.0F) { nx->Add(new RE::ExtraHealth(health)); }
+			// 54a4: the current charge comes across exactly (a full weapon has no ExtraCharge: full)
+			if (weapon)
+			{
+				auto* xc = new RE::ExtraCharge();
+				xc->charge = oldCharge;
+				nx->Add(xc);
+			}
 			std::string newKey;
 			if (!KeyOf(tmpl, nx, newKey)) { return false; }
 			// the entry: the base's enchantment is now this copy's own, its shown name kept
@@ -1551,7 +1566,7 @@ namespace SoulStones
 				const auto s = it->second.stones[a_slot];   // D22 revised: taking a stone out is free
 				if (auto* stone = g_t.words[s.word].stones[s.tier]) { p->AddObjectToContainer(stone, nullptr, 1, nullptr); }
 				it->second.stones[a_slot] = {};
-				SetResult(Say("NJ_SS_RTaken", "%s (%s) taken out of %s - the stone is back in your pack.", g_t.words[s.word].name.c_str(), TierName(s.tier).c_str(), obj->GetName()));
+				SetResult(Say("NJ_SS_RTaken", "%s (%s) taken out of %s - the stone is back in your pack.", g_t.words[s.word].name.c_str(), TierName(s.tier).c_str(), ShownName(obj, x).c_str()));
 			}
 			else
 			{
@@ -1560,7 +1575,7 @@ namespace SoulStones
 				if (!PayFee(a_tier, why)) { SetResult(why); BuildSnapshot(); return; }
 				p->RemoveItem(g_t.words[a_word].stones[a_tier], 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				it->second.stones[a_slot] = { a_word, a_tier };
-				SetResult(Say("NJ_SS_RSet", "%s (%s) set into slot %d of %s.", g_t.words[a_word].name.c_str(), TierName(a_tier).c_str(), a_slot + 1, obj->GetName()));
+				SetResult(Say("NJ_SS_RSet", "%s (%s) set into slot %d of %s.", g_t.words[a_word].name.c_str(), TierName(a_tier).c_str(), a_slot + 1, ShownName(obj, x).c_str()));
 			}
 			const bool changed = Compose(obj, x, it->second);
 			bool any = false;
@@ -1591,7 +1606,7 @@ namespace SoulStones
 			auto it = g_entries.find(key);
 			const int added = it != g_entries.end() ? it->second.added : 0;
 			const int now = it != g_entries.end() ? SlotsOf(obj, it->second) : SlotsOf(obj);
-			if (now >= 3) { SetResult(Say("NJ_SS_RSlotsFull", "%s already holds three stones - no piece holds more.", obj->GetName())); BuildSnapshot(); return; }
+			if (now >= 3) { SetResult(Say("NJ_SS_RSlotsFull", "%s already holds three stones - no piece holds more.", ShownName(obj, x).c_str())); BuildSnapshot(); return; }
 			const int k = std::clamp(added, 0, 2);
 			RE::TESBoundObject* gem = nullptr;
 			for (auto* g : g_t.addGems[k]) { if (g && CountOf(g) > 0) { gem = g; break; } }
@@ -1609,7 +1624,7 @@ namespace SoulStones
 			++it->second.added;
 			Compose(obj, x, it->second);
 			UpdateName(obj, x, it->second, true);
-			SetResult(Say("NJ_SS_RSlotAdded", "Thorvar cuts a new slot into %s: it now holds %d.", obj->GetName(), SlotsOf(obj, it->second)));
+			SetResult(Say("NJ_SS_RSlotAdded", "Thorvar cuts a new slot into %s: it now holds %d.", ShownName(obj, x).c_str(), SlotsOf(obj, it->second)));
 			Recompute(false);
 		}
 
@@ -2078,7 +2093,11 @@ namespace SoulStones
 			{
 				// a word learned at a wall or unlocked in the magic menu: the next pass sees the knowledge change
 				if (a_e && !a_e->opening) { g_knowledgeDirty = true; }
-				if (a_e && !a_e->opening && a_e->menuName == RE::DialogueMenu::MENU_NAME && g_windowPending.exchange(false))
+				// 54a4: any menu closing while an open is pending, with no dialogue up any more, opens the window (Tab pressed as
+				// the topic ended closed the dialogue before the service was marked open)
+				auto* ui = RE::UI::GetSingleton();
+				const bool dialogueUp = ui && ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME);
+				if (a_e && !a_e->opening && !dialogueUp && g_windowPending.exchange(false))
 				{
 					Queue([]() {
 						if (!g_service || !g_windowOpener) { return; }
@@ -2105,8 +2124,14 @@ namespace SoulStones
 					logger::info("soul stones: the runesmith opens his service");
 					BuildSnapshot();
 					// ed4e: a window opened during dialogue would not close on its X while the Dialogue Menu was up - it opens
-					// when the conversation ends
-					g_windowPending = true;
+					// when the conversation ends; if the dialogue is already gone (54a4), it opens now
+					auto* ui = RE::UI::GetSingleton();
+					if (ui && !ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME) && g_windowOpener)
+					{
+						FaceRunesmith();
+						g_windowOpener(true);
+					}
+					else { g_windowPending = true; }
 				});
 				return RE::BSEventNotifyControl::kContinue;
 			}
