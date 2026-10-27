@@ -805,6 +805,8 @@ static class StoneBuild
             ["craft"] = craftOut,
             ["drops"] = dropsOut,
             ["addSlot"] = addOut,
+            // CUSTOM-TREES.md 3: the werebear race the skills key swaps trees for (StatsMenuClass reads it)
+            ["werebearRace"] = (TryEdid<IRaceGetter>("DLC2WerebearBeastRace") is IRaceGetter wr) ? Ref(wr) : null,
             ["words"] = wordOut,
             ["phrases"] = phraseOut,
         };

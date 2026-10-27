@@ -1,0 +1,254 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Exit-9B/CustomSkills/main/docs/schema/CustomSkill.json",
+  "version": 1,
+  "skydome": {
+    "model": "Interface/NjordlingerCGO/intperkskydome20.nif",
+    "cameraRightPoint": 1
+  },
+  "skills": [
+    "Illusion",
+    "Conjuration",
+    "Destruction",
+    "Restoration",
+    "Alteration",
+    "Enchanting",
+    "Smithing",
+    "HeavyArmor",
+    "Block",
+    "TwoHanded",
+    "OneHanded",
+    "Marksman",
+    "LightArmor",
+    "Sneak",
+    "Lockpicking",
+    "Pickpocket",
+    "Speechcraft",
+    "Alchemy",
+    {
+      "id": "diving",
+      "name": "Diving",
+      "description": "Learn to endure Skyrim's dangerous waters or master the art of underwater exploration. Deep Lungs and Strong Stroke form a shared beginning; at Rank 3, choose the Survival or Exploration path and carry it to One with the Deep.",
+      "level": "UnderwaterNG.esp|842",
+      "ratio": "UnderwaterNG.esp|843",
+      "legendary": "UnderwaterNG.esp|846",
+      "color": "UnderwaterNG.esp|847",
+      "showLevelup": "UnderwaterNG.esp|845",
+      "experienceFormula": {
+        "useMult": 1.0,
+        "useOffset": 0.0,
+        "improveMult": 1.0,
+        "improveOffset": 0.0,
+        "enableXPPerRank": false
+      },
+      "nodes": [
+        {
+          "id": "deep_lungs",
+          "perk": "UnderwaterNG.esp|850",
+          "x": 1.5,
+          "y": 0.0,
+          "links": [
+            "strong_stroke"
+          ]
+        },
+        {
+          "id": "strong_stroke",
+          "perk": "UnderwaterNG.esp|851",
+          "x": 1.5,
+          "y": 1.0,
+          "links": [
+            "coldwater_blood",
+            "clear_sight"
+          ]
+        },
+        {
+          "id": "coldwater_blood",
+          "perk": "UnderwaterNG.esp|852",
+          "x": 0.55,
+          "y": 2.0,
+          "links": [
+            "marshwise"
+          ]
+        },
+        {
+          "id": "marshwise",
+          "perk": "UnderwaterNG.esp|854",
+          "x": 0.55,
+          "y": 3.0,
+          "links": [
+            "one_with_the_deep"
+          ]
+        },
+        {
+          "id": "clear_sight",
+          "perk": "UnderwaterNG.esp|853",
+          "x": 2.45,
+          "y": 2.0,
+          "links": [
+            "salvagers_sense"
+          ]
+        },
+        {
+          "id": "salvagers_sense",
+          "perk": "UnderwaterNG.esp|855",
+          "x": 2.45,
+          "y": 3.0,
+          "links": [
+            "one_with_the_deep"
+          ]
+        },
+        {
+          "id": "one_with_the_deep",
+          "perk": "UnderwaterNG.esp|856",
+          "x": 1.5,
+          "y": 4.15
+        }
+      ]
+    },
+    {
+      "id": "Necromancer",
+      "name": "Necromancer",
+      "description": "Master the art of necromancer, commanding the dead to dominate the battlefield.",
+      "level": "CustomSkills -necromancer-.esp|5E6E",
+      "ratio": "CustomSkills -necromancer-.esp|5E6F",
+      "legendary": "CustomSkills -necromancer-.esp|5E71",
+      "color": null,
+      "showLevelup": "CustomSkills -necromancer-.esp|1A2B3",
+      "experienceFormula": {
+        "useMult": 1.0,
+        "useOffset": 0.0,
+        "improveMult": 1.0,
+        "improveOffset": 0.0,
+        "enableXPPerRank": false
+      },
+      "nodes": [
+        {
+          "id": "node1",
+          "perk": "CustomSkills -necromancer-.esp|5E72",
+          "x": 1.0,
+          "y": 0.0,
+          "links": [
+            "node2",
+            "node3"
+          ]
+        },
+        {
+          "id": "node2",
+          "perk": "CustomSkills -necromancer-.esp|5E73",
+          "x": 2.7,
+          "y": 0.5,
+          "links": [
+            "node5"
+          ]
+        },
+        {
+          "id": "node3",
+          "perk": "CustomSkills -necromancer-.esp|5E74",
+          "x": -0.7,
+          "y": 0.5,
+          "links": [
+            "node4"
+          ]
+        },
+        {
+          "id": "node4",
+          "perk": "CustomSkills -necromancer-.esp|AF7D",
+          "x": -1.2,
+          "y": 2.0,
+          "links": [
+            "node6"
+          ]
+        },
+        {
+          "id": "node5",
+          "perk": "CustomSkills -necromancer-.esp|AF7E",
+          "x": 3.2,
+          "y": 2.0,
+          "links": [
+            "node7"
+          ]
+        },
+        {
+          "id": "node6",
+          "perk": "CustomSkills -necromancer-.esp|AF7F",
+          "x": -0.8,
+          "y": 3.5,
+          "links": [
+            "node8"
+          ]
+        },
+        {
+          "id": "node7",
+          "perk": "CustomSkills -necromancer-.esp|10080",
+          "x": 2.8,
+          "y": 3.5,
+          "links": [
+            "node8",
+            "node9"
+          ]
+        },
+        {
+          "id": "node8",
+          "perk": "CustomSkills -necromancer-.esp|D62",
+          "x": 1.0,
+          "y": 5.0,
+          "links": [
+            "node10",
+            "node11",
+            "node12"
+          ]
+        },
+        {
+          "id": "node9",
+          "perk": "CustomSkills -necromancer-.esp|10081",
+          "x": 3.0,
+          "y": 5.0
+        },
+        {
+          "id": "node10",
+          "perk": "CustomSkills -necromancer-.esp|10086",
+          "x": -1.5,
+          "y": 6.5,
+          "links": [
+            "node13"
+          ]
+        },
+        {
+          "id": "node11",
+          "perk": "CustomSkills -necromancer-.esp|10087",
+          "x": 3.5,
+          "y": 6.5,
+          "links": [
+            "node15"
+          ]
+        },
+        {
+          "id": "node12",
+          "perk": "CustomSkills -necromancer-.esp|10088",
+          "x": 1.0,
+          "y": 6.5,
+          "links": [
+            "node14"
+          ]
+        },
+        {
+          "id": "node13",
+          "perk": "CustomSkills -necromancer-.esp|10093",
+          "x": -1.0,
+          "y": 8.0
+        },
+        {
+          "id": "node14",
+          "perk": "CustomSkills -necromancer-.esp|10094",
+          "x": 1.0,
+          "y": 8.0
+        },
+        {
+          "id": "node15",
+          "perk": "CustomSkills -necromancer-.esp|10099",
+          "x": 3.0,
+          "y": 8.0
+        }
+      ]
+    }
+  ]
+}

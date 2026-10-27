@@ -1,7 +1,7 @@
 r"""Build the perk-menu sky (constellation skydome) with N tree slots for the Custom Skills Framework ring - ONE command.
 
   py -3 tools\make-skydome.py [--bsa "<Stock Game>\Data\Skyrim - Meshes1.bsa" | --src <loose intperkskydome.nif>]
-                              [--slots 20] [--copy-from 16,17] [--out data\meshes\interface\NjordlingerCGO\intperkskydome20.nif]
+                              [--slots 20] [--copy-from 16,17] [--out testonly\CustomSkillsRing\meshes\interface\NjordlingerCGO\intperkskydome20.nif]
 
 Base: the VANILLA meshes\interface\intperkskydome.nif, read straight out of the game's Skyrim - Meshes1.bsa (nothing is
 unpacked anywhere). --bsa defaults to <NJCGO_MO2_INSTANCE>\Stock Game\Data\Skyrim - Meshes1.bsa. --src takes a loose
@@ -316,7 +316,7 @@ def main():
     ap.add_argument('--src', help='a loose skydome NIF to use instead of the BSA')
     ap.add_argument('--slots', type=int, default=20)
     ap.add_argument('--copy-from', default='16,17', help='vanilla slots whose pictures the new slots copy, in order')
-    ap.add_argument('--out', default=os.path.join(REPO, 'data', 'meshes', 'interface', 'NjordlingerCGO', 'intperkskydome20.nif'))
+    ap.add_argument('--out', default=os.path.join(REPO, 'testonly', 'CustomSkillsRing', 'meshes', 'interface', 'NjordlingerCGO', 'intperkskydome20.nif'))
     a = ap.parse_args()
     if a.slots < VANILLA_SLOTS:
         sys.exit('--slots must be at least %d' % VANILLA_SLOTS)

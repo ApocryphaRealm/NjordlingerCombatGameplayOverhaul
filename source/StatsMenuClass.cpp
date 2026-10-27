@@ -2,6 +2,7 @@
 
 #include "StatsMenuClass.h"
 
+#include "ClassData.h"
 #include "Classes.h"
 #include "Settings.h"
 
@@ -11,6 +12,9 @@
 #include <nlohmann/json.hpp>
 
 #include <atomic>
+#include <filesystem>
+#include <fstream>
+#include <map>
 #include <chrono>
 #include <mutex>
 #include <thread>
@@ -37,6 +41,71 @@ namespace StatsMenuClass
 		constexpr const char* kFieldName = "njClassLine";
 		std::atomic<bool> g_open{ false };
 		std::atomic<std::uint32_t> g_session{ 0 };
+
+		// The owner 01:34 (CUSTOM-TREES.md): the Custom Skills Framework ring - SKILLS.json's order, read from
+		// skills-ring.json (shipped beside it in the Test-only mod). Each slot: a vanilla skill (our skill index) or a
+		// custom tree with the class group that holds it (-1: every class). Empty when the ring is not installed.
+		struct RingSlot { int skill = -1; int group = -1; std::string id; };
+		std::vector<RingSlot> g_ring;
+		RE::TESRace* g_werebearRace = nullptr;
+		RE::TESGlobal* g_werebearMenu = nullptr;   // Berserkyr's "show the werebear tree" global
+
+		void LoadRing()
+		{
+			static const std::pair<const char*, RE::ActorValue> kVanilla[] = {
+				{ "OneHanded", RE::ActorValue::kOneHanded }, { "TwoHanded", RE::ActorValue::kTwoHanded }, { "Marksman", RE::ActorValue::kArchery },
+				{ "Block", RE::ActorValue::kBlock }, { "Smithing", RE::ActorValue::kSmithing }, { "HeavyArmor", RE::ActorValue::kHeavyArmor },
+				{ "LightArmor", RE::ActorValue::kLightArmor }, { "Pickpocket", RE::ActorValue::kPickpocket }, { "Lockpicking", RE::ActorValue::kLockpicking },
+				{ "Sneak", RE::ActorValue::kSneak }, { "Alchemy", RE::ActorValue::kAlchemy }, { "Speechcraft", RE::ActorValue::kSpeech },
+				{ "Alteration", RE::ActorValue::kAlteration }, { "Conjuration", RE::ActorValue::kConjuration }, { "Destruction", RE::ActorValue::kDestruction },
+				{ "Illusion", RE::ActorValue::kIllusion }, { "Restoration", RE::ActorValue::kRestoration }, { "Enchanting", RE::ActorValue::kEnchanting } };
+			std::ifstream in(std::filesystem::path("Data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul/skills-ring.json"));
+			if (!in) { logger::info("stats menu: no skills ring (skills-ring.json not installed) - the 18 vanilla trees"); return; }
+			std::map<std::string, int> customGroup;
+			try
+			{
+				std::ifstream cin(std::filesystem::path("Data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul/classes.json"));
+				const auto cj = cin ? nlohmann::json::parse(cin) : nlohmann::json::object();
+				for (const auto& t : cj.value("customTrees", nlohmann::json::array()))
+				{
+					const auto gid = t.value("group", std::string());
+					for (int g = 0; g < ClassData::kGroupCount; ++g) { if (gid == ClassData::kGroupId[g]) { customGroup[t.value("skill", std::string())] = g; } }
+				}
+				const auto j = nlohmann::json::parse(in);
+				for (const auto& e : j.value("ring", nlohmann::json::array()))
+				{
+					RingSlot slot;
+					slot.id = e.get<std::string>();
+					for (const auto& [name, av] : kVanilla) { if (slot.id == name) { slot.skill = static_cast<int>(av) - static_cast<int>(RE::ActorValue::kOneHanded); } }
+					if (slot.skill < 0) { if (auto it = customGroup.find(slot.id); it != customGroup.end()) { slot.group = it->second; } }
+					g_ring.push_back(slot);
+				}
+				logger::info("stats menu: the skills ring holds {} trees (skills-ring.json)", g_ring.size());
+			}
+			catch (const std::exception& ex) { logger::warn("stats menu: skills-ring.json not readable ({}) - the 18 vanilla trees", ex.what()); g_ring.clear(); }
+		}
+
+		// Werebear (CUSTOM-TREES.md 3, way b): the skills key in werebear form opens Berserkyr's werebear tree (its own
+		// global, as its hotkey script does) instead of the werewolf tree.
+		void ResolveWerebear()
+		{
+			// the race from the plugin build (stones.json: resolved from the masters by editor ID)
+			try
+			{
+				std::ifstream in(std::filesystem::path("Data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul/stones.json"));
+				const auto j = in ? nlohmann::json::parse(in) : nlohmann::json::object();
+				const auto ref = j.value("werebearRace", std::string());
+				const auto bar = ref.find('|');
+				if (bar != std::string::npos)
+				{
+					if (auto* dh = RE::TESDataHandler::GetSingleton()) { g_werebearRace = dh->LookupForm<RE::TESRace>(static_cast<RE::FormID>(std::stoul(ref.substr(bar + 1), nullptr, 0)), ref.substr(0, bar)); }
+				}
+			}
+			catch (...) {}
+			if (auto* dh = RE::TESDataHandler::GetSingleton()) { g_werebearMenu = dh->LookupForm<RE::TESGlobal>(0x814, "Tales of Skyrim - Berserkyr.esp"); }
+			logger::info("stats menu: werebear tree swap {} (race {}, Berserkyr menu global {})", g_werebearRace && g_werebearMenu ? "ready" : "off",
+				g_werebearRace ? "found" : "not found", g_werebearMenu ? "found" : "not found");
+		}
 		std::atomic<bool> g_boxOpen{ false };
 		std::atomic<std::uint32_t> g_lineShown{ 0 };
 		std::atomic<std::uint32_t> g_boxesOpened{ 0 };
@@ -188,10 +257,16 @@ namespace StatsMenuClass
 			RE::GFxValue ring;
 			const bool haveRing = movie->GetVariable(&ring, "_root.StatsMenuBaseInstance.AnimatingSkillTextInstance") && ring.IsDisplayObject();
 			std::uint32_t hidden = 0, found = 0, missing = 0;
-			for (std::uint32_t i = 0; haveRing && i < trees.size() && i < static_cast<std::uint32_t>(skilllist::kCount); ++i)
+			// the 18-entry limit lifted: with the framework's ring installed every slot is walked, by the ring's own order
+			const bool ringOn = !g_ring.empty() && trees.size() == g_ring.size();
+			const std::uint32_t count = ringOn ? static_cast<std::uint32_t>(trees.size()) : std::min<std::uint32_t>(static_cast<std::uint32_t>(trees.size()), static_cast<std::uint32_t>(skilllist::kCount));
+			for (std::uint32_t i = 0; haveRing && i < count; ++i)
 			{
-				const int skill = static_cast<int>(trees[i]) - static_cast<int>(RE::ActorValue::kOneHanded);
-				const bool locked = want && skill >= 0 && skill < skilllist::kCount && !snap.held[static_cast<std::size_t>(skill)];
+				int skill = static_cast<int>(trees[i]) - static_cast<int>(RE::ActorValue::kOneHanded);
+				int group = -1;
+				if (ringOn) { skill = g_ring[i].skill; group = g_ring[i].group; }
+				bool locked = want && skill >= 0 && skill < skilllist::kCount && !snap.held[static_cast<std::size_t>(skill)];
+				if (want && skill < 0 && group >= 0) { locked = !snap.groupsHeld[static_cast<std::size_t>(group)]; }   // a custom tree: its class group
 				RE::GFxValue clip;
 				const auto name = fmt::format("SkillText{}", i);
 				if (!ring.GetMember(name.c_str(), &clip) || !clip.IsDisplayObject()) { ++missing; continue; }
@@ -234,6 +309,17 @@ namespace StatsMenuClass
 			RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override
 			{
 				if (!a_event || a_event->menuName != RE::StatsMenu::MENU_NAME) { return RE::BSEventNotifyControl::kContinue; }
+				if (a_event->opening && g_werebearRace && g_werebearMenu)
+				{
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					if (pl && pl->GetRace() == g_werebearRace)
+					{
+						if (auto* q = RE::UIMessageQueue::GetSingleton()) { q->AddMessage(RE::StatsMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr); }
+						g_werebearMenu->value = 1.0F;   // the framework opens Berserkyr's werebear tree
+						logger::info("stats menu: werebear form - the werebear tree opens in place of the werewolf tree");
+						return RE::BSEventNotifyControl::kContinue;
+					}
+				}
 				if (a_event->opening)
 				{
 					g_open = true;
@@ -276,6 +362,8 @@ namespace StatsMenuClass
 
 	void Install()
 	{
+		LoadRing();
+		ResolveWerebear();
 		if (auto* ui = RE::UI::GetSingleton()) { ui->AddEventSink<RE::MenuOpenCloseEvent>(&g_sink); }
 		logger::info("stats menu class line: menu sink registered");
 	}
