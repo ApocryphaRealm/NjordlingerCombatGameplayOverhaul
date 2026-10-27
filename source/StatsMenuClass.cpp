@@ -177,19 +177,25 @@ namespace StatsMenuClass
 			const auto snap = Classes::GetSnapshot();
 			const bool want = settings::classes::hideLockedTrees && snap.enabled && snap.chosen;
 			const auto& trees = menu->GetRuntimeData().skillTrees;
-			static std::atomic<bool> s_asked{ false };
-			std::uint32_t hidden = 0;
-			for (std::uint32_t i = 0; i < trees.size() && i < static_cast<std::uint32_t>(skilllist::kCount); ++i)
+			// efc8: the ring's text clips appear as the movie lays itself out - an early poll found SkillText0 but not
+			// SkillText1, warned once for good and never said it worked later. Missing clips are skipped (the next poll
+			// tries again), and one line per menu session reports the outcome once the layout has had time (poll 12).
+			static std::uint32_t s_reported = 0;
+			static int s_polls = 0;
+			static std::uint32_t s_pollSession = 0;
+			if (s_pollSession != a_session) { s_pollSession = a_session; s_polls = 0; }
+			++s_polls;
+			RE::GFxValue ring;
+			const bool haveRing = movie->GetVariable(&ring, "_root.StatsMenuBaseInstance.AnimatingSkillTextInstance") && ring.IsDisplayObject();
+			std::uint32_t hidden = 0, found = 0, missing = 0;
+			for (std::uint32_t i = 0; haveRing && i < trees.size() && i < static_cast<std::uint32_t>(skilllist::kCount); ++i)
 			{
 				const int skill = static_cast<int>(trees[i]) - static_cast<int>(RE::ActorValue::kOneHanded);
 				const bool locked = want && skill >= 0 && skill < skilllist::kCount && !snap.held[static_cast<std::size_t>(skill)];
 				RE::GFxValue clip;
-				const auto path = fmt::format("_root.StatsMenuBaseInstance.AnimatingSkillTextInstance.SkillText{}", i);
-				if (!movie->GetVariable(&clip, path.c_str()) || !clip.IsDisplayObject())
-				{
-					if (!s_asked.exchange(true)) { logger::warn("stats menu: {} is not in this statsmenu.swf - locked trees are not hidden (rule 30)", path); }
-					return;
-				}
+				const auto name = fmt::format("SkillText{}", i);
+				if (!ring.GetMember(name.c_str(), &clip) || !clip.IsDisplayObject()) { ++missing; continue; }
+				++found;
 				RE::GFxValue::DisplayInfo info;
 				clip.GetDisplayInfo(&info);
 				if (info.GetVisible() == locked)
@@ -199,7 +205,12 @@ namespace StatsMenuClass
 				}
 				hidden += locked ? 1 : 0;
 			}
-			if (!s_asked.exchange(true)) { logger::info("stats menu: the ring holds {} trees; {} hidden by the class", trees.size(), hidden); }
+			if (s_polls == 12 && s_reported != a_session)
+			{
+				s_reported = a_session;
+				if (!haveRing) { logger::warn("stats menu: this statsmenu.swf has no AnimatingSkillTextInstance - locked trees are not hidden (rule 30)"); }
+				else { logger::info("stats menu: the ring holds {} trees; {} text clips found, {} missing; {} hidden by the class", trees.size(), found, missing, hidden); }
+			}
 			g_treesHidden = hidden;
 		}
 

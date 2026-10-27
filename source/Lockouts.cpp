@@ -4,6 +4,7 @@
 
 #include "ClassData.h"
 #include "Classes.h"
+#include "Enchanting.h"
 #include "Settings.h"
 
 #include "utils/Logger.h"
@@ -15,6 +16,7 @@
 #include <atomic>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <chrono>
 #include <thread>
 #include <mutex>
@@ -89,6 +91,11 @@ namespace Lockouts
 			{
 				const int group = ClassData::GroupOfSkill(i);
 				RE::TESGlobal* global = group >= 0 ? table.groupGlobal[group] : nullptr;
+				// D28: the Enchanting tree reads its own gate (magic group open AND Enchanting on), set by Classes::Apply
+				if (_stricmp(skilllist::kIniName[i], "Enchanting") == 0)
+				{
+					if (auto* eg = Enchanting::TreeGlobal()) { global = eg; }
+				}
 				if (!global) { logger::warn("perk lock: {} has no group global - its perks are not locked", skilllist::kDisplayName[i]); continue; }
 				const auto av = static_cast<RE::ActorValue>(i + 6);
 #if RUNTIME_LINE == 17
@@ -130,21 +137,45 @@ namespace Lockouts
 					RE::TESGlobal* global = group >= 0 ? table.groupGlobal[group] : nullptr;
 					if (!file || !global) { logger::info("perk lock: custom tree {} ({}) - {}", t.value("skill", std::string()), plugin, !file ? "plugin not loaded" : "unknown group"); continue; }
 					std::uint32_t n = 0;
-					// ed4e: the Necromancer tree's perktree.json is not valid JSON (a brace closes the object early), so a JSON
-					// parser reads nothing. The file is read as text and every "perk": "<plugin>|<id>" in it is taken - the tree's
-					// nodes, in any shape the framework accepts.
-					std::ifstream tf(std::filesystem::path("Data") / t.value("perkTree", std::string()), std::ios::binary);
-					const std::string text = tf ? std::string((std::istreambuf_iterator<char>(tf)), std::istreambuf_iterator<char>()) : std::string();
-					static const std::regex kPerk(R"re("perk"\s*:\s*"([^"|]+)\|([0-9A-Fa-fxX]+)")re");
-					for (auto it = std::sregex_iterator(text.begin(), text.end(), kPerk); it != std::sregex_iterator(); ++it)
+					auto readAll = [](const std::string& a_rel) {
+						std::ifstream f(std::filesystem::path("Data") / a_rel, std::ios::binary);
+						return f ? std::string((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>()) : std::string();
+					};
+					// (plugin, local id) of every node's perk
+					std::vector<std::pair<std::string, std::string>> nodes;
+					std::string source;
+					// efc8: the file the framework ACTUALLY reads first - NetScriptFramework\Plugins\CustomSkill.<key>.config.txt
+					// (Custom Skills Framework 2.0.2 on 1.5.97). Its NodeN.PerkFile / NodeN.PerkId carry the real IDs; the
+					// perktree.json beside it may hold light-plugin-masked ones the installer did not rewrite.
+					if (const auto txt = readAll(t.value("configTxt", std::string())); !txt.empty())
+					{
+						static const std::regex kFile(R"re(Node(\d+)\.PerkFile\s*=\s*"([^"]+)")re");
+						static const std::regex kId(R"re(Node(\d+)\.PerkId\s*=\s*(0[xX][0-9A-Fa-f]+|\d+))re");
+						std::map<int, std::string> files, ids;
+						for (auto it = std::sregex_iterator(txt.begin(), txt.end(), kFile); it != std::sregex_iterator(); ++it) { files[std::stoi((*it)[1].str())] = (*it)[2].str(); }
+						for (auto it = std::sregex_iterator(txt.begin(), txt.end(), kId); it != std::sregex_iterator(); ++it) { ids[std::stoi((*it)[1].str())] = (*it)[2].str(); }
+						for (const auto& [node, id] : ids) { if (files.contains(node)) { nodes.emplace_back(files[node], id); } }
+						source = t.value("configTxt", std::string());
+					}
+					if (nodes.empty())
+					{
+						// ed4e: the Necromancer tree's perktree.json is not valid JSON (a brace closes the object early), so it is
+						// read as text and every "perk": "<plugin>|<id>" in it is taken.
+						const auto text = readAll(t.value("perkTree", std::string()));
+						static const std::regex kPerk(R"re("perk"\s*:\s*"([^"|]+)\|([0-9A-Fa-fxX]+)")re");
+						for (auto it = std::sregex_iterator(text.begin(), text.end(), kPerk); it != std::sregex_iterator(); ++it) { nodes.emplace_back((*it)[1].str(), "0x" + (*it)[2].str()); }
+						source = t.value("perkTree", std::string());
+					}
+					for (const auto& [pluginName, id] : nodes)
 					{
 						std::uint32_t local = 0;
-						try { local = static_cast<std::uint32_t>(std::stoul((*it)[2].str(), nullptr, 16)); } catch (...) { continue; }
-						auto* first = handler->LookupForm<RE::BGSPerk>(local & 0xFFFFFF, (*it)[1].str());
-						if (!first) { logger::warn("perk lock: custom tree {} - perk {}|{} not found", t.value("skill", std::string()), (*it)[1].str(), (*it)[2].str()); }
+						try { local = static_cast<std::uint32_t>(std::stoul(id, nullptr, 0)); } catch (...) { continue; }
+						auto* first = handler->LookupForm<RE::BGSPerk>(local & 0xFFFFFF, pluginName);
+						if (!first) { logger::warn("perk lock: custom tree {} - perk {}|{} not found", t.value("skill", std::string()), pluginName, id); }
 						for (auto* perk = first; perk && seen.insert(perk).second; perk = perk->nextPerk) { ConditionPerk(perk, global, player); ++n; }
 					}
-					if (text.empty()) { logger::warn("perk lock: custom tree {} - its tree file {} could not be read; nothing gated", t.value("skill", std::string()), t.value("perkTree", std::string())); }
+					if (nodes.empty()) { logger::warn("perk lock: custom tree {} - neither {} nor {} gave a perk; nothing gated", t.value("skill", std::string()), t.value("configTxt", std::string()), t.value("perkTree", std::string())); }
+					else { logger::info("perk lock: custom tree {} - {} node perk(s) read from {}", t.value("skill", std::string()), nodes.size(), source); }
 					logger::info("perk lock: custom tree {} - {} perks of {} conditioned on the {} group", t.value("skill", std::string()), n, plugin, groupId);
 				}
 			}
@@ -183,7 +214,6 @@ namespace Lockouts
 			RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override
 			{
 				if (!a_event || !a_event->opening || a_event->menuName != RE::CraftingMenu::MENU_NAME) { return RE::BSEventNotifyControl::kContinue; }
-				if (!settings::classes::enabled || !settings::classes::craftingGate) { return RE::BSEventNotifyControl::kContinue; }
 				auto* player = RE::PlayerCharacter::GetSingleton();
 				if (!player) { return RE::BSEventNotifyControl::kContinue; }
 				const auto handle = player->GetOccupiedFurniture();
@@ -192,7 +222,11 @@ namespace Lockouts
 				auto* furniture = base ? base->As<RE::TESFurniture>() : nullptr;
 				if (!furniture) { logger::debug("crafting gate: the crafting menu opened with no furniture in use - left open"); return RE::BSEventNotifyControl::kContinue; }
 				const int group = StationGroup(furniture);
-				if (group < 0 || Classes::HoldsGroup(group))
+				// D28: Enchanting Off refuses the arcane enchanter (and disenchanting with it) for every class, whatever the
+				// class settings; otherwise the class gate as before
+				const bool enchantOff = group == ClassData::kMagic && !Enchanting::IsOn();
+				const bool gateOn = settings::classes::enabled && settings::classes::craftingGate;
+				if (!enchantOff && (!gateOn || group < 0 || Classes::HoldsGroup(group)))
 				{
 					logger::debug("crafting gate: station {:08X} (group {}) - open", furniture->GetFormID(), group);
 					return RE::BSEventNotifyControl::kContinue;
@@ -209,7 +243,7 @@ namespace Lockouts
 				if (auto* queue = RE::UIMessageQueue::GetSingleton()) { queue->AddMessage(RE::CraftingMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr); }
 				static constexpr const char* kKeys[3] = { "NJ_NoticeNoSmithing", "NJ_NoticeNoEnchanting", "NJ_NoticeNoAlchemy" };
 				static constexpr const char* kText[3] = { "Your class does not know the smith's craft.", "Your class does not know the enchanter's craft.", "Your class does not know the alchemist's craft." };
-				const char* notice = strings::TR(kKeys[group], kText[group]);
+				const char* notice = enchantOff ? strings::TR("NJ_NoticeEnchantingOff", "No one enchants in this world: Enchanting is off.") : strings::TR(kKeys[group], kText[group]);
 				notify::Show(notice);
 				logger::info("notice: {}", notice);
 				// Combined run 78d7: with the menu refused the player stayed seated at the forge, hammering, until a move key.

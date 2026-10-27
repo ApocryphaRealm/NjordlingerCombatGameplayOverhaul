@@ -5,7 +5,9 @@
     "Sleeping Giant Inn in Riverwood, below Bleak Falls Barrow's word wall. His quest in one line: learn a word of power at",
     "any word wall and tell him. Then he sets and takes out soul stones (fee: one soul gem of the stone's tier) and sells",
     "stones. Dialogue is text only (Fuz Ro D-oh shows it as subtitles); the plugin's text is English (as every ESP string of",
-    "this mod so far). tools/PluginBuild builds it."
+    "this mod so far). tools/PluginBuild builds it.",
+    "D22 revised (STONE-CRAFTING.md, 2026-10-26): he sells nothing; he grinds soul gems into dust and cuts stones of learned words; the fee is one dust of the stone's tier; taking a stone out is free. The Barter topic became Grind (same record); Craft is built late.",
+    "ENCHANTING-OFF.md 7 (the owner 20:14): 'whileOn' lines are spoken only while Enchanting is On (global NJCGO_RunesmithEnchantingOn, kept by the SKSE plugin); with Enchanting Off he only adds slots and the player sets stones anywhere. AddSlot is built late."
   ],
   "npc": {
     "name": "Thorvar Stone-Speaker",
@@ -16,26 +18,98 @@
     "outfit": "ClothesMageRobesOutfitNoHood",
     "level": 10
   },
-  "home": { "cell": "RiverwoodSleepingGiantInn", "near": ["XMarkerHeading", "Chair", "Bench"], "offset": [64, 0, 0] },
+  "home": {
+    "cell": "RiverwoodSleepingGiantInn",
+    "near": [
+      "XMarkerHeading",
+      "Chair",
+      "Bench"
+    ],
+    "offset": [
+      64,
+      0,
+      0
+    ]
+  },
   "quest": {
     "name": "Words in Stone",
     "stages": {
       "10": "I met Thorvar Stone-Speaker at the Sleeping Giant Inn in Riverwood. He sets soul stones into gear, but only for one who has learned a word of power.",
-      "100": "Thorvar now sets and takes out my soul stones, for one soul gem of each stone's size."
+      "100": "Thorvar now grinds my soul gems into dust, cuts soul stones of the words I have learned, and sets them for one dust of each stone's size."
     },
     "objective": "Learn a word of power at a word wall, then return to Thorvar"
   },
   "topics": [
-    { "id": "Meet", "prompt": "You carve words into stones?", "stage": "<10", "script": "TIF_NJCGO_RunesmithMeet",
-      "say": ["Words of the dragon tongue, set in soul stones. A sword that holds the word for fire burns what it strikes.", "But a word means nothing from a mouth that never spoke one. Learn a word of power at one of the old walls, then come back to me."] },
-    { "id": "Where", "prompt": "Where would I find a word of power?", "stage": "10", "learned": 0,
-      "say": ["On the walls in the old barrows. Bleak Falls Barrow, up the mountain from here, has one."] },
-    { "id": "Learned", "prompt": "I have learned a word of power.", "stage": "10", "learned": 1, "script": "TIF_NJCGO_RunesmithLearned",
-      "say": ["I can hear it in your breath. Good.", "Bring me your gear and your stones whenever you like. One soul gem of the stone's own size for each stone I set or take out."] },
-    { "id": "Socket", "prompt": "Set my soul stones.", "stage": ">=100", "socket": true,
-      "say": ["Show me what you carry."] },
-    { "id": "Barter", "prompt": "Do you have stones to sell?", "stage": ">=100", "script": "TIF_NJCGO_RunesmithBarter",
-      "say": ["A few. Have a look."] }
+    {
+      "id": "Meet",
+      "prompt": "You carve words into stones?",
+      "stage": "<10",
+      "script": "TIF_NJCGO_RunesmithMeet",
+      "say": [
+        "Words of the dragon tongue, set in soul stones. A sword that holds the word for fire burns what it strikes.",
+        "But a word means nothing from a mouth that never spoke one. Learn a word of power at one of the old walls, then come back to me."
+      ]
+    },
+    {
+      "id": "Where",
+      "prompt": "Where would I find a word of power?",
+      "stage": "10",
+      "learned": 0,
+      "say": [
+        "On the walls in the old barrows. Bleak Falls Barrow, up the mountain from here, has one."
+      ]
+    },
+    {
+      "id": "Learned",
+      "prompt": "I have learned a word of power.",
+      "stage": "10",
+      "learned": 1,
+      "script": "TIF_NJCGO_RunesmithLearned",
+      "say": [
+        "I can hear it in your breath. Good.",
+        "Bring me soul gems and I will grind them to dust. One orichalcum ingot and dust of the right size, and I cut you a stone of any word you have learned. Setting a stone costs one pinch of its dust; taking one out costs nothing."
+      ]
+    },
+    {
+      "id": "Socket",
+      "prompt": "Set my soul stones.",
+      "stage": ">=100",
+      "socket": true,
+      "say": [
+        "Show me what you carry."
+      ],
+      "whileOn": true
+    },
+    {
+      "id": "Grind",
+      "prompt": "Grind soul gems into dust.",
+      "stage": ">=100",
+      "say": [
+        "Hand them over. Filled ones give more."
+      ],
+      "whileOn": true
+    },
+    {
+      "id": "Craft",
+      "prompt": "Make a soul stone.",
+      "stage": ">=100",
+      "late": true,
+      "say": [
+        "Which word? Only one you have read on a wall."
+      ],
+      "whileOn": true
+    },
+    {
+      "id": "AddSlot",
+      "prompt": "Add a rune slot to my gear.",
+      "stage": ">=100",
+      "late": true,
+      "say": [
+        "Orichalcum and a soul gem for each slot. Three is all any piece will hold."
+      ]
+    }
   ],
-  "shopChest": { "name": "Thorvar's stones", "vendorStones": 8 }
+  "chest": {
+    "name": "Thorvar's chest"
+  }
 }

@@ -24,8 +24,7 @@
       "glow": "0x976",
       "list": "0xBF5",
       "feeGems": [
-        "Skyrim.esm|0x2E4E2",
-        "Skyrim.esm|0x2E4E3"
+        "0xC4C"
       ]
     },
     {
@@ -34,8 +33,7 @@
       "glow": "0x978",
       "list": "0xBF6",
       "feeGems": [
-        "Skyrim.esm|0x2E4E4",
-        "Skyrim.esm|0x2E4E5"
+        "0xC4E"
       ]
     },
     {
@@ -44,8 +42,7 @@
       "glow": "0x97A",
       "list": "0xBF7",
       "feeGems": [
-        "Skyrim.esm|0x2E4E6",
-        "Skyrim.esm|0x2E4F3"
+        "0xC50"
       ]
     },
     {
@@ -54,8 +51,7 @@
       "glow": "0x97C",
       "list": "0xBF8",
       "feeGems": [
-        "Skyrim.esm|0x2E4F4",
-        "Skyrim.esm|0x2E4FB"
+        "0xC52"
       ]
     },
     {
@@ -64,8 +60,7 @@
       "glow": "0x97E",
       "list": "0xBF9",
       "feeGems": [
-        "Skyrim.esm|0x2E4FC",
-        "Skyrim.esm|0x2E4FF"
+        "0xC54"
       ]
     }
   ],
@@ -92,6 +87,147 @@
     "Disarm": "0xC17",
     "Mirror": "0xC19",
     "Hush": "0xC1B"
+  },
+  "dust": [
+    "0xC4C",
+    "0xC4E",
+    "0xC50",
+    "0xC52",
+    "0xC54"
+  ],
+  "grind": [
+    {
+      "gem": "Skyrim.esm|0x2E4E2",
+      "gemEditorId": "SoulGemPetty",
+      "tier": 0,
+      "empty": 1,
+      "filled": 2
+    },
+    {
+      "gem": "Skyrim.esm|0x2E4E3",
+      "gemEditorId": "SoulGemPettyFilled",
+      "tier": 0,
+      "empty": 1,
+      "filled": 2
+    },
+    {
+      "gem": "Skyrim.esm|0x2E4E4",
+      "gemEditorId": "SoulGemLesser",
+      "tier": 1,
+      "empty": 1,
+      "filled": 2
+    },
+    {
+      "gem": "Skyrim.esm|0x2E4E5",
+      "gemEditorId": "SoulGemLesserFilled",
+      "tier": 1,
+      "empty": 1,
+      "filled": 2
+    },
+    {
+      "gem": "Skyrim.esm|0x2E4E6",
+      "gemEditorId": "SoulGemCommon",
+      "tier": 2,
+      "empty": 1,
+      "filled": 2
+    },
+    {
+      "gem": "Skyrim.esm|0x2E4F3",
+      "gemEditorId": "SoulGemCommonFilled",
+      "tier": 2,
+      "empty": 1,
+      "filled": 2
+    },
+    {
+      "gem": "Skyrim.esm|0x2E4F4",
+      "gemEditorId": "SoulGemGreater",
+      "tier": 3,
+      "empty": 1,
+      "filled": 2
+    },
+    {
+      "gem": "Skyrim.esm|0x2E4FB",
+      "gemEditorId": "SoulGemGreaterFilled",
+      "tier": 3,
+      "empty": 1,
+      "filled": 2
+    },
+    {
+      "gem": "Skyrim.esm|0x2E4FC",
+      "gemEditorId": "SoulGemGrand",
+      "tier": 4,
+      "empty": 1,
+      "filled": 2
+    },
+    {
+      "gem": "Skyrim.esm|0x2E4FF",
+      "gemEditorId": "SoulGemGrandFilled",
+      "tier": 4,
+      "empty": 1,
+      "filled": 2
+    },
+    {
+      "gem": "Skyrim.esm|0x2E500",
+      "gemEditorId": "SoulGemBlack",
+      "tier": 4,
+      "empty": 2,
+      "filled": 4
+    },
+    {
+      "gem": "Skyrim.esm|0x2E504",
+      "gemEditorId": "SoulGemBlackFilled",
+      "tier": 4,
+      "empty": 2,
+      "filled": 4
+    }
+  ],
+  "craft": {
+    "ingot": "Skyrim.esm|0x5AD99",
+    "dust": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  "drops": {
+    "bandFrom": [
+      1,
+      10,
+      20,
+      30,
+      40
+    ],
+    "human": 8,
+    "animal": 0,
+    "creature": 12,
+    "boss": 40,
+    "dragon": 100,
+    "bossRolls": 2,
+    "dragonGrandLevel": 40,
+    "bossLocRefType": "Skyrim.esm|0x130F7",
+    "atLeastGreater": [
+      "Skyrim.esm|0x131EF",
+      "Skyrim.esm|0x131F1"
+    ]
+  },
+  "addSlot": {
+    "ingot": "Skyrim.esm|0x5AD99",
+    "gems": [
+      [
+        "Skyrim.esm|0x2E4E4",
+        "Skyrim.esm|0x2E4E5"
+      ],
+      [
+        "Skyrim.esm|0x2E4F4",
+        "Skyrim.esm|0x2E4FB"
+      ],
+      [
+        "Skyrim.esm|0x2E4FC",
+        "Skyrim.esm|0x2E4FF"
+      ]
+    ]
   },
   "words": [
     {
@@ -1079,7 +1215,7 @@
         "melee": {
           "kind": "rec",
           "effect": "0xA2E",
-          "text": "Struck targets deal \u003Cmag\u003E% less weapon damage for \u003Cdur\u003E seconds (Subdue).",
+          "text": "Struck targets deal 10-30% less weapon damage for \u003Cdur\u003E seconds (Subdue).",
           "m": [
             0.1,
             0.15,
@@ -1098,7 +1234,7 @@
         "ranged": {
           "kind": "rec",
           "effect": "0xA2F",
-          "text": "Arrows weaken the target\u0027s weapon damage by \u003Cmag\u003E% for \u003Cdur\u003E seconds (Subdue).",
+          "text": "Arrows weaken the target\u0027s weapon damage by 10-30% for \u003Cdur\u003E seconds (Subdue).",
           "m": [
             0.1,
             0.15,
@@ -1137,7 +1273,7 @@
         "melee": {
           "kind": "rec",
           "effect": "0xA36",
-          "text": "Struck targets deal \u003Cmag\u003E% less damage for \u003Cdur\u003E seconds.",
+          "text": "Struck targets deal 5-25% less damage for \u003Cdur\u003E seconds.",
           "m": [
             0.05,
             0.1,

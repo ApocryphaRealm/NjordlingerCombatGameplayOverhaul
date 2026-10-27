@@ -32,7 +32,7 @@ static class StoneBuild
 
     public static void Run(SkyrimMod mod, ModKey modKey, string repo, JsonNode cfg, JsonNode scheme,
         Dictionary<string, FormKey> keywords, JsonObject forms, List<string> stubs, List<string> approx, List<string> dllDone,
-        Func<JsonNode, string, Condition> makeCondition, Func<APerkEntryPointEffect.EntryType, byte> tabCount, Action? afterBase = null)
+        Func<JsonNode, string, Condition> makeCondition, Func<APerkEntryPointEffect.EntryType, byte> tabCount, Action? afterBase = null, Action? afterLate = null)
     {
         // ---- the masters ------------------------------------------------------------------------------------------------
         var folders = (Environment.GetEnvironmentVariable("NJCGO_MASTERS") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries);
@@ -160,7 +160,17 @@ static class StoneBuild
         }
 
         // Q66 (Fable 14:20): a cell not built yet never reads as active - "<line> (dormant)" on the card and the page.
-        string CardText(JsonNode cell) => cell["d"]!.GetValue<string>() + (cell["k"]?.GetValue<string>() == "stub" ? " (dormant)" : "");
+        string CardText(JsonNode cell)
+        {
+            var d = cell["d"]!.GetValue<string>();
+            // efc8: a fraction shown as a percent (AttackDamageMult 0.2 = 20% less) - the engine prints the magnitude as a whole
+            // number ("0%"), so the card names the tier range instead; the page fills the tier's own value
+            if (d.Contains("<mag>%") && cell["m"] is JsonArray ma && ma.Count == 2 && ma.All(v => v!.GetValue<double>() <= 1.0))
+            {
+                d = d.Replace("<mag>%", $"{ma[0]!.GetValue<double>() * 100:0}-{ma[1]!.GetValue<double>() * 100:0}%");
+            }
+            return d + (cell["k"]?.GetValue<string>() == "stub" ? " (dormant)" : "");
+        }
 
         // ---- the effect of one cell -------------------------------------------------------------------------------------
         int recCount = 0, markerCount = 0;
@@ -531,11 +541,18 @@ static class StoneBuild
         };
         var lootLists = cfg["lootLists"]!.AsArray().Select(n => TryEdid<ILeveledItemGetter>(n!.GetValue<string>())).Where(x => x != null).ToList();
         var vendorLists = cfg["vendorLists"]!.AsArray().Select(n => TryEdid<ILeveledItemGetter>(n!.GetValue<string>())).Where(x => x != null).ToList();
-        if (lootLists.Count > 0) { spLines.Add($"filterByLLs={string.Join(",", lootLists.Select(l => Sky(l!)))}:addToLLs={Own(loot)}~1~1"); }
-        if (vendorLists.Count > 0) { spLines.Add($"filterByLLs={string.Join(",", vendorLists.Select(l => Sky(l!)))}:addToLLs={Own(vendor)}~1~2"); }
+        // D22 revised (STONE-CRAFTING.md 4): stones are neither loot nor merchandise - the SkyPatcher file is no longer
+        // written (tools/PluginBuild moves an old one aside, never deletes it); the levelled lists stay so no form ID moves.
+        _ = spLines; _ = Sky(loot); _ = Own(vendor);
         var spDir = Path.Combine(repo, "data", "SKSE", "Plugins", "SkyPatcher", "leveledList", "NjordlingerCGO");
-        Directory.CreateDirectory(spDir);
-        File.WriteAllText(Path.Combine(spDir, "SoulStones.ini"), string.Join("\r\n", spLines) + "\r\n");
+        var spFile = Path.Combine(spDir, "SoulStones.ini");
+        if (File.Exists(spFile))
+        {
+            var keep = Path.Combine(repo, "_retired", "SkyPatcher-SoulStones.ini." + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+            Directory.CreateDirectory(Path.GetDirectoryName(keep)!);
+            File.Move(spFile, keep);
+            Console.WriteLine($"stones: the SkyPatcher loot file moved aside to {keep}");
+        }
 
         // ---- I4: soul-gem icon in the tier colour (PLAN.md phase 4 step 5) --------------------------------------------------
         var i4Rules = new JsonArray();
@@ -620,6 +637,58 @@ static class StoneBuild
         }
         Console.WriteLine($"stones (late pass): {latePhrases.Count} soft-linked phrases, {lateWords} new words");
 
+        // ---- D22 revised (STONE-CRAFTING.md 2): soul gem dust, built after every earlier record --------------------------
+        var dustCfg = cfg["dust"]!;
+        var dustModel = ByEdid<IIngredientGetter>(dustCfg["modelFrom"]!.GetValue<string>());
+        var dustKw = mod.Keywords.AddNew("NJCGO_Dust");
+        var dustForms = new JsonArray();
+        for (var t = 0; t < tiers.Length; ++t)
+        {
+            var tkw = mod.Keywords.AddNew("NJCGO_DustTier_" + tiers[t]);
+            var d = mod.MiscItems.AddNew("NJCGO_Dust_" + tiers[t]);
+            d.Name = dustCfg["names"]![t]!.GetValue<string>();
+            d.Model = dustModel.Model?.DeepCopy();
+            d.PickUpSound.SetTo(dustModel.PickUpSound.FormKeyNullable);
+            d.PutDownSound.SetTo(dustModel.PutDownSound.FormKeyNullable);
+            d.Value = (uint)Math.Max(1, ByEdid<ISoulGemGetter>(dustCfg["valueFrom"]![t]!.GetValue<string>()).Value / 2);
+            d.Weight = dustCfg["weight"]!.GetValue<float>();
+            d.Keywords = new ExtendedList<IFormLinkGetter<IKeywordGetter>> { dustKw.ToLink(), tkw.ToLink() };
+            dustForms.Add(Hex(d));
+        }
+        var grindOut = new JsonArray();
+        foreach (var g in cfg["grind"]!.AsArray())
+        {
+            grindOut.Add(new JsonObject
+            {
+                ["gem"] = Ref(ByEdid<ISoulGemGetter>(g!["gem"]!.GetValue<string>())), ["gemEditorId"] = g["gem"]!.GetValue<string>(),
+                ["tier"] = g["tier"]!.GetValue<int>(), ["empty"] = g["empty"]!.GetValue<int>(), ["filled"] = g["filled"]!.GetValue<int>()
+            });
+        }
+        var craftOut = new JsonObject
+        {
+            ["ingot"] = Ref(ByEdid<IMiscItemGetter>(cfg["craft"]!["ingot"]!.GetValue<string>())),
+            ["dust"] = JsonNode.Parse(cfg["craft"]!["dust"]!.ToJsonString())
+        };
+        var addCfg = cfg["addSlot"]!;
+        var addOut = new JsonObject
+        {
+            ["ingot"] = Ref(ByEdid<IMiscItemGetter>(addCfg["ingot"]!.GetValue<string>())),
+            ["gems"] = new JsonArray(addCfg["gems"]!.AsArray().Select(g => (JsonNode)new JsonArray(g!.AsArray().Select(n => (JsonNode)JsonValue.Create(Ref(ByEdid<ISoulGemGetter>(n!.GetValue<string>())))!).ToArray())).ToArray())
+        };
+        var dropsCfg = cfg["drops"]!;
+        var dropsOut = JsonNode.Parse(dropsCfg.ToJsonString())!.AsObject();
+        dropsOut.Remove("_comment");
+        dropsOut["bossLocRefType"] = Ref(ByEdid<ILocationReferenceTypeGetter>(dropsCfg["bossLocRefType"]!.GetValue<string>()));
+        var greaterOut = new JsonArray();
+        foreach (var r in dropsCfg["atLeastGreater"]!.AsArray())
+        {
+            var race = TryEdid<IRaceGetter>(r!.GetValue<string>());
+            if (race != null) { greaterOut.Add(Ref(race)); } else { Console.WriteLine($"stones: drops - race {r} is not in the masters (skipped)"); }
+        }
+        dropsOut["atLeastGreater"] = greaterOut;
+        Console.WriteLine($"stones: {dustForms.Count} dust items, {grindOut.Count} grindable gems; drops while Enchanting is off: {greaterOut.Count} at-least-greater races");
+        afterLate?.Invoke();
+
         // ---- D26 (SHOUTING-OFF.md 5): the quests that need the Voice while Shouting is off -------------------------------
         // Rows found by the quest's NAME in the masters (Fable's editor IDs were a guess - verified here, not typed); the
         // exemption runs from the quest's start to its completion stage (the stage whose log entry completes the quest).
@@ -663,7 +732,8 @@ static class StoneBuild
             tierOut.Add(new JsonObject
             {
                 ["name"] = tiers[t], ["keyword"] = Hex(tierKws[t]), ["glow"] = glowForms[t], ["list"] = Hex(tierLists[t]),
-                ["feeGems"] = new JsonArray(feeGems[t]!.AsArray().Select(n => (JsonNode)JsonValue.Create(Ref(ByEdid<ISoulGemGetter>(n!.GetValue<string>())))!).ToArray())
+                // D22 revised: the fee is one dust of the tier (tierFeeGems in the config is history)
+                ["feeGems"] = new JsonArray((JsonNode)JsonValue.Create(dustForms[t]!.GetValue<string>())!)
             });
         }
         itemTierKw["Unique"] = forms["gear"]?["keywords"]?["tierUnique"]?.GetValue<string>();
@@ -680,6 +750,11 @@ static class StoneBuild
             ["loot"] = Hex(loot),
             ["vendor"] = Hex(vendor),
             ["helpers"] = helperForms,
+            ["dust"] = dustForms,
+            ["grind"] = grindOut,
+            ["craft"] = craftOut,
+            ["drops"] = dropsOut,
+            ["addSlot"] = addOut,
             ["words"] = wordOut,
             ["phrases"] = phraseOut,
         };
@@ -691,9 +766,9 @@ static class StoneBuild
             ["counts"] = new JsonObject
             {
                 ["stones"] = stonesByTier.Sum(l => l.Count), ["recEffects"] = recCount, ["markerEffects"] = markerCount,
-                ["perks"] = perkCount, ["abilities"] = selfCount, ["helpers"] = helperForms.Count, ["lootLists"] = lootLists.Count, ["vendorLists"] = vendorLists.Count
+                ["perks"] = perkCount, ["abilities"] = selfCount, ["helpers"] = helperForms.Count, ["lootLists"] = 0, ["vendorLists"] = 0, ["dust"] = dustForms.Count
             }
         };
-        Console.WriteLine($"stones: {stonesByTier.Sum(l => l.Count)} stones, {recCount} effects that act, {markerCount} card lines, {perkCount} perks, {selfCount} abilities, {helperForms.Count} helpers; loot into {lootLists.Count} lists, merchants {vendorLists.Count}");
+        Console.WriteLine($"stones: {stonesByTier.Sum(l => l.Count)} stones, {recCount} effects that act, {markerCount} card lines, {perkCount} perks, {selfCount} abilities, {helperForms.Count} helpers; not in loot or at merchants (D22 revised)");
     }
 }

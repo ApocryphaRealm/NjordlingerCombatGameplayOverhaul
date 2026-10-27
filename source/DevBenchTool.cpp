@@ -14,6 +14,8 @@
 #include "StatsMenuClass.h"
 #include "Settings.h"
 #include "Shouting.h"
+#include "CarryWeight.h"
+#include "Enchanting.h"
 #include "SoulStones.h"
 #include "UI.h"
 
@@ -123,8 +125,36 @@ namespace DevBenchTool
 			}
 			if (op == "shouting")
 			{
-				if (args.contains("enabled")) { Shouting::RequestSetEnabled(args.value("enabled", false)); }
+				if (args.contains("mode")) { Shouting::RequestSetMode(args.value("mode", 0)); }
+				else if (args.contains("enabled")) { Shouting::RequestSetMode(args.value("enabled", false) ? Shouting::kOn : Shouting::kOff); }
 				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "shouting", nlohmann::json::parse(Shouting::StatusJson(), nullptr, false) } });
+				return;
+			}
+			if (op == "carry")
+			{
+				if (args.contains("base")) { settings::carry::base = std::clamp(args.value("base", 300.0F), 50.0F, 1000.0F); }
+				if (args.contains("perStamina")) { settings::carry::perStamina = std::clamp(args.value("perStamina", 2.5F), 0.0F, 10.0F); }
+				if (args.contains("enabled")) { settings::carry::enabled = args.value("enabled", true); }
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "carry", nlohmann::json::parse(CarryWeight::StatusJson(), nullptr, false) } });
+				return;
+			}
+			if (op == "enchanting")
+			{
+				if (args.contains("on")) { Enchanting::RequestSet(args.value("on", true)); }
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "enchanting", nlohmann::json::parse(Enchanting::StatusJson(), nullptr, false) } });
+				return;
+			}
+			if (op == "stonesgrind")
+			{
+				const auto form = static_cast<RE::FormID>(std::stoul(args.value("form", std::string("0")), nullptr, 0));
+				SoulStones::RequestGrind(form, args.value("all", false));
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true } });
+				return;
+			}
+			if (op == "stonesdrop")
+			{
+				SoulStones::ForceNextDrop(args.value("force", true));
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "forceNextDrop", args.value("force", true) } });
 				return;
 			}
 			if (op == "stoneswords")
@@ -153,6 +183,18 @@ namespace DevBenchTool
 			if (op == "stonesgive")
 			{
 				SoulStones::RequestGiveForTest(wordIndex(), tierIndex(), std::clamp(args.value("count", 1), 1, 20));
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true }, { "note", "read stones.lastResult with op=stones a moment later" } });
+				return;
+			}
+			if (op == "stonesaddslot")
+			{
+				SoulStones::RequestAddSlot(args.value("item", std::string()));
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true }, { "note", "read stones.lastResult with op=stones a moment later" } });
+				return;
+			}
+			if (op == "stonescraft")
+			{
+				SoulStones::RequestCraft(wordIndex(), tierIndex());
 				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true }, { "note", "read stones.lastResult with op=stones a moment later" } });
 				return;
 			}

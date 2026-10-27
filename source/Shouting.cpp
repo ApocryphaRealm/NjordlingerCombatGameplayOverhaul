@@ -22,7 +22,7 @@ namespace Shouting
 {
 	namespace
 	{
-		constexpr std::uint32_t kRecordVersion = 1;
+		constexpr std::uint32_t kRecordVersion = 2;   // 1 = D26's {enabled}; 2 = D27's {mode}
 
 		struct Row
 		{
@@ -35,7 +35,8 @@ namespace Shouting
 		std::vector<Row> g_rows;
 
 		std::atomic<bool> g_loaded{ false };
-		std::atomic<bool> g_enabled{ false };   // this save
+		std::atomic<int> g_mode{ kAuto };       // this save
+		std::atomic<bool> g_holdsMagic{ true };  // published by the class module
 		std::atomic<bool> g_haveRecord{ false };
 		std::atomic<std::uint32_t> g_souls{ 0 }, g_points{ 0 }, g_refusals{ 0 };
 		std::atomic<bool> g_reserved{ false };
@@ -45,6 +46,14 @@ namespace Shouting
 		std::string g_error;
 
 		RE::PlayerCharacter* Player() { return RE::PlayerCharacter::GetSingleton(); }
+
+		bool Allowed()
+		{
+			const int m = g_mode.load();
+			return m == kOn || (m == kAuto && g_holdsMagic.load());
+		}
+
+		const char* ModeName(int a_mode) { return a_mode == kOn ? "On" : a_mode == kOff ? "Off" : "Auto"; }
 
 		RE::TESForm* Resolve(const std::string& a_ref)
 		{
@@ -74,7 +83,7 @@ namespace Shouting
 			static bool CanProcess(RE::ShoutHandler* a_this, RE::InputEvent* a_event)
 			{
 				if (!_original(a_this, a_event)) { return false; }
-				if (g_enabled.load() || !g_loaded.load()) { return true; }
+				if (Allowed() || !g_loaded.load()) { return true; }
 				auto* p = Player();
 				auto* power = p ? p->GetActorRuntimeData().selectedPower : nullptr;
 				auto* shout = power ? power->As<RE::TESShout>() : nullptr;
@@ -83,7 +92,7 @@ namespace Shouting
 				if (!g_toldThisSession.exchange(true))
 				{
 					notify::Show(strings::TR("NJ_ShoutingSilent", "Your Voice is silent; the words live in your stones."));
-					logger::info("shouting: the shout key refused for {} (Shouting is off for this save)", shout->GetName());
+					logger::info("shouting: the shout key refused for {} (Shouting {} for this save)", shout->GetName(), ModeName(g_mode.load()));
 				}
 				return false;
 			}
@@ -113,7 +122,7 @@ namespace Shouting
 		void Convert()
 		{
 			auto* p = Player();
-			if (!p || g_enabled.load()) { g_reserved = false; return; }
+			if (!p || Allowed()) { g_reserved = false; return; }
 			bool reserved = false;
 			for (const auto& r : g_rows)
 			{
@@ -179,19 +188,19 @@ namespace Shouting
 		ShoutHook::_original = vtbl.write_vfunc(0x1, ShoutHook::CanProcess);
 		g_loaded = true;
 		if (!g_running.exchange(true)) { std::thread(Worker).detach(); }
-		logger::info("shouting: the shout key is guarded; {} quest row(s); {} soul(s) per perk point; new saves start with Shouting {}", g_rows.size(), g_soulsPerPoint, settings::shouting::enabledDefault ? "on" : "off");
+		logger::info("shouting: the shout key is guarded; {} quest row(s); {} soul(s) per perk point; new saves start with Shouting {}", g_rows.size(), g_soulsPerPoint, ModeName(settings::shouting::mode));
 	}
 
 	void OnGameLoaded()
 	{
 		g_toldThisSession = false;
-		if (!g_haveRecord.load()) { g_enabled = settings::shouting::enabledDefault; }
-		logger::info("shouting: this save - Shouting {}; {} soul(s) converted so far", g_enabled.load() ? "on" : "off", g_souls.load());
+		if (!g_haveRecord.load()) { g_mode = settings::shouting::mode; }
+		logger::info("shouting: this save - Shouting {} (the class holds magic: {}; resolved {}); {} soul(s) converted so far", ModeName(g_mode.load()), g_holdsMagic.load(), Allowed() ? "on" : "off", g_souls.load());
 	}
 
 	void OnSave(SKSE::SerializationInterface* a_intfc)
 	{
-		const std::string text = nlohmann::json{ { "enabled", g_enabled.load() }, { "souls", g_souls.load() }, { "points", g_points.load() } }.dump();
+		const std::string text = nlohmann::json{ { "mode", g_mode.load() }, { "souls", g_souls.load() }, { "points", g_points.load() } }.dump();
 		const auto size = static_cast<std::uint32_t>(text.size());
 		if (!a_intfc || !a_intfc->OpenRecord(kRecord, kRecordVersion)) { logger::error("shouting: could not open the co-save record"); return; }
 		a_intfc->WriteRecordData(&size, sizeof(size));
@@ -200,7 +209,7 @@ namespace Shouting
 
 	void ReadRecord(SKSE::SerializationInterface* a_intfc, std::uint32_t a_version, std::uint32_t a_length)
 	{
-		if (!a_intfc || a_version != kRecordVersion || a_length < sizeof(std::uint32_t)) { return; }
+		if (!a_intfc || (a_version != 1 && a_version != kRecordVersion) || a_length < sizeof(std::uint32_t)) { return; }
 		std::uint32_t size = 0;
 		if (!a_intfc->ReadRecordData(&size, sizeof(size)) || size != a_length - sizeof(size)) { return; }
 		std::string text(size, '\0');
@@ -208,7 +217,8 @@ namespace Shouting
 		try
 		{
 			const auto j = nlohmann::json::parse(text);
-			g_enabled = j.value("enabled", settings::shouting::enabledDefault);
+			if (j.contains("mode")) { g_mode = std::clamp(j.value("mode", 0), 0, 2); }
+			else { g_mode = j.value("enabled", false) ? kOn : kAuto; }   // a D26 save: on stays On, off becomes Auto
 			g_souls = j.value("souls", 0u);
 			g_points = j.value("points", 0u);
 			g_haveRecord = true;
@@ -219,7 +229,8 @@ namespace Shouting
 	void OnRevert()
 	{
 		g_haveRecord = false;
-		g_enabled = settings::shouting::enabledDefault;
+		g_mode = settings::shouting::mode;
+		g_holdsMagic = true;
 		g_souls = 0;
 		g_points = 0;
 	}
@@ -229,7 +240,9 @@ namespace Shouting
 		State s;
 		s.loaded = g_loaded.load();
 		s.error = g_error;
-		s.enabled = g_enabled.load();
+		s.mode = g_mode.load();
+		s.holdsMagic = g_holdsMagic.load();
+		s.enabled = Allowed();
 		s.soulsConverted = g_souls.load();
 		s.pointsGiven = g_points.load();
 		s.soulsPerPoint = g_soulsPerPoint;
@@ -239,17 +252,23 @@ namespace Shouting
 		return s;
 	}
 
-	void RequestSetEnabled(bool a_enabled)
+	void RequestSetMode(int a_mode)
 	{
-		g_enabled = a_enabled;
+		g_mode = std::clamp(a_mode, 0, 2);
 		g_haveRecord = true;
-		logger::info("shouting: this save - Shouting switched {}", a_enabled ? "on" : "off");
+		logger::info("shouting: this save - Shouting set to {} (resolved {})", ModeName(g_mode.load()), Allowed() ? "on" : "off");
+	}
+
+	void SetHoldsMagic(bool a_holds)
+	{
+		const bool was = g_holdsMagic.exchange(a_holds);
+		if (was != a_holds) { logger::info("shouting: the class {} the magic group - Auto resolves {}", a_holds ? "holds" : "does not hold", a_holds ? "on" : "off"); }
 	}
 
 	std::string StatusJson()
 	{
 		const auto s = GetState();
-		return nlohmann::json{ { "loaded", s.loaded }, { "error", s.error }, { "enabled", s.enabled }, { "soulsConverted", s.soulsConverted },
+		return nlohmann::json{ { "loaded", s.loaded }, { "error", s.error }, { "mode", ModeName(s.mode) }, { "holdsMagic", s.holdsMagic }, { "enabled", s.enabled }, { "soulsConverted", s.soulsConverted },
 			{ "pointsGiven", s.pointsGiven }, { "soulsPerPoint", s.soulsPerPoint }, { "reserved", s.reserved }, { "refusals", s.refusals }, { "rows", s.rows } }.dump();
 	}
 }

@@ -16,6 +16,8 @@
 #include "Settings.h"
 #include "SkillList.h"
 #include "Shouting.h"
+#include "CarryWeight.h"
+#include "Enchanting.h"
 #include "Skills.h"
 #include "SoulStones.h"
 
@@ -40,6 +42,7 @@ namespace UI
 		std::string g_selectedSlider;
 		char g_perksTable[128]{};
 		bool g_inRunesmithWindow = false;               // the Soul Stones page drawn inside the runesmith's window
+		int g_runesmithTab = 0;                          // D22 revised: 0 Socket, 1 Grind, 2 Craft
 		SKSEMenuFramework::Model::WindowInterface* g_runesmithWindow = nullptr;
 		bool g_perksTableSeeded = false;
 
@@ -122,6 +125,8 @@ namespace UI
 				"igIsItemActive",
 				"igIsItemHovered",
 				"igButton",
+				"igRadioButton_IntPtr",  // the runesmith's Craft tab
+				"igSeparator",
 				"igSameLine",
 				"igSpacing",
 				"igPushItemWidth",
@@ -325,15 +330,43 @@ namespace UI
 		const auto lug = LevelUpGains::GetState();
 		ImGuiMCP::TextDisabled(strings::TR("NJ_LevelUpReadout", "Level ups this session: %u - attribute picks skipped: %u"), lug.levelUps, lug.picksSkipped);
 
-		// D26: Shouting, per save
+		// D26, D27: Shouting, per save - Auto / On / Off, and what Auto resolves to
 		{
 			ImGuiMCP::SeparatorText(strings::TR("NJ_ShoutingTitle", "The Voice"));
 			const auto sh = Shouting::GetState();
-			bool on = sh.enabled;
-			if (ImGuiMCP::Toggle(strings::TR("NJ_Shouting", "Shouting"), &on)) { Shouting::RequestSetEnabled(on); }
-			HelpMarker(strings::TR("NJ_HelpShouting", "Off (the default): your shout key does nothing - the Shouts your soul stones grant and the ones a quest needs still work - and every dragon soul becomes perk points. Off also parks Stormcrown's Dragonborn tree and meditations, which are paid in souls. This choice is kept per save."));
+			const char* modes[] = { strings::TR("NJ_ShoutingAuto", "Auto"), strings::TR("NJ_ShoutingOn", "On"), strings::TR("NJ_ShoutingOff", "Off") };
+			int mode = sh.mode;
+			if (ImGuiMCP::Combo(strings::TR("NJ_Shouting", "Shouting"), &mode, modes, 3)) { Shouting::RequestSetMode(mode); }
+			HelpMarker(strings::TR("NJ_HelpShouting", "Auto (the default): you can shout while your class holds the magic group - checked again at every evolution, so a class that gains magic gains the Voice. On or Off sets it yourself. While shouting is refused your shout key does nothing - the Shouts your soul stones grant and the ones a quest needs still work - and every dragon soul becomes perk points; it also parks Stormcrown's Dragonborn tree and meditations, which are paid in souls. This choice is kept per save."));
+			if (sh.mode == Shouting::kAuto)
+			{
+				ImGuiMCP::TextDisabled("%s", sh.enabled ? strings::TR("NJ_ShoutingAutoOn", "Auto - on: your class holds magic") : strings::TR("NJ_ShoutingAutoOff", "Auto - off: your class does not hold magic"));
+			}
+			else
+			{
+				ImGuiMCP::TextDisabled("%s", sh.enabled ? strings::TR("NJ_ShoutingNowOn", "You can shout") : strings::TR("NJ_ShoutingNowOff", "Your shout key is refused"));
+			}
 			ImGuiMCP::TextDisabled(strings::TR("NJ_ShoutingLine", "Dragon souls turned into perk points: %u (%d soul(s) per point)%s"), sh.soulsConverted, sh.soulsPerPoint,
 				sh.reserved ? strings::TR("NJ_ShoutingReserved", " - waiting until The Way of the Voice is done") : "");
+		}
+		// D28: Enchanting, per save
+		{
+			ImGuiMCP::SeparatorText(strings::TR("NJ_EnchantingTitle", "Enchanting"));
+			bool on = Enchanting::IsOn();
+			if (ImGuiMCP::Toggle(strings::TR("NJ_Enchanting", "Enchanting"), &on)) { Enchanting::RequestSet(on); }
+			HelpMarker(strings::TR("NJ_HelpEnchanting", "On (the default): enchanting belongs to the classes that hold magic, and the runesmith makes soul stones. Off: no one enchants - the arcane enchanter refuses everyone, the Enchanting tree is locked and the skill stays where it is - and soul stones drop from the fallen instead. Enchanted gear you find keeps its enchantments. This choice is kept per save."));
+		}
+		// The owner 19:53/19:54: carry weight - one owned modifier (CarryWeight.h)
+		{
+			ImGuiMCP::SeparatorText(strings::TR("NJ_CarryTitle", "Carry weight"));
+			ImGuiMCP::Toggle(strings::TR("NJ_CarryControl", "Control carry weight"), &carry::enabled);
+			HelpMarker(strings::TR("NJ_HelpCarryControl", "On: your carry weight starts at the value below, and every permanent Stamina point Adaptive Attributes grants adds the amount below. Potions, the Steed Stone and other effects still add on top. Off: the game's own values."));
+			NudgeableSlider(strings::TR("NJ_CarryBase", "Starting carry weight"), &carry::base, 50.0F, 1000.0F, "%.0f", 10.0F);
+			NudgeableSlider(strings::TR("NJ_CarryPerStamina", "Carry weight per stamina point"), &carry::perStamina, 0.0F, 10.0F, "%.1f", 0.5F);
+			const auto cw = CarryWeight::GetState();
+			if (cw.aaWritesCarry) { ImGuiMCP::TextWrapped("%s", strings::TR("NJ_CarryAaWrites", "Adaptive Attributes adds the per-stamina carry weight itself (bEnableCarryWeightFromStaminaBonus in its INI), so this slider waits: set that option to false to let this page control it.")); }
+			else if (!cw.aaFound) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_CarryNoAa", "Adaptive Attributes did not answer: only the starting value applies.")); }
+			ImGuiMCP::TextDisabled(strings::TR("NJ_CarryLine", "Stamina points from Adaptive Attributes: %d - this page's change: %+.1f - carry weight now: %.0f"), cw.aaStamina, cw.applied, cw.carryWeight);
 		}
 		ImGuiMCP::SeparatorText(strings::TR("NJ_SkillsTitle", "Skills"));
 		ImGuiMCP::Toggle(strings::TR("NJ_ControlCaps", "Control skill caps"), &skills::overrideCaps);
@@ -534,16 +567,113 @@ namespace UI
 		RenderButtons();
 	}
 
-	// The runesmith's window (D22): his socketing service, drawn with the Soul Stones page; closing it ends the service.
+	// D22 revised (STONE-CRAFTING.md): the Grind tab - soul gems in, dust out (a filled gem gives two, black two grand).
+	void GrindTab(const ::SoulStones::Snapshot& a_s, const char* (*a_tier)(int))
+	{
+		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_GrindIntro", "Thorvar grinds soul gems into soul gem dust of their size, free of charge. A filled gem gives two dust, an empty one one; a black soul gem gives two grand dust (four when filled)."));
+		if (a_s.gems.empty()) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoGems", "You carry no soul gems he will grind.")); }
+		for (const auto& g : a_s.gems)
+		{
+			ImGuiMCP::Text(strings::TR("NJ_SS_GemLine", "%s - %d filled, %d empty: %d %s dust"), g.name.c_str(), g.filled, g.empty, g.dust, a_tier(g.tier));
+			ImGuiMCP::SameLine();
+			const std::string one = std::string(strings::TR("NJ_SS_GrindOne", "Grind one")) + "##g1_" + std::to_string(g.form);
+			if (ImGuiMCP::SmallButton(one.c_str())) { ::SoulStones::RequestGrind(g.form, false); }
+			ImGuiMCP::SameLine();
+			const std::string all = std::string(strings::TR("NJ_SS_GrindAll", "Grind all")) + "##ga_" + std::to_string(g.form);
+			if (ImGuiMCP::SmallButton(all.c_str())) { ::SoulStones::RequestGrind(g.form, true); }
+		}
+	}
+
+	// The Craft tab - a learned word, a tier, the recipe line, Make.
+	void CraftTab(const ::SoulStones::Snapshot& a_s, const char* (*a_tier)(int))
+	{
+		static int tier = 0;
+		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_CraftIntro", "Thorvar cuts a soul stone of any word you have learned at a word wall from one orichalcum ingot and soul gem dust of the stone's size."));
+		for (int t = 0; t < 5; ++t)
+		{
+			if (t > 0) { ImGuiMCP::SameLine(); }
+			ImGuiMCP::RadioButton(a_tier(t), &tier, t);
+		}
+		ImGuiMCP::TextDisabled(strings::TR("NJ_SS_RecipeLine", "Recipe: one orichalcum ingot and %d %s dust. You carry %d ingot(s) and %d %s dust."),
+							   a_s.craftDust[tier], a_tier(tier), a_s.ingots, a_s.feeGems[tier], a_tier(tier));
+		if (a_s.learnedWords.empty()) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoLearned", "You have learned no word of power yet: learn one at a word wall.")); }
+		const bool can = a_s.ingots >= 1 && a_s.feeGems[tier] >= a_s.craftDust[tier];
+		for (const int w : a_s.learnedWords)
+		{
+			const std::string b = std::string(strings::TR("NJ_SS_Make", "Make")) + "##mk" + std::to_string(w);
+			if (ImGuiMCP::SmallButton(b.c_str())) { ::SoulStones::RequestCraft(w, tier); }
+			ImGuiMCP::SameLine();
+			if (can) { ImGuiMCP::Text("%s (%s)", a_s.words[w].c_str(), a_tier(tier)); }
+			else { ImGuiMCP::TextDisabled("%s (%s)", a_s.words[w].c_str(), a_tier(tier)); }
+		}
+		ImGuiMCP::TextDisabled(strings::TR("NJ_SS_Tallies", "Dust ground: %u - stones made: %u"), a_s.dustMade, a_s.stonesMade);
+	}
+
+	// ENCHANTING-OFF.md 7: the Add slot tab - items below three slots, the cost of the next slot, Add.
+	void AddSlotTab(const ::SoulStones::Snapshot& a_s)
+	{
+		static const char* gemKeys[] = { "NJ_SS_GemLesser", "NJ_SS_GemGreater", "NJ_SS_GemGrand" };
+		static const char* gemEn[] = { "lesser", "greater", "grand" };
+		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_SlotIntro", "Thorvar cuts new stone slots into gear, up to three on any piece. Each new slot costs one orichalcum ingot and one soul gem, filled or empty: lesser for a piece's first added slot, greater for the second, grand for the third. The piece keeps its tier and colour."));
+		ImGuiMCP::TextDisabled(strings::TR("NJ_SS_SlotCarry", "You carry %d orichalcum ingot(s) and %d / %d / %d lesser / greater / grand soul gems."), a_s.addIngots, a_s.addGems[0], a_s.addGems[1], a_s.addGems[2]);
+		if (a_s.slotOffers.empty()) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoSlotOffers", "Nothing in your pack can take another slot.")); }
+		for (const auto& o : a_s.slotOffers)
+		{
+			const std::string b = std::string(strings::TR("NJ_SS_AddSlot", "Add")) + "##as_" + o.key;
+			if (ImGuiMCP::SmallButton(b.c_str())) { ::SoulStones::RequestAddSlot(o.key); }
+			ImGuiMCP::SameLine();
+			const bool can = a_s.addIngots >= 1 && a_s.addGems[o.gemTier] >= 1;
+			char line[256];
+			std::snprintf(line, sizeof(line), strings::TR("NJ_SS_SlotLine", "%s - %d of 3 slots; next: one ingot and one %s soul gem"), o.name.c_str(), o.slots, strings::TR(gemKeys[o.gemTier], gemEn[o.gemTier]));
+			if (can) { ImGuiMCP::Text("%s", line); }
+			else { ImGuiMCP::TextDisabled("%s", line); }
+		}
+	}
+
+	// The runesmith's window (D22): his services - Socket, Grind, Craft, Add slot - drawn with the Soul Stones page;
+	// closing it ends the service. His line picks the tab it opens on. Enchanting Off: Add slot only.
 	void __stdcall RunesmithWindow()
 	{
 		strings::Tick();
 		bool open = true;
+		if (const int asked = ::SoulStones::TakeRequestedTab(); asked >= 0) { g_runesmithTab = asked; }
 		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), &open, 0))
 		{
-			g_inRunesmithWindow = true;
-			Pages::SoulStones();
-			g_inRunesmithWindow = false;
+			const char* tabs[] = { strings::TR("NJ_SS_TabSocket", "Socket"), strings::TR("NJ_SS_TabGrind", "Grind"), strings::TR("NJ_SS_TabCraft", "Craft"), strings::TR("NJ_SS_TabAddSlot", "Add slot") };
+			const bool runeMode = !::SoulStones::GetSnapshot().enchantingOn;
+			if (runeMode) { g_runesmithTab = 3; }   // Enchanting Off: he only adds slots
+			bool firstTab = true;
+			for (int t = 0; t < 4; ++t)
+			{
+				if (runeMode && t != 3) { continue; }
+				if (!firstTab) { ImGuiMCP::SameLine(); }
+				firstTab = false;
+				const std::string label = (g_runesmithTab == t ? std::string("[ ") + tabs[t] + " ]" : std::string(tabs[t])) + "##tab" + std::to_string(t);
+				if (ImGuiMCP::Button(label.c_str())) { g_runesmithTab = t; }
+			}
+			ImGuiMCP::Separator();
+			auto tierName = [](int a_t) -> const char* {
+				static const char* keys[] = { "NJ_SS_Tier0", "NJ_SS_Tier1", "NJ_SS_Tier2", "NJ_SS_Tier3", "NJ_SS_Tier4" };
+				static const char* en[] = { "Petty", "Lesser", "Common", "Greater", "Grand" };
+				return (a_t >= 0 && a_t < 5) ? strings::TR(keys[a_t], en[a_t]) : "";
+			};
+			if (g_runesmithTab == 0)
+			{
+				g_inRunesmithWindow = true;
+				Pages::SoulStones();
+				g_inRunesmithWindow = false;
+			}
+			else
+			{
+				static auto lastAsk = std::chrono::steady_clock::now() - std::chrono::seconds(10);
+				const auto now = std::chrono::steady_clock::now();
+				if (now - lastAsk > std::chrono::milliseconds(750)) { ::SoulStones::RequestRefresh(); lastAsk = now; }
+				const auto snap = ::SoulStones::GetSnapshot();
+				if (g_runesmithTab == 1) { GrindTab(snap, tierName); }
+				else if (g_runesmithTab == 2) { CraftTab(snap, tierName); }
+				else { AddSlotTab(snap); }
+				if (!snap.lastResult.empty()) { ImGuiMCP::TextWrapped("%s", snap.lastResult.c_str()); }
+			}
 		}
 		ImGuiMCP::End();
 		if (!open)
@@ -595,10 +725,14 @@ namespace UI
 			return;
 		}
 		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_Intro", "A soul stone is a word of the dragon tongue. Magic gear has one slot, epic two, legendary and unique three; staves take none. Each stone acts for the item it sits in, and three stones of one Shout in word order add its phrase once you have unlocked all three words."));
-		if (s.serviceOpen) { ImGuiMCP::TextColored(known, "%s", strings::TR("NJ_SS_ServiceOpen", "The runesmith is at work: set and take out stones below.")); }
-		else { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_ServiceClosed", "Stones are set and taken out only at the runesmith. Here you can see what your gear carries.")); }
-		ImGuiMCP::TextDisabled(strings::TR("NJ_SS_FeeLine", "Fee: one soul gem of the stone's tier for each stone set or taken out. You carry %d / %d / %d / %d / %d (petty to grand)."),
-							   s.feeGems[0], s.feeGems[1], s.feeGems[2], s.feeGems[3], s.feeGems[4]);
+		if (!s.enchantingOn) { ImGuiMCP::TextColored(known, "%s", strings::TR("NJ_SS_RuneMode", "Enchanting is off: set and take out your stones here, anywhere, free. Stones drop from the fallen.")); }
+		else if (s.serviceOpen) { ImGuiMCP::TextColored(known, "%s", strings::TR("NJ_SS_ServiceOpen", "The runesmith is at work: set and take out stones below.")); }
+		else { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_ServiceClosedCraft", "Stones are made, set and taken out only by the runesmith. Here you can see what your gear carries.")); }
+		if (s.enchantingOn)
+		{
+			ImGuiMCP::TextDisabled(strings::TR("NJ_SS_FeeLineDust", "Fee: one soul gem dust of the stone's tier for each stone set; taking one out is free. You carry %d / %d / %d / %d / %d dust (petty to grand)."),
+								   s.feeGems[0], s.feeGems[1], s.feeGems[2], s.feeGems[3], s.feeGems[4]);
+		}
 
 		ImGuiMCP::SeparatorText(strings::TR("NJ_SS_ItemsTitle", "Your gear with slots"));
 		if (s.items.empty())
@@ -647,7 +781,7 @@ namespace UI
 				if (st.word >= 0)
 				{
 					ImGuiMCP::TextDisabled("    %s", ::SoulStones::CellText(st.word, sel->host, st.tier).c_str());
-					if (s.serviceOpen)
+					if (s.canSocket)
 					{
 						ImGuiMCP::SameLine();
 						const std::string b = std::string(strings::TR("NJ_SS_TakeOut", "Take out")) + "##out" + std::to_string(k);
@@ -663,12 +797,16 @@ namespace UI
 		}
 		ImGuiMCP::EndChild();
 
-		if (sel && s.serviceOpen && sel->stones[targetSlot].word < 0 && sel->key.find(":plain") == std::string::npos)
+		if (sel && s.canSocket && sel->stones[targetSlot].word < 0 && sel->key.find(":plain") == std::string::npos)
 		{
 			char title[160];
 			std::snprintf(title, sizeof(title), strings::TR("NJ_SS_StonesTitle", "Your stones - into slot %d"), targetSlot + 1);
 			ImGuiMCP::SeparatorText(title);
-			if (s.stones.empty()) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoStones", "You carry no soul stones. They are found in boss chests and sold where soul gems are sold.")); }
+			if (s.stones.empty())
+			{
+				ImGuiMCP::TextDisabled("%s", s.enchantingOn ? strings::TR("NJ_SS_NoStonesCraft", "You carry no soul stones. The runesmith cuts them from orichalcum and soul gem dust, for words you have learned.")
+															: strings::TR("NJ_SS_NoStonesDrop", "You carry no soul stones. With Enchanting off they are found on the fallen."));
+			}
 			for (const auto& v : s.stones)
 			{
 				// the known-phrase highlight: this stone continues, in this slot, a phrase whose three words you have learned

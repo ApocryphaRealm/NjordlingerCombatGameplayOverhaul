@@ -413,8 +413,9 @@
       "perks": 34,
       "abilities": 5,
       "helpers": 16,
-      "lootLists": 9,
-      "vendorLists": 1
+      "lootLists": 0,
+      "vendorLists": 0,
+      "dust": 5
     }
   },
   "runesmith": {
@@ -442,9 +443,17 @@
         "topic": "0xC0F",
         "info": "0xC11"
       },
-      "Barter": {
+      "Grind": {
         "topic": "0xC12",
         "info": "0xC14"
+      },
+      "Craft": {
+        "topic": "0xC56",
+        "info": "0xC58"
+      },
+      "AddSlot": {
+        "topic": "0xC59",
+        "info": "0xC5B"
       }
     },
     "home": "RiverwoodSleepingGiantInn at -314,4,13 (near XMarkerHeading)",

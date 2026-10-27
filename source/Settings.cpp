@@ -66,6 +66,16 @@ namespace settings
 
 		bool ParseText(const std::string& a_text, std::string& a_out) { a_out = Trim(a_text); return true; }
 
+		// D27: Auto / On / Off (or 0 / 1 / 2).
+		bool ParseShoutingMode(const std::string& a_text, int& a_out)
+		{
+			const std::string v = Lower(Trim(a_text));
+			if (v == "auto" || v == "0") { a_out = 0; return true; }
+			if (v == "on" || v == "1") { a_out = 1; return true; }
+			if (v == "off" || v == "2") { a_out = 2; return true; }
+			return false;
+		}
+
 		// key:section (both lower case) -> value; plus the [QuestRewardRows] rows with their keys as written.
 		struct FileKeys
 		{
@@ -127,7 +137,11 @@ namespace settings
 			gear::uniques = true;
 			gear::setStrength = 1.0F;
 			gear::uniqueStrength = 1.0F;
-			shouting::enabledDefault = false;
+			shouting::mode = 0;
+			carry::enabled = true;
+			carry::base = 300.0F;
+			carry::perStamina = 2.5F;
+			enchanting::onDefault = true;
 			stones::enabled = true;
 			stones::nameSlots = true;
 			stones::nameDragonLetters = false;
@@ -136,6 +150,8 @@ namespace settings
 
 		void Clamp()
 		{
+			carry::base = std::clamp(carry::base, 50.0F, 1000.0F);
+			carry::perStamina = std::clamp(carry::perStamina, 0.0F, 10.0F);
 			for (int i = 0; i < skilllist::kCount; ++i)
 			{
 				skills::cap[i] = std::clamp(skills::cap[i], 0.0F, 1000.0F);
@@ -203,7 +219,11 @@ namespace settings
 			get("buniqueeffects:gear", gear::uniques, ParseBool);
 			get("fsetstrength:gear", gear::setStrength, ParseFloat);
 			get("funiquestrength:gear", gear::uniqueStrength, ParseFloat);
-			get("bshouting:shouting", shouting::enabledDefault, ParseBool);
+			get("sshouting:shouting", shouting::mode, ParseShoutingMode);
+			get("bcontrolcarryweight:carryweight", carry::enabled, ParseBool);
+			get("fstartingcarryweight:carryweight", carry::base, ParseFloat);
+			get("fcarryweightperstamina:carryweight", carry::perStamina, ParseFloat);
+			get("benchanting:enchanting", enchanting::onDefault, ParseBool);
 			get("benablesoulstones:soulstones", stones::enabled, ParseBool);
 			get("bnameslots:soulstones", stones::nameSlots, ParseBool);
 			get("bnamedragonletters:soulstones", stones::nameDragonLetters, ParseBool);
@@ -318,7 +338,11 @@ namespace settings
 		ok &= WriteKey(lines, "Gear", "bUniqueEffects", gear::uniques ? "1" : "0");
 		ok &= WriteKey(lines, "Gear", "fSetStrength", FormatFloat(gear::setStrength));
 		ok &= WriteKey(lines, "Gear", "fUniqueStrength", FormatFloat(gear::uniqueStrength));
-		ok &= WriteKey(lines, "Shouting", "bShouting", shouting::enabledDefault ? "1" : "0");
+		ok &= WriteKey(lines, "Shouting", "sShouting", shouting::mode == 1 ? "On" : shouting::mode == 2 ? "Off" : "Auto");
+		ok &= WriteKey(lines, "Enchanting", "bEnchanting", enchanting::onDefault ? "1" : "0");
+		ok &= WriteKey(lines, "CarryWeight", "bControlCarryWeight", carry::enabled ? "1" : "0");
+		ok &= WriteKey(lines, "CarryWeight", "fStartingCarryWeight", FormatFloat(carry::base));
+		ok &= WriteKey(lines, "CarryWeight", "fCarryWeightPerStamina", FormatFloat(carry::perStamina));
 		ok &= WriteKey(lines, "SoulStones", "bEnableSoulStones", stones::enabled ? "1" : "0");
 		ok &= WriteKey(lines, "SoulStones", "bNameSlots", stones::nameSlots ? "1" : "0");
 		ok &= WriteKey(lines, "SoulStones", "bNameDragonLetters", stones::nameDragonLetters ? "1" : "0");

@@ -15,7 +15,7 @@
   ],
   "version": 2,
   "customTrees": [
-    { "skill": "Necromancer", "plugin": "CustomSkills -Necromancer-.esp", "group": "magic", "perkTree": "SKSE/Plugins/CustomSkills/Necromancy/perktree.json",
+    { "skill": "Necromancer", "plugin": "CustomSkills -Necromancer-.esp", "group": "magic", "perkTree": "SKSE/Plugins/CustomSkills/Necromancy/perktree.json", "configTxt": "NetScriptFramework/Plugins/CustomSkill.Necromancer.config.txt",
       "note": "PROPOSED 2026-10-26 for Fable / the owner: Necromancy (Custom Skills Framework, Nexus 184608) belongs to the magic group beside Conjuration - its perks take and work only for a class holding magic (Mage, Sorcerer, Healer and every magic hybrid); the Sorcerer -> Battlemage / Nightblade line is its natural home in CLASS-CONTENT. Its perk points are its own globals and are not touched." }
   ],
   "groups": {

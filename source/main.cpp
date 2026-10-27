@@ -21,6 +21,8 @@
 #include "StatsMenuClass.h"
 #include "Skills.h"
 #include "Shouting.h"
+#include "CarryWeight.h"
+#include "Enchanting.h"
 #include "SoulStones.h"
 #include "UI.h"
 
@@ -53,6 +55,7 @@ namespace
 			Gear::Install();
 			SoulStones::Install();
 			Shouting::Install();
+			CarryWeight::Install();
 			QuestRewards::Install();
 			RaceMenuClass::Install();
 			StatsMenuClass::Install();
@@ -65,6 +68,8 @@ namespace
 			Gear::OnGameLoaded();
 			SoulStones::OnGameLoaded();
 			Shouting::OnGameLoaded();
+			CarryWeight::OnGameLoaded();
+			Enchanting::OnGameLoaded();
 			break;
 		default:
 			break;
@@ -78,6 +83,8 @@ namespace
 		QuestRewards::OnSave(a_intfc);
 		SoulStones::OnSave(a_intfc);
 		Shouting::OnSave(a_intfc);
+		CarryWeight::OnSave(a_intfc);
+		Enchanting::OnSave(a_intfc);
 	}
 
 	void LoadCallback(SKSE::SerializationInterface* a_intfc)
@@ -92,6 +99,8 @@ namespace
 			case ClassEffects::kRecord: ClassEffects::ReadRecord(a_intfc, version, length); break;
 			case SoulStones::kRecord: SoulStones::ReadRecord(a_intfc, version, length); break;
 			case Shouting::kRecord: Shouting::ReadRecord(a_intfc, version, length); break;
+			case CarryWeight::kRecord: CarryWeight::ReadRecord(a_intfc, version, length); break;
+			case Enchanting::kRecord: Enchanting::ReadRecord(a_intfc, version, length); break;
 			default: logger::warn("co-save: unknown record {:08X} (version {}, {} bytes) skipped", type, version, length); break;
 			}
 		}
@@ -104,6 +113,8 @@ namespace
 		QuestRewards::OnRevert();
 		SoulStones::OnRevert();
 		Shouting::OnRevert();
+		CarryWeight::OnRevert();
+		Enchanting::OnRevert();
 	}
 }
 

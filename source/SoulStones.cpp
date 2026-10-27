@@ -2,6 +2,7 @@
 
 #include "SoulStones.h"
 
+#include "Enchanting.h"
 #include "Settings.h"
 
 #include "utils/Logger.h"
@@ -115,8 +116,30 @@ namespace SoulStones
 			std::unordered_map<RE::EffectSetting*, int> glowTier;
 			std::unordered_map<std::string, RE::SpellItem*> helpers;
 			float lowHealth = 0.30F;
+			// D22 revised (STONE-CRAFTING.md): dust by tier, the grind table, the recipe
+			std::array<RE::TESBoundObject*, kTiers> dust{};
+			RE::TESBoundObject* ingot = nullptr;
+			std::array<int, kTiers> craftDust{ 1, 2, 3, 4, 5 };
+			struct Grind { RE::TESBoundObject* gem = nullptr; int tier = 0; int empty = 1; int filled = 2; };
+			std::vector<Grind> grind;
+			// ENCHANTING-OFF.md 7: the slot-adding service - one ingot and one gem of the list for the item's Nth added slot
+			RE::TESBoundObject* addIngot = nullptr;
+			std::array<std::vector<RE::TESBoundObject*>, 3> addGems;
+			// D28 (ENCHANTING-OFF.md 3): drops from the fallen while Enchanting is off
+			struct Drops
+			{
+				std::array<int, kTiers> bandFrom{ 1, 10, 20, 30, 40 };   // the victim level each tier starts at
+				int human = 8, animal = 0, creature = 12, boss = 40, dragon = 100;   // percent
+				int bossRolls = 2;
+				int dragonGrandLevel = 40;
+				RE::BGSLocationRefType* bossRef = nullptr;
+				std::vector<RE::TESRace*> atLeastGreater;   // dragon priests, Dwemer centurions
+			} drops;
 		};
 		Table g_t;
+		std::atomic<std::uint32_t> g_dustMade{ 0 }, g_stonesMade{ 0 };   // co-save tallies (NJSS)
+		std::atomic<std::uint32_t> g_stonesDropped{ 0 };
+		std::atomic<bool> g_forceDrop{ false };   // DevBench: the next roll succeeds
 
 		// ---- the per-instance table (main thread; the co-save) ----------------------------------------------------------
 		struct SavedEffect
@@ -139,6 +162,7 @@ namespace SoulStones
 			std::int32_t origCost = -1;           // the original's cost per use (-1: none - our composition costs nothing)
 			bool hadName = false;                 // the instance had a custom name before (an enchanter's, say)
 			std::string origName;
+			int added = 0;                        // slots the runesmith added (ENCHANTING-OFF.md 7), on top of the tier's
 		};
 		std::unordered_map<std::string, Entry> g_entries;
 		std::string g_heldRecord;   // the co-save text kept as it was while the table is not loaded (never lose a save's stones)
@@ -175,6 +199,10 @@ namespace SoulStones
 			bool loaded = false;
 			RE::FormID npcRef = 0;
 			RE::FormID socketInfo = 0;
+			RE::FormID grindInfo = 0;      // D22 revised: "Grind soul gems." opens the window on Grind
+			RE::FormID craftInfo = 0;      // "Make a soul stone." opens it on Craft
+			RE::FormID addSlotInfo = 0;    // "Add a rune slot to my gear." opens it on Add slot
+			RE::TESGlobal* enchantingOn = nullptr;   // 1 while Enchanting is On: his set / grind / craft lines
 			RE::TESGlobal* learned = nullptr;
 			float radius = 1500.0F;
 			RE::FormID homeCell = 0;
@@ -186,6 +214,7 @@ namespace SoulStones
 		std::function<void(bool)> g_windowOpener;   // the settings page's runesmith window (UI registers it)
 		std::atomic<bool> g_checkDistance{ false };
 		std::atomic<bool> g_windowPending{ false };   // the runesmith opened his service: show the window once the dialogue closes
+		std::atomic<int> g_requestedTab{ -1 };        // the tab his line asked for (0 socket, 1 grind, 2 craft)
 
 		RE::PlayerCharacter* Player() { return RE::PlayerCharacter::GetSingleton(); }
 
@@ -336,6 +365,9 @@ namespace SoulStones
 			return std::min(best, 3);
 		}
 
+		// The tier's slots plus what the runesmith added to this instance, at most three.
+		int SlotsOf(RE::TESBoundObject* a_obj, const Entry& a_e) { return HostOf(a_obj) == Host::kNone ? 0 : std::min(3, SlotsOf(a_obj) + std::max(0, a_e.added)); }
+
 		std::string KeyOf(RE::FormID a_base, RE::FormID a_owner, std::uint16_t a_uid)
 		{
 			return fmt::format("{:08X}:{:08X}:{:04X}", a_base, a_owner, a_uid);
@@ -484,7 +516,7 @@ namespace SoulStones
 					if (fx && fx->baseEffect) { out.push_back({ fx->baseEffect, fx->effectItem.magnitude, fx->effectItem.area, fx->effectItem.duration }); }
 				}
 			}
-			const int slots = SlotsOf(a_obj);
+			const int slots = SlotsOf(a_obj, a_e);
 			int bestTier = -1;
 			bool any = false;
 			for (int i = 0; i < 3 && i < slots; ++i)
@@ -619,14 +651,14 @@ namespace SoulStones
 			if (!a_obj || !a_x) { return; }
 			const std::string baseName = a_e.hadName ? a_e.origName : std::string(a_obj->GetName());
 			auto* t = a_x->GetByType<RE::ExtraTextDisplayData>();
-			if (!a_any || !settings::stones::nameSlots)
+			if ((!a_any && a_e.added <= 0) || !settings::stones::nameSlots)
 			{
 				if (a_e.hadName) { if (t) { t->SetName(a_e.origName.c_str()); } }
 				else if (t) { a_x->RemoveByType(RE::ExtraDataType::kTextDisplayData); }
 				return;
 			}
 			std::string tail;
-			const int slots = SlotsOf(a_obj);
+			const int slots = SlotsOf(a_obj, a_e);   // the name carries the slot total: the second fallback for added slots
 			for (int i = 0; i < slots; ++i)
 			{
 				const auto& s = a_e.stones[i];
@@ -999,6 +1031,32 @@ namespace SoulStones
 
 		// ---- the main-thread pass ----------------------------------------------------------------------------------------
 		void BuildSnapshot();
+		struct GemCount { int filled = 0; int empty = 0; RE::InventoryEntryData* entry = nullptr; };
+		GemCount CountGem(RE::TESBoundObject* a_gem);
+		bool WordLearned(int a_word);
+		int RemoveOneGem(RE::TESBoundObject* a_gem);
+
+		// ENCHANTING-OFF.md 7, the second fallback: the name's "[a b -]" tail holds the instance's slot total.
+		int AddedFromName(RE::TESBoundObject* a_obj, RE::ExtraDataList* a_x)
+		{
+			auto* t = a_x ? a_x->GetByType<RE::ExtraTextDisplayData>() : nullptr;
+			const char* dn = t ? a_x->GetDisplayName(a_obj) : nullptr;
+			const std::string name = dn ? dn : "";
+			const auto open = name.rfind(" [");
+			if (open == std::string::npos || name.empty() || name.back() != ']') { return 0; }
+			const std::string tail = name.substr(open + 2, name.size() - open - 3);
+			int tokens = tail.empty() ? 0 : 1;
+			for (char c : tail) { tokens += c == ' ' ? 1 : 0; }
+			return std::clamp(tokens - SlotsOf(a_obj), 0, 3);
+		}
+
+		void StripNameTail(Entry& a_e)
+		{
+			const auto open = a_e.origName.rfind(" [");
+			if (a_e.hadName && open != std::string::npos) { a_e.origName.resize(open); }
+			auto* base = RE::TESForm::LookupByID<RE::TESBoundObject>(a_e.base);
+			if (base && a_e.origName == base->GetName()) { a_e.hadName = false; a_e.origName.clear(); }
+		}
 
 		// Re-composes every socketed instance the player carries (idempotent), rebuilds the equipped list and applies the
 		// perks, abilities and granted Shouts. a_repair also rebuilds lost table entries from the items' enchantments.
@@ -1016,8 +1074,14 @@ namespace SoulStones
 				if (it == g_entries.end())
 				{
 					Entry rebuilt;
-					if (!a_repair || !Repair(e->object, x, rebuilt)) { return; }
-					logger::info("soul stones: rebuilt the table entry of {} from its enchantment (its key had changed)", e->object->GetName());
+					if (!a_repair) { return; }
+					const bool fromEnchant = Repair(e->object, x, rebuilt);
+					const int named = AddedFromName(e->object, x);
+					if (!fromEnchant && named <= 0) { return; }
+					if (!fromEnchant) { rebuilt = NewEntry(e->object, x); StripNameTail(rebuilt); }
+					rebuilt.added = std::max(rebuilt.added, named);
+					logger::info("soul stones: rebuilt the table entry of {} from its {} (its key had changed){}", e->object->GetName(), fromEnchant ? "enchantment" : "name",
+						named > 0 ? fmt::format("; {} added slot(s) read from the name", named) : std::string());
 					it = g_entries.emplace(key, std::move(rebuilt)).first;
 				}
 				const bool changed = Compose(e->object, x, it->second);
@@ -1033,7 +1097,7 @@ namespace SoulStones
 					eq.left = left;
 					eq.stones = it->second.stones;
 					const int p = SpelledPhrase(eq.stones);
-					eq.phrase = (p >= 0 && SlotsOf(e->object) >= 3 && PhraseUnlocked(p)) ? p : -1;
+					eq.phrase = (p >= 0 && SlotsOf(e->object, it->second) >= 3 && PhraseUnlocked(p)) ? p : -1;
 					g_equipped.push_back(eq);
 				}
 			});
@@ -1064,6 +1128,8 @@ namespace SoulStones
 			s.words = g_t.wordNames;
 			s.tiers = g_t.tierNames;
 			s.serviceOpen = g_service.load();
+			s.enchantingOn = Enchanting::IsOn();
+			s.canSocket = s.serviceOpen || !s.enchantingOn;   // ENCHANTING-OFF.md 7: Off - set and take out anywhere, free
 			s.tableEntries = static_cast<std::uint32_t>(g_entries.size());
 			s.composes = g_composes;
 			s.procsFired = g_procsFired.load();
@@ -1085,8 +1151,22 @@ namespace SoulStones
 				// eligible items: every instance with an extra list, plus one row per plain stack
 				std::unordered_map<RE::TESBoundObject*, int> listed;
 				ForEachInstance([&](RE::InventoryEntryData* e, RE::ExtraDataList* x) {
-					const int slots = SlotsOf(e->object);
 					listed[e->object] += std::max(1, static_cast<int>(x->GetCount()));
+					std::string ikey;
+					const Entry* ent = nullptr;
+					if (KeyOf(e->object, x, ikey)) { if (auto f = g_entries.find(ikey); f != g_entries.end()) { ent = &f->second; } }
+					const int slots = ent ? SlotsOf(e->object, *ent) : SlotsOf(e->object);
+					const char* dn0 = x->GetDisplayName(e->object);
+					if (slots < 3 && HostOf(e->object) != Host::kNone)
+					{
+						SlotOffer so;
+						so.key = ent || !ikey.empty() ? ikey : fmt::format("{:08X}:list:{:X}", e->object->GetFormID(), reinterpret_cast<std::uintptr_t>(x));
+						so.name = dn0 ? dn0 : e->object->GetName();
+						so.slots = slots;
+						so.added = ent ? ent->added : 0;
+						so.gemTier = std::clamp(so.added, 0, 2);
+						s.slotOffers.push_back(std::move(so));
+					}
 					if (slots <= 0) { return; }
 					ItemView v;
 					v.host = HostOf(e->object);
@@ -1119,6 +1199,17 @@ namespace SoulStones
 					v.count = plain;
 					s.items.push_back(std::move(v));
 				}
+				for (const auto& [obj, n] : counts)
+				{
+					if (!obj || n <= 0 || HostOf(obj) == Host::kNone || SlotsOf(obj) >= 3 || n - listed[obj] <= 0) { continue; }
+					SlotOffer so;
+					so.key = fmt::format("{:08X}:plain", obj->GetFormID());
+					so.name = obj->GetName();
+					so.slots = SlotsOf(obj);
+					s.slotOffers.push_back(std::move(so));
+				}
+				s.addIngots = g_t.addIngot ? CountOf(g_t.addIngot) : 0;
+				for (int k = 0; k < 3; ++k) { for (auto* g : g_t.addGems[k]) { s.addGems[k] += g ? CountOf(g) : 0; } }
 				std::sort(s.items.begin(), s.items.end(), [](const ItemView& a, const ItemView& b) { return a.equipped != b.equipped ? a.equipped : a.name < b.name; });
 				// phrases: the blueprint (learned at a wall) and the working state (unlocked)
 				for (std::size_t i = 0; i < g_t.phrases.size(); ++i)
@@ -1135,7 +1226,26 @@ namespace SoulStones
 					}
 					s.phrases.push_back(pv);
 				}
+				// D22 revised: the gems he grinds, the words you may have cut, the recipe's ingot
+				for (const auto& g : g_t.grind)
+				{
+					const auto c = CountGem(g.gem);
+					if (c.filled + c.empty <= 0) { continue; }
+					GemView gv;
+					gv.form = g.gem->GetFormID();
+					gv.name = g.gem->GetName();
+					gv.filled = c.filled;
+					gv.empty = c.empty;
+					gv.tier = g.tier;
+					gv.dust = c.filled * g.filled + c.empty * g.empty;
+					s.gems.push_back(std::move(gv));
+				}
+				for (int w = 0; w < static_cast<int>(g_t.words.size()); ++w) { if (WordLearned(w)) { s.learnedWords.push_back(w); } }
+				s.ingots = g_t.ingot ? CountOf(g_t.ingot) : 0;
+				for (int t = 0; t < kTiers; ++t) { s.craftDust[t] = g_t.craftDust[t]; }
 			}
+			s.dustMade = g_dustMade.load();
+			s.stonesMade = g_stonesMade.load();
 			std::scoped_lock l(g_lock);
 			s.lastResult = g_snapshot.lastResult;
 			s.activePerks = g_snapshot.activePerks;
@@ -1155,7 +1265,7 @@ namespace SoulStones
 					return true;
 				}
 			}
-			a_why = Say("NJ_SS_RFee", "The fee is one %s soul gem, and you carry none.", TierName(a_tier).c_str());
+			a_why = Say("NJ_SS_RFeeDust", "The fee is one %s soul gem dust, and you carry none.", TierName(a_tier).c_str());
 			return false;
 		}
 
@@ -1207,16 +1317,17 @@ namespace SoulStones
 		{
 			auto* p = Player();
 			if (!g_t.loaded || !p) { SetResult(Say("NJ_SS_RNotLoaded", "The soul stone table is not loaded - see the log.")); return; }
-			if (!g_service.load()) { SetResult(Say("NJ_SS_RService", "Stones are set and taken out only at the runesmith.")); BuildSnapshot(); return; }
+			const bool runeMode = !Enchanting::IsOn();   // ENCHANTING-OFF.md 7: Off - anywhere, no fee
+			if (!g_service.load() && !runeMode) { SetResult(Say("NJ_SS_RService", "Stones are set and taken out only at the runesmith.")); BuildSnapshot(); return; }
 			RE::TESBoundObject* obj = nullptr;
 			if (!a_unsocket)
 			{
 				if (a_word < 0 || a_word >= static_cast<int>(g_t.words.size()) || a_tier < 0 || a_tier >= kTiers) { SetResult(Say("NJ_SS_RNoSuchStone", "There is no such stone.")); return; }
 				auto* stone = g_t.words[a_word].stones[a_tier];
 				if (!stone || CountOf(stone) <= 0) { SetResult(Say("NJ_SS_RNoStone", "You carry no such stone.")); BuildSnapshot(); return; }
-				if (!HasFee(a_tier)) { SetResult(Say("NJ_SS_RFee", "The fee is one %s soul gem, and you carry none.", TierName(a_tier).c_str())); BuildSnapshot(); return; }
+				if (!runeMode && !HasFee(a_tier)) { SetResult(Say("NJ_SS_RFeeDust", "The fee is one %s soul gem dust, and you carry none.", TierName(a_tier).c_str())); BuildSnapshot(); return; }
 				obj = BaseOfKey(a_key);
-				if (!obj || a_slot < 0 || a_slot >= SlotsOf(obj)) { SetResult(Say("NJ_SS_RNoSlot", "That item has no such slot.")); BuildSnapshot(); return; }
+				if (!obj || a_slot < 0 || a_slot >= 3) { SetResult(Say("NJ_SS_RNoSlot", "That item has no such slot.")); BuildSnapshot(); return; }
 			}
 			std::string key;
 			auto* x = Resolve(a_key, obj, key);
@@ -1226,15 +1337,14 @@ namespace SoulStones
 				BuildSnapshot();
 				return;
 			}
-			const int slots = SlotsOf(obj);
-			if (a_slot < 0 || a_slot >= slots) { SetResult(Say("NJ_SS_RNoSlot", "That item has no such slot.")); BuildSnapshot(); return; }
 			auto it = g_entries.find(key);
+			const int slots = it != g_entries.end() ? SlotsOf(obj, it->second) : SlotsOf(obj);
+			if (a_slot < 0 || a_slot >= slots) { SetResult(Say("NJ_SS_RNoSlot", "That item has no such slot.")); BuildSnapshot(); return; }
 			std::string why;
 			if (a_unsocket)
 			{
 				if (it == g_entries.end() || it->second.stones[a_slot].word < 0) { SetResult(Say("NJ_SS_REmpty", "That slot is empty.")); BuildSnapshot(); return; }
-				const auto s = it->second.stones[a_slot];
-				if (!PayFee(s.tier, why)) { SetResult(why); BuildSnapshot(); return; }
+				const auto s = it->second.stones[a_slot];   // D22 revised: taking a stone out is free
 				if (auto* stone = g_t.words[s.word].stones[s.tier]) { p->AddObjectToContainer(stone, nullptr, 1, nullptr); }
 				it->second.stones[a_slot] = {};
 				SetResult(Say("NJ_SS_RTaken", "%s (%s) taken out of %s - the stone is back in your pack.", g_t.words[s.word].name.c_str(), TierName(s.tier).c_str(), obj->GetName()));
@@ -1243,7 +1353,7 @@ namespace SoulStones
 			{
 				if (it == g_entries.end()) { it = g_entries.emplace(key, NewEntry(obj, x)).first; }
 				if (it->second.stones[a_slot].word >= 0) { SetResult(Say("NJ_SS_RFull", "That slot holds a stone already - take it out first.")); BuildSnapshot(); return; }
-				if (!PayFee(a_tier, why)) { SetResult(why); BuildSnapshot(); return; }
+				if (!runeMode && !PayFee(a_tier, why)) { SetResult(why); BuildSnapshot(); return; }
 				p->RemoveItem(g_t.words[a_word].stones[a_tier], 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				it->second.stones[a_slot] = { a_word, a_tier };
 				SetResult(Say("NJ_SS_RSet", "%s (%s) set into slot %d of %s.", g_t.words[a_word].name.c_str(), TierName(a_tier).c_str(), a_slot + 1, obj->GetName()));
@@ -1252,8 +1362,227 @@ namespace SoulStones
 			bool any = false;
 			for (const auto& s : it->second.stones) { any |= s.word >= 0; }
 			if (changed) { Reequip(obj, x); }
-			if (!any) { g_entries.erase(it); }
+			if (!any && it->second.added <= 0) { g_entries.erase(it); }
 			Recompute(false);
+		}
+
+		// ENCHANTING-OFF.md 7: the runesmith adds a stone slot (both modes), up to three.
+		void DoAddSlot(std::string a_key)
+		{
+			auto* p = Player();
+			if (!g_t.loaded || !p) { SetResult(Say("NJ_SS_RNotLoaded", "The soul stone table is not loaded - see the log.")); return; }
+			if (!g_service.load()) { SetResult(Say("NJ_SS_RServiceSlot", "Only the runesmith adds stone slots.")); BuildSnapshot(); return; }
+			RE::TESBoundObject* obj = BaseOfKey(a_key);
+			if (!obj || HostOf(obj) == Host::kNone) { SetResult(Say("NJ_SS_RNoItem", "The item was not found in your pack.")); BuildSnapshot(); return; }
+			std::string key;
+			auto* x = Resolve(a_key, obj, key);
+			if (!x) { if (a_key.find(":plain") == std::string::npos) { SetResult(Say("NJ_SS_RNoItem", "The item was not found in your pack.")); } BuildSnapshot(); return; }
+			auto it = g_entries.find(key);
+			const int added = it != g_entries.end() ? it->second.added : 0;
+			const int now = it != g_entries.end() ? SlotsOf(obj, it->second) : SlotsOf(obj);
+			if (now >= 3) { SetResult(Say("NJ_SS_RSlotsFull", "%s already holds three stones - no piece holds more.", obj->GetName())); BuildSnapshot(); return; }
+			const int k = std::clamp(added, 0, 2);
+			RE::TESBoundObject* gem = nullptr;
+			for (auto* g : g_t.addGems[k]) { if (g && CountOf(g) > 0) { gem = g; break; } }
+			if (!g_t.addIngot || CountOf(g_t.addIngot) < 1 || !gem)
+			{
+				static const char* gemKeys[] = { "NJ_SS_GemLesser", "NJ_SS_GemGreater", "NJ_SS_GemGrand" };
+				static const char* gemEn[] = { "lesser", "greater", "grand" };
+				SetResult(Say("NJ_SS_RSlotCost", "A new slot takes one orichalcum ingot and one %s soul gem.", strings::TR(gemKeys[k], gemEn[k])));
+				BuildSnapshot();
+				return;
+			}
+			p->RemoveItem(g_t.addIngot, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			RemoveOneGem(gem);
+			if (it == g_entries.end()) { it = g_entries.emplace(key, NewEntry(obj, x)).first; }
+			++it->second.added;
+			Compose(obj, x, it->second);
+			UpdateName(obj, x, it->second, true);
+			SetResult(Say("NJ_SS_RSlotAdded", "Thorvar cuts a new slot into %s: it now holds %d.", obj->GetName(), SlotsOf(obj, it->second)));
+			Recompute(false);
+		}
+
+		// ---- grinding and crafting (D22 revised, STONE-CRAFTING.md) ----------------------------------------------------
+		// A gem base's carried copies split into filled and empty: a base that holds a soul (SoulGemPettyFilled) is filled
+		// in every copy; an empty base is filled in the copies whose extra list carries a soul (the player's own trapping).
+		GemCount CountGem(RE::TESBoundObject* a_gem)
+		{
+			GemCount c;
+			auto* p = Player();
+			auto* changes = p ? p->GetInventoryChanges() : nullptr;
+			const int total = CountOf(a_gem);
+			if (!changes || !changes->entryList || total <= 0) { return c; }
+			auto* sg = a_gem->As<RE::TESSoulGem>();
+			if (sg && sg->GetContainedSoul() != RE::SOUL_LEVEL::kNone) { c.filled = total; return c; }
+			int souled = 0;
+			for (auto* e : *changes->entryList)
+			{
+				if (!e || e->object != a_gem) { continue; }
+				c.entry = e;
+				if (!e->extraLists) { continue; }
+				for (auto* x : *e->extraLists)
+				{
+					if (x && x->GetSoulLevel() != RE::SOUL_LEVEL::kNone) { souled += std::max(1, static_cast<int>(x->GetCount())); }
+				}
+			}
+			c.filled = std::clamp(souled, 0, total);
+			c.empty = total - c.filled;
+			return c;
+		}
+
+		// Removes one copy of the gem, a filled one first; returns whether that copy was filled (-1: none removed).
+		int RemoveOneGem(RE::TESBoundObject* a_gem)
+		{
+			auto* p = Player();
+			const auto c = CountGem(a_gem);
+			if (c.filled + c.empty <= 0) { return -1; }
+			auto* sg = a_gem->As<RE::TESSoulGem>();
+			const bool baseFilled = sg && sg->GetContainedSoul() != RE::SOUL_LEVEL::kNone;
+			RE::ExtraDataList* pick = nullptr;
+			bool filled = baseFilled;
+			if (!baseFilled && c.entry && c.entry->extraLists)
+			{
+				int inLists = 0;
+				RE::ExtraDataList* emptyList = nullptr;
+				for (auto* x : *c.entry->extraLists)
+				{
+					if (!x) { continue; }
+					inLists += std::max(1, static_cast<int>(x->GetCount()));
+					if (x->GetSoulLevel() != RE::SOUL_LEVEL::kNone) { if (!pick) { pick = x; } }
+					else if (!emptyList) { emptyList = x; }
+				}
+				if (pick) { filled = true; }
+				else if (c.filled + c.empty - inLists <= 0) { pick = emptyList; }   // every copy sits in a list: take an empty one by its list
+			}
+			p->RemoveItem(a_gem, 1, RE::ITEM_REMOVE_REASON::kRemove, pick, nullptr);
+			return filled ? 1 : 0;
+		}
+
+		void DoGrind(RE::FormID a_gem, bool a_all)
+		{
+			auto* p = Player();
+			if (!g_t.loaded || !p) { SetResult(Say("NJ_SS_RNotLoaded", "The soul stone table is not loaded - see the log.")); return; }
+			if (!g_service.load() || !Enchanting::IsOn()) { SetResult(Say("NJ_SS_RServiceCraft", "Only the runesmith grinds soul gems and makes stones.")); BuildSnapshot(); return; }
+			const Table::Grind* row = nullptr;
+			for (const auto& g : g_t.grind) { if (g.gem && g.gem->GetFormID() == a_gem) { row = &g; } }
+			if (!row || !g_t.dust[row->tier]) { SetResult(Say("NJ_SS_RNoGrind", "He will not grind that.")); BuildSnapshot(); return; }
+			int ground = 0, dust = 0;
+			for (int guard = 0; guard < 1000; ++guard)
+			{
+				const int filled = RemoveOneGem(row->gem);
+				if (filled < 0) { break; }
+				++ground;
+				dust += filled ? row->filled : row->empty;
+				if (!a_all) { break; }
+			}
+			if (ground == 0) { SetResult(Say("NJ_SS_RNoGem", "You carry none of those.")); BuildSnapshot(); return; }
+			p->AddObjectToContainer(g_t.dust[row->tier], nullptr, dust, nullptr);
+			g_dustMade += static_cast<std::uint32_t>(dust);
+			SetResult(Say("NJ_SS_RGround", "%d %s ground into %d %s soul gem dust.", ground, row->gem->GetName(), dust, TierName(row->tier).c_str()));
+			BuildSnapshot();
+		}
+
+		bool WordLearned(int a_word)
+		{
+			if (a_word < 0 || a_word >= static_cast<int>(g_t.words.size())) { return false; }
+			const auto& w = g_t.words[a_word];
+			if (w.phrase < 0 || w.phrase >= static_cast<int>(g_t.phrases.size()) || w.position < 0 || w.position > 2) { return false; }
+			return Learned(g_t.phrases[w.phrase].real[w.position]);
+		}
+
+		void DoCraft(int a_word, int a_tier)
+		{
+			auto* p = Player();
+			if (!g_t.loaded || !p) { SetResult(Say("NJ_SS_RNotLoaded", "The soul stone table is not loaded - see the log.")); return; }
+			if (!g_service.load() || !Enchanting::IsOn()) { SetResult(Say("NJ_SS_RServiceCraft", "Only the runesmith grinds soul gems and makes stones.")); BuildSnapshot(); return; }
+			if (a_word < 0 || a_word >= static_cast<int>(g_t.words.size()) || a_tier < 0 || a_tier >= kTiers || !g_t.words[a_word].stones[a_tier])
+			{
+				SetResult(Say("NJ_SS_RNoSuchStone", "There is no such stone.")); BuildSnapshot(); return;
+			}
+			const auto& name = g_t.words[a_word].name;
+			if (!WordLearned(a_word)) { SetResult(Say("NJ_SS_RNotLearned", "You have not learned %s at a word wall - he cannot cut a word you have never read.", name.c_str())); BuildSnapshot(); return; }
+			const int need = g_t.craftDust[a_tier];
+			if (!g_t.ingot || CountOf(g_t.ingot) < 1 || !g_t.dust[a_tier] || CountOf(g_t.dust[a_tier]) < need)
+			{
+				SetResult(Say("NJ_SS_RRecipe", "A %s stone takes one orichalcum ingot and %d %s soul gem dust.", TierName(a_tier).c_str(), need, TierName(a_tier).c_str()));
+				BuildSnapshot();
+				return;
+			}
+			p->RemoveItem(g_t.ingot, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			if (need > 0) { p->RemoveItem(g_t.dust[a_tier], need, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr); }
+			p->AddObjectToContainer(g_t.words[a_word].stones[a_tier], nullptr, 1, nullptr);
+			++g_stonesMade;
+			SetResult(Say("NJ_SS_RMade", "Thorvar cuts %s into a %s soul stone.", name.c_str(), TierName(a_tier).c_str()));
+			BuildSnapshot();
+		}
+
+		// ---- drops while Enchanting is off (D28, ENCHANTING-OFF.md 3) --------------------------------------------------
+		bool HasKw(RE::Actor* a_a, const char* a_kw)
+		{
+			auto* race = a_a->GetRace();
+			auto* base = a_a->GetActorBase();
+			return (race && race->HasKeywordString(a_kw)) || (base && base->HasKeywordString(a_kw));
+		}
+
+		bool IsBoss(RE::Actor* a_a)
+		{
+			if (!g_t.drops.bossRef) { return false; }
+			auto* x = a_a->extraList.GetByType<RE::ExtraLocationRefType>();
+			return x && x->locRefType == g_t.drops.bossRef;
+		}
+
+		void DropFrom(RE::Actor* a_victim)
+		{
+			if (!a_victim || !g_t.loaded || Enchanting::IsOn()) { return; }
+			static thread_local std::mt19937 rng{ std::random_device{}() };
+			const auto& dr = g_t.drops;
+			const int level = a_victim->GetLevel();
+			const bool force = g_forceDrop.exchange(false);
+			auto give = [&](int a_word, int a_tier) {
+				auto* stone = g_t.words[a_word].stones[a_tier];
+				if (!stone) { return; }
+				a_victim->AddObjectToContainer(stone, nullptr, 1, nullptr);
+				++g_stonesDropped;
+				logger::info("soul stones: {} (level {}) carries a {} stone of {}", a_victim->GetName(), level, TierName(a_tier), g_t.words[a_word].name);
+			};
+			// a dragon: a full set of one Shout it can use - its spell list's Shouts, matched to our phrases
+			if (HasKw(a_victim, "ActorTypeDragon"))
+			{
+				if (!force && static_cast<int>(rng() % 100) >= dr.dragon) { return; }
+				const int tier = level >= dr.dragonGrandLevel ? 4 : 3;
+				std::vector<int> mine;
+				auto* base = a_victim->GetActorBase();
+				auto* fx = base ? base->actorEffects : nullptr;
+				for (std::uint32_t i = 0; fx && fx->shouts && i < fx->numShouts; ++i)
+				{
+					for (int p = 0; p < static_cast<int>(g_t.phrases.size()); ++p)
+					{
+						if (fx->shouts[i] && g_t.phrases[p].own == fx->shouts[i] && g_t.phrases[p].available) { mine.push_back(p); }
+					}
+				}
+				if (mine.empty()) { logger::info("soul stones: the dragon {} uses no Shout of ours - no set", a_victim->GetName()); return; }
+				const int p = mine[rng() % mine.size()];
+				for (const int w : g_t.phrases[p].words) { if (w >= 0) { give(w, tier); } }
+				return;
+			}
+			int chance = 0;
+			const bool boss = IsBoss(a_victim);
+			if (boss) { chance = dr.boss; }
+			else if (HasKw(a_victim, "ActorTypeAnimal")) { chance = dr.animal; }
+			else if (HasKw(a_victim, "ActorTypeNPC")) { chance = dr.human; }
+			else if (HasKw(a_victim, "ActorTypeCreature") || HasKw(a_victim, "ActorTypeUndead") || HasKw(a_victim, "ActorTypeDwarven") || HasKw(a_victim, "ActorTypeDaedra")) { chance = dr.creature; }
+			int tier = 0;
+			for (int t = 0; t < kTiers; ++t) { if (level >= dr.bandFrom[t]) { tier = t; } }
+			auto* race = a_victim->GetRace();
+			if (race && std::find(dr.atLeastGreater.begin(), dr.atLeastGreater.end(), race) != dr.atLeastGreater.end()) { tier = std::max(tier, 3); }
+			const int rolls = boss ? dr.bossRolls : 1;
+			for (int r = 0; r < rolls; ++r)
+			{
+				if (!(force && r == 0) && (chance <= 0 || static_cast<int>(rng() % 100) >= chance)) { continue; }
+				std::vector<int> words;
+				for (int w = 0; w < static_cast<int>(g_t.words.size()); ++w) { if (g_t.words[w].stones[tier]) { words.push_back(w); } }
+				if (!words.empty()) { give(words[rng() % words.size()], tier); }
+			}
 		}
 
 		// ---- procs --------------------------------------------------------------------------------------------------
@@ -1446,7 +1775,19 @@ namespace SoulStones
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESDeathEvent* a_e, RE::BSTEventSource<RE::TESDeathEvent>*) override
 			{
 				auto* p = Player();
-				if (!a_e || !a_e->dead || !p || a_e->actorKiller.get() != p) { return RE::BSEventNotifyControl::kContinue; }
+				if (!a_e || !a_e->dead || !p) { return RE::BSEventNotifyControl::kContinue; }
+				auto* killerRef = a_e->actorKiller.get();
+				auto* killer = killerRef ? killerRef->As<RE::Actor>() : nullptr;
+				// D28: while Enchanting is off, a kill by the player or a follower may leave a stone on the corpse
+				if (killer && (killer == p || killer->IsPlayerTeammate()) && !Enchanting::IsOn() && a_e->actorDying)
+				{
+					const auto victim = a_e->actorDying->GetHandle();
+					Queue([victim]() {
+						auto ref = victim.get();
+						if (auto* a = ref ? ref->As<RE::Actor>() : nullptr) { DropFrom(a); }
+					});
+				}
+				if (killerRef != p) { return RE::BSEventNotifyControl::kContinue; }
 				Event ev;
 				ev.on = Proc::On::kKill;
 				ev.other = a_e->actorDying ? a_e->actorDying->GetHandle() : RE::ObjectRefHandle{};
@@ -1485,10 +1826,11 @@ namespace SoulStones
 		public:
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESTopicInfoEvent* a_e, RE::BSTEventSource<RE::TESTopicInfoEvent>*) override
 			{
-				if (!a_e || !g_rs.loaded || a_e->topicInfoFormID != g_rs.socketInfo || a_e->type.get() != RE::TESTopicInfoEvent::TopicInfoEventType::kTopicEnd)
-				{
-					return RE::BSEventNotifyControl::kContinue;
-				}
+				if (!a_e || !g_rs.loaded || a_e->type.get() != RE::TESTopicInfoEvent::TopicInfoEventType::kTopicEnd) { return RE::BSEventNotifyControl::kContinue; }
+				const auto id = a_e->topicInfoFormID;
+				const int tab = id == g_rs.socketInfo ? 0 : (g_rs.grindInfo && id == g_rs.grindInfo) ? 1 : (g_rs.craftInfo && id == g_rs.craftInfo) ? 2 : (g_rs.addSlotInfo && id == g_rs.addSlotInfo) ? 3 : -1;
+				if (tab < 0 || !id) { return RE::BSEventNotifyControl::kContinue; }
+				g_requestedTab = tab;
 				Queue([]() {
 					g_service = true;
 					logger::info("soul stones: the runesmith opens his service");
@@ -1532,6 +1874,12 @@ namespace SoulStones
 						ref->data.angle.z = g_rs.homeAngleZ;
 						logger::info("soul stones: the runesmith is brought to his place in the inn ({:.0f}, {:.0f}, {:.0f})", g_rs.homePos.x, g_rs.homePos.y, g_rs.homePos.z);
 					});
+				}
+				// ENCHANTING-OFF.md 7: his set / grind / craft lines are spoken only while Enchanting is On
+				if (g_rs.enchantingOn && ticks % 4 == 0)
+				{
+					const float want = Enchanting::IsOn() ? 1.0F : 0.0F;
+					if (g_rs.enchantingOn->value != want) { Queue([want]() { g_rs.enchantingOn->value = want; logger::info("soul stones: the runesmith's crafting lines {}", want > 0.5F ? "return (Enchanting On)" : "are hidden (Enchanting Off)"); }); }
 				}
 				if (g_service && g_rs.loaded && ticks % 4 == 0)
 				{
@@ -1594,6 +1942,52 @@ namespace SoulStones
 			g_t.unknownWeapon = Form<RE::EffectSetting>(j["unknownPhrase"].value("weapon", nlohmann::json()), "unknown phrase");
 			g_t.unknownArmour = Form<RE::EffectSetting>(j["unknownPhrase"].value("armour", nlohmann::json()), "unknown phrase");
 			for (auto& [name, v] : j["helpers"].items()) { g_t.helpers[name] = Form<RE::SpellItem>(v, "helper"); }
+			// D22 revised: dust, the grind table and the recipe
+			if (j.contains("dust"))
+			{
+				for (int t = 0; t < kTiers && t < static_cast<int>(j["dust"].size()); ++t) { g_t.dust[t] = Form<RE::TESBoundObject>(j["dust"][t], "dust"); }
+			}
+			if (j.contains("craft"))
+			{
+				g_t.ingot = Form<RE::TESBoundObject>(j["craft"].value("ingot", nlohmann::json()), "orichalcum ingot");
+				const auto& need = j["craft"]["dust"];
+				for (int t = 0; t < kTiers && t < static_cast<int>(need.size()); ++t) { g_t.craftDust[t] = std::max(0, need[t].get<int>()); }
+			}
+			if (j.contains("addSlot"))
+			{
+				g_t.addIngot = Form<RE::TESBoundObject>(j["addSlot"].value("ingot", nlohmann::json()), "add-slot ingot");
+				const auto& gl = j["addSlot"]["gems"];
+				for (int k = 0; k < 3 && k < static_cast<int>(gl.size()); ++k)
+				{
+					for (const auto& g : gl[k]) { if (auto* gem = Form<RE::TESBoundObject>(g, "add-slot gem")) { g_t.addGems[k].push_back(gem); } }
+				}
+			}
+			if (j.contains("drops"))
+			{
+				const auto& d = j["drops"];
+				auto& dr = g_t.drops;
+				for (int t = 0; t < kTiers && t < static_cast<int>(d.value("bandFrom", nlohmann::json::array()).size()); ++t) { dr.bandFrom[t] = d["bandFrom"][t].get<int>(); }
+				dr.human = d.value("human", 8);
+				dr.animal = d.value("animal", 0);
+				dr.creature = d.value("creature", 12);
+				dr.boss = d.value("boss", 40);
+				dr.dragon = d.value("dragon", 100);
+				dr.bossRolls = d.value("bossRolls", 2);
+				dr.dragonGrandLevel = d.value("dragonGrandLevel", 40);
+				dr.bossRef = Form<RE::BGSLocationRefType>(d.value("bossLocRefType", nlohmann::json()), "boss location ref type");
+				for (const auto& r : d.value("atLeastGreater", nlohmann::json::array())) { if (auto* race = Form<RE::TESRace>(r, "at-least-greater race")) { dr.atLeastGreater.push_back(race); } }
+			}
+			for (const auto& g : j.value("grind", nlohmann::json::array()))
+			{
+				Table::Grind row;
+				row.gem = Form<RE::TESBoundObject>(g.value("gem", nlohmann::json()), "grind gem");
+				row.tier = std::clamp(g.value("tier", 0), 0, kTiers - 1);
+				row.empty = g.value("empty", 1);
+				row.filled = g.value("filled", 2);
+				if (row.gem) { g_t.grind.push_back(row); }
+			}
+			logger::info("soul stones: crafting - {} grindable gem(s), dust {}, ingot {}", g_t.grind.size(),
+				std::count_if(g_t.dust.begin(), g_t.dust.end(), [](auto* d) { return d != nullptr; }), g_t.ingot ? "resolved" : "MISSING");
 			for (const auto& w : j["words"])
 			{
 				Word word;
@@ -1679,13 +2073,19 @@ namespace SoulStones
 			{
 				const auto r = nlohmann::json::parse(rin);
 				auto* ref = Form<RE::TESObjectREFR>(r.value("npcRef", nlohmann::json()), "runesmith reference");
-				RE::FormID infoId = 0;
-				if (auto* file = handler->LookupModByName(kPlugin); file && r.contains("socketInfo"))
-				{
-					const auto local = static_cast<std::uint32_t>(std::stoul(r["socketInfo"].get<std::string>(), nullptr, 0));
-					infoId = file->IsLight() ? (0xFE000000u | (static_cast<std::uint32_t>(file->GetSmallFileCompileIndex()) << 12) | (local & 0xFFFu))
-					                         : ((static_cast<std::uint32_t>(file->GetCompileIndex()) << 24) | (local & 0xFFFFFFu));
-				}
+				// TESTopicInfo forms are not in memory at data load: the full form ID is computed from the plugin's index
+				auto fullId = [&](const char* a_field) -> RE::FormID {
+					auto* file = handler->LookupModByName(kPlugin);
+					if (!file || !r.contains(a_field)) { return 0; }
+					const auto local = static_cast<std::uint32_t>(std::stoul(r[a_field].get<std::string>(), nullptr, 0));
+					return file->IsLight() ? (0xFE000000u | (static_cast<std::uint32_t>(file->GetSmallFileCompileIndex()) << 12) | (local & 0xFFFu))
+					                       : ((static_cast<std::uint32_t>(file->GetCompileIndex()) << 24) | (local & 0xFFFFFFu));
+				};
+				const RE::FormID infoId = fullId("socketInfo");
+				g_rs.grindInfo = fullId("grindInfo");
+				g_rs.craftInfo = fullId("craftInfo");
+				g_rs.addSlotInfo = fullId("addSlotInfo");
+				g_rs.enchantingOn = Form<RE::TESGlobal>(r.value("enchantingOnGlobal", nlohmann::json()), "runesmith's enchanting-on global");
 				g_rs.learned = Form<RE::TESGlobal>(r.value("learnedGlobal", nlohmann::json()), "runesmith global");
 				g_rs.radius = r.value("serviceRadius", 1500.0F);
 				if (auto* cell = Form<RE::TESForm>(r.value("homeCell", nlohmann::json()), "runesmith's inn")) { g_rs.homeCell = cell->GetFormID(); }
@@ -1704,7 +2104,7 @@ namespace SoulStones
 			}
 		}
 		catch (const std::exception& e) { logger::warn("soul stones: runesmith.json is not valid ({}) - no runesmith", e.what()); }
-		logger::info("soul stones: runesmith {}", g_rs.loaded ? fmt::format("ref {:08X}, socketing line {:08X}", g_rs.npcRef, g_rs.socketInfo) : std::string("not loaded"));
+		logger::info("soul stones: runesmith {}", g_rs.loaded ? fmt::format("ref {:08X}, socketing line {:08X}, grind line {:08X}, craft line {:08X}", g_rs.npcRef, g_rs.socketInfo, g_rs.grindInfo, g_rs.craftInfo) : std::string("not loaded"));
 		if (auto* holder = RE::ScriptEventSourceHolder::GetSingleton())
 		{
 			holder->AddEventSink<RE::TESTopicInfoEvent>(&g_topic);
@@ -1762,9 +2162,9 @@ namespace SoulStones
 			nlohmann::json orig = nlohmann::json::array();
 			for (const auto& o : e.orig) { orig.push_back({ o.effect, o.magnitude, o.area, o.duration }); }
 			arr.push_back({ { "base", e.base }, { "owner", e.owner }, { "uid", e.uid }, { "stones", st }, { "hadEnchant", e.hadEnchant }, { "orig", orig },
-				{ "origCharge", e.origCharge }, { "origCost", e.origCost }, { "hadName", e.hadName }, { "name", e.origName } });
+				{ "origCharge", e.origCharge }, { "origCost", e.origCost }, { "hadName", e.hadName }, { "name", e.origName }, { "added", e.added } });
 		}
-		const std::string text = nlohmann::json{ { "entries", arr } }.dump();
+		const std::string text = nlohmann::json{ { "entries", arr }, { "dustMade", g_dustMade.load() }, { "stonesMade", g_stonesMade.load() } }.dump();
 		const auto size = static_cast<std::uint32_t>(text.size());
 		if (!a_intfc || !a_intfc->OpenRecord(kRecord, kRecordVersion)) { logger::error("soul stones: could not open the co-save record; the socketed stones were not saved"); return; }
 		if (!a_intfc->WriteRecordData(&size, sizeof(size)) || !a_intfc->WriteRecordData(text.data(), size)) { logger::error("soul stones: writing the co-save record failed"); return; }
@@ -1784,6 +2184,8 @@ namespace SoulStones
 		try
 		{
 			const auto j = nlohmann::json::parse(text);
+			g_dustMade = j.value("dustMade", 0u);
+			g_stonesMade = j.value("stonesMade", 0u);
 			for (const auto& v : j["entries"])
 			{
 				Entry e;
@@ -1816,6 +2218,7 @@ namespace SoulStones
 				e.origCost = v.value("origCost", -1);
 				e.hadName = v.value("hadName", false);
 				e.origName = v.value("name", std::string());
+				e.added = std::clamp(v.value("added", 0), 0, 3);
 				g_entries[KeyOf(e.base, e.owner, e.uid)] = std::move(e);
 			}
 		}
@@ -1827,6 +2230,8 @@ namespace SoulStones
 	{
 		g_entries.clear();
 		g_heldRecord.clear();
+		g_dustMade = 0;
+		g_stonesMade = 0;
 		g_equipped.clear();
 		g_service = false;
 	}
@@ -1853,12 +2258,32 @@ namespace SoulStones
 
 	void SetServiceOpen(bool a_open)
 	{
-		if (!a_open) { Queue([]() { CloseService("closed"); BuildSnapshot(); }); return; }
+		if (!a_open)
+		{
+			// efc8: the flag drops now (a caller reading IsServiceOpen right after sees it closed); the window closes on the main thread
+			if (!g_service.exchange(false)) { return; }
+			Queue([]() {
+				logger::info("soul stones: the runesmith's service closes (closed)");
+				if (g_windowOpener) { g_windowOpener(false); }
+				BuildSnapshot();
+			});
+			return;
+		}
 		g_service = true;
 		RequestRefresh();
 	}
 
 	void SetWindowOpener(std::function<void(bool)> a_fn) { g_windowOpener = std::move(a_fn); }
+
+	int TakeRequestedTab() { return g_requestedTab.exchange(-1); }
+
+	void ForceNextDrop(bool a_force) { g_forceDrop = a_force; }
+
+	void RequestAddSlot(const std::string& a_itemKey) { Queue([key = a_itemKey]() { DoAddSlot(key); }); }
+
+	void RequestGrind(RE::FormID a_gem, bool a_all) { Queue([a_gem, a_all]() { DoGrind(a_gem, a_all); }); }
+
+	void RequestCraft(int a_word, int a_tier) { Queue([a_word, a_tier]() { DoCraft(a_word, a_tier); }); }
 
 	bool IsStoneShout(RE::TESShout* a_shout)
 	{
@@ -1879,7 +2304,7 @@ namespace SoulStones
 			if (!stone || !gem) { SetResult(fmt::format("give: FAILED - the {} form did not resolve at load (see the log)", !stone ? "stone" : "fee gem")); BuildSnapshot(); return; }
 			p->AddObjectToContainer(stone, nullptr, a_count, nullptr);
 			p->AddObjectToContainer(gem, nullptr, a_count, nullptr);
-			SetResult(fmt::format("gave {} x {} ({}) and {} fee gem(s)", a_count, g_t.words[a_word].name, g_t.tierNames[a_tier], a_count));
+			SetResult(fmt::format("gave {} x {} ({}) and {} {} dust", a_count, g_t.words[a_word].name, g_t.tierNames[a_tier], a_count, g_t.tierNames[a_tier]));
 			BuildSnapshot();
 		});
 	}
@@ -1905,7 +2330,10 @@ namespace SoulStones
 				text.replace(at, std::strlen(a_tag), fmt::format("{:g}", std::round(a_v * 100.0F) / 100.0F));
 			}
 		};
-		fill("<mag>", c.kind == "self" ? c.value[t] : c.m[t]);
+		float mag = c.kind == "self" ? c.value[t] : c.m[t];
+		// efc8: a fraction written as a percent (AttackDamageMult 0.2 = 20%)
+		if (text.find("<mag>%") != std::string::npos && std::fabs(mag) <= 1.0F && std::fabs(mag) > 0.0F) { mag *= 100.0F; }
+		fill("<mag>", mag);
 		fill("<dur>", c.dur[t]);
 		return text;
 	}
@@ -1945,8 +2373,13 @@ namespace SoulStones
 		for (const auto& v : s.stones) { stones.push_back({ { "word", s.words[v.word] }, { "wordIndex", v.word }, { "tier", s.tiers[v.tier] }, { "tierIndex", v.tier }, { "count", v.count } }); }
 		nlohmann::json phrases = nlohmann::json::array();
 		for (const auto& p : s.phrases) { phrases.push_back({ { "shout", p.shout }, { "learned", p.learned }, { "unlocked", p.unlocked }, { "granted", p.granted } }); }
-		return nlohmann::json{ { "loaded", s.loaded }, { "error", s.error }, { "serviceOpen", s.serviceOpen }, { "tableEntries", s.tableEntries },
-			{ "composes", s.composes }, { "procsFired", s.procsFired }, { "feeGems", s.feeGems }, { "active", s.activePerks }, { "lastResult", s.lastResult },
+		nlohmann::json offers = nlohmann::json::array();
+		for (const auto& o : s.slotOffers) { offers.push_back({ { "key", o.key }, { "name", o.name }, { "slots", o.slots }, { "added", o.added }, { "gemTier", o.gemTier } }); }
+		nlohmann::json gems = nlohmann::json::array();
+		for (const auto& g : s.gems) { gems.push_back({ { "form", fmt::format("0x{:08X}", g.form) }, { "name", g.name }, { "filled", g.filled }, { "empty", g.empty }, { "tier", g.tier }, { "dust", g.dust } }); }
+		return nlohmann::json{ { "loaded", s.loaded }, { "error", s.error }, { "serviceOpen", s.serviceOpen }, { "enchantingOn", s.enchantingOn }, { "canSocket", s.canSocket },
+			{ "slotOffers", offers }, { "gemList", gems }, { "addIngots", s.addIngots }, { "addGems", s.addGems }, { "learnedWordList", s.learnedWords }, { "tableEntries", s.tableEntries },
+			{ "composes", s.composes }, { "procsFired", s.procsFired }, { "dustMade", s.dustMade }, { "stonesMade", s.stonesMade }, { "stonesDropped", g_stonesDropped.load() }, { "ingots", s.ingots }, { "gems", s.gems.size() }, { "learnedWords", s.learnedWords.size() }, { "feeGems", s.feeGems }, { "active", s.activePerks }, { "lastResult", s.lastResult },
 			{ "items", items }, { "stones", stones }, { "phrases", phrases }, { "revision", s.revision } }.dump();
 	}
 }

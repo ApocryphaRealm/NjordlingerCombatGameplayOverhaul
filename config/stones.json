@@ -86,6 +86,42 @@
   "vendorLists": [
     "LItemMiscVendorSoulGem75"
   ],
+  "lootListsRetired": "D22 revised (STONE-CRAFTING.md, 2026-10-26): lootLists and vendorLists are no longer injected (stones are neither loot nor merchandise); the levelled lists stay in the plugin so no form ID moves",
+  "dust": {
+    "_comment": "D22 revised (STONE-CRAFTING.md 2): five MISC items, one per tier; value half the empty gem's; the model and sounds of bone meal. Built LATE (after every earlier record) so no form ID moves.",
+    "names": ["Petty Soul Gem Dust", "Lesser Soul Gem Dust", "Common Soul Gem Dust", "Greater Soul Gem Dust", "Grand Soul Gem Dust"],
+    "valueFrom": ["SoulGemPetty", "SoulGemLesser", "SoulGemCommon", "SoulGemGreater", "SoulGemGrand"],
+    "modelFrom": "BoneMeal",
+    "weight": 0.1
+  },
+  "grind": [
+    { "gem": "SoulGemPetty", "tier": 0, "empty": 1, "filled": 2 },
+    { "gem": "SoulGemPettyFilled", "tier": 0, "empty": 1, "filled": 2 },
+    { "gem": "SoulGemLesser", "tier": 1, "empty": 1, "filled": 2 },
+    { "gem": "SoulGemLesserFilled", "tier": 1, "empty": 1, "filled": 2 },
+    { "gem": "SoulGemCommon", "tier": 2, "empty": 1, "filled": 2 },
+    { "gem": "SoulGemCommonFilled", "tier": 2, "empty": 1, "filled": 2 },
+    { "gem": "SoulGemGreater", "tier": 3, "empty": 1, "filled": 2 },
+    { "gem": "SoulGemGreaterFilled", "tier": 3, "empty": 1, "filled": 2 },
+    { "gem": "SoulGemGrand", "tier": 4, "empty": 1, "filled": 2 },
+    { "gem": "SoulGemGrandFilled", "tier": 4, "empty": 1, "filled": 2 },
+    { "gem": "SoulGemBlack", "tier": 4, "empty": 2, "filled": 4 },
+    { "gem": "SoulGemBlackFilled", "tier": 4, "empty": 2, "filled": 4 }
+  ],
+  "drops": {
+    "_comment": "D28 (ENCHANTING-OFF.md 3, TUNE): only while Enchanting is OFF - a kill by the player or a follower rolls once by the victim's level band (petty from 1, lesser 10, common 20, greater 30, grand 40); percent chances; bosses (the Boss location ref type) roll twice; dragon priests and Dwemer centurions at least greater; a dragon drops the three stones of one Shout on its spell list (grand from level 40, else greater). Runtime, no levelled lists.",
+    "bandFrom": [1, 10, 20, 30, 40],
+    "human": 8, "animal": 0, "creature": 12, "boss": 40, "dragon": 100,
+    "bossRolls": 2, "dragonGrandLevel": 40,
+    "bossLocRefType": "Boss",
+    "atLeastGreater": ["DragonPriestRace", "DwarvenCenturionRace", "DLC2DwarvenCenturionRace", "DLC2DragonPriestRace"]
+  },
+  "addSlot": {
+    "_comment": "ENCHANTING-OFF.md 7 (the owner 20:14, TUNE Q77): Thorvar raises an item's stone slots up to three, in both modes; each added slot costs one orichalcum ingot and one soul gem (filled or empty) sized by which added slot it is - lesser for the item's first added slot, greater for the second, grand for the third.",
+    "ingot": "IngotOrichalcum",
+    "gems": [["SoulGemLesser", "SoulGemLesserFilled"], ["SoulGemGreater", "SoulGemGreaterFilled"], ["SoulGemGrand", "SoulGemGrandFilled"]]
+  },
+  "craft": { "_comment": "STONE-CRAFTING.md 3 (TUNE): one orichalcum ingot plus dust of the stone's tier; only words learned at a wall", "ingot": "IngotOrichalcum", "dust": [1, 2, 3, 4, 5] },
   "shoutEdids": {
     "Unrelenting Force": "UnrelentingForceShout",
     "Fire Breath": "FireBreathShout",

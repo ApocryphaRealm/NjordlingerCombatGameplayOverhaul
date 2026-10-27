@@ -48,7 +48,11 @@ DEFAULTS = [
     ("Gear", "bUniqueEffects", "1", "gear::uniques", "named unique items carry an effect of their own"),
     ("Gear", "fSetStrength", "1.00", "gear::setStrength", "0.25 to 2.00 - scales every set bonus from the value in the plugin (1.00 = as written)"),
     ("Gear", "fUniqueStrength", "1.00", "gear::uniqueStrength", "0.25 to 2.00 - scales every unique effect"),
-    ("Shouting", "bShouting", "0", "shouting::enabledDefault", "a NEW save's Shouting: 0 = the shout key is refused (stone Shouts and quest Shouts still work) and dragon souls become perk points; each save keeps its own choice"),
+    ("Shouting", "sShouting", "Auto", "", "a NEW save's Shouting: Auto = you can shout while your class holds the magic group (re-read at every evolution); On; Off = the shout key is refused (stone Shouts and quest Shouts still work). While shouting is refused, dragon souls become perk points. Each save keeps its own choice"),
+    ("Enchanting", "bEnchanting", "1", "enchanting::onDefault", "a NEW save's Enchanting: 1 = On (the arcane enchanter is gated by class); 0 = Off - nobody enchants, the Enchanting tree is locked for all, and soul stones drop from the fallen. Each save keeps its own choice"),
+    ("CarryWeight", "bControlCarryWeight", "1", "carry::enabled", "one owned carry-weight modifier: the starting value below, plus the amount per Adaptive Attributes Stamina point (only while Adaptive Attributes' own bEnableCarryWeightFromStaminaBonus is false - one writer)"),
+    ("CarryWeight", "fStartingCarryWeight", "300.00", "carry::base", "50 to 1000 - the carry weight a character starts with (vanilla races: 300); level-up gains and effects stack on top"),
+    ("CarryWeight", "fCarryWeightPerStamina", "2.50", "carry::perStamina", "0 to 10 - carry weight per permanent Stamina point Adaptive Attributes grants"),
     ("SoulStones", "bEnableSoulStones", "1", "stones::enabled", "soul stone effects, phrases and the Shouts phrases grant"),
     ("SoulStones", "bNameSlots", "1", "stones::nameSlots", "a socketed item's name ends with its words, e.g. Elven Sword [Yol Fo -]"),
     ("SoulStones", "bNameDragonLetters", "0", "stones::nameDragonLetters", "leave 0: tested 2026-10-26 - the inventories on this list show font tags in item names as raw text"),
@@ -71,6 +75,8 @@ def check_defaults():
         code = m.group(1).strip().rstrip("F").replace("true", "1").replace("false", "0")
         if abs(float(code) - float(value)) > 1e-6:
             bad.append(f"{name}: compiled {code}, INI {value}")
+    if "shouting::mode = 0;" not in body:
+        bad.append("shouting::mode: compiled default is not Auto (0), INI Auto")
     if "levelup::perksByLevel = { { 1, 1 } }" not in body:
         bad.append("levelup::perksByLevel: compiled table is not 1:1")
     for needle in ("skills::cap[i] = kVanillaSkillCap", "skillexp::mult[i] = 1.0F"):

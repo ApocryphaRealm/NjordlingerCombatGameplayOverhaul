@@ -85,6 +85,24 @@ namespace SoulStones
 		int granted = 0;          // the clone Shout's level granted by worn stones (armour reading, D21), 0 = none
 	};
 
+	struct GemView                // D22 revised: a soul gem kind in the pack, as the runesmith grinds it
+	{
+		RE::FormID form = 0;
+		std::string name;
+		int filled = 0, empty = 0;
+		int tier = 0;                 // the dust it becomes
+		int dust = 0;                 // what grinding every copy gives
+	};
+
+	struct SlotOffer              // ENCHANTING-OFF.md 7: an item the runesmith can add a slot to
+	{
+		std::string key;
+		std::string name;
+		int slots = 0;                // now
+		int added = 0;                // added so far
+		int gemTier = 0;              // the next slot's gem: 0 lesser, 1 greater, 2 grand
+	};
+
 	struct Snapshot
 	{
 		bool loaded = false;
@@ -94,8 +112,18 @@ namespace SoulStones
 		std::vector<ItemView> items;          // eligible items in the player's inventory (slots > 0)
 		std::vector<StoneView> stones;        // stones the player carries
 		std::vector<PhraseView> phrases;
-		std::array<int, 5> feeGems{};         // soul gems the player carries, by tier (the fee)
+		std::array<int, 5> feeGems{};         // soul gem dust the player carries, by tier (the fee; D22 revised)
+		std::vector<GemView> gems;            // gems he can grind
+		std::vector<int> learnedWords;        // words learned at a wall: the stones he can cut
+		int ingots = 0;                       // orichalcum ingots carried
+		std::array<int, 5> craftDust{};       // dust a stone of each tier takes
+		std::uint32_t dustMade = 0, stonesMade = 0;   // this save's tallies
 		bool serviceOpen = false;             // socketing is open (the runesmith, or DevBench's test switch)
+		bool enchantingOn = true;             // D28: On - Thorvar's services; Off - stones set anywhere, free
+		bool canSocket = false;               // the socket buttons show (service open, or Enchanting Off)
+		std::vector<SlotOffer> slotOffers;    // items below three slots
+		int addIngots = 0;
+		std::array<int, 3> addGems{};         // lesser / greater / grand gems carried (the add-slot cost)
 		std::uint32_t tableEntries = 0;       // socketed instances in the co-save table
 		std::uint32_t composes = 0;           // enchantments composed this session
 		std::uint32_t procsFired = 0;
@@ -112,11 +140,24 @@ namespace SoulStones
 	// Re-composes every socketed item and re-applies perks and Shouts (after a settings change). Safe from any thread.
 	void RequestRecompose();
 
-	// Socket a stone into a slot (1-based slot index 0..2) / take it out. Fee: one soul gem of the stone's tier, empty or
-	// filled (D22); unsocketing returns the stone (Q13 default). Refused unless the service is open. Safe from any thread;
+	// Socket a stone into a slot (1-based slot index 0..2) / take it out. Fee: one soul gem dust of the stone's tier (D22
+	// revised); taking a stone out is free and returns it. Refused unless the service is open. Safe from any thread;
 	// the result lands in the snapshot's lastResult.
 	void RequestSocket(const std::string& a_itemKey, int a_slot, int a_word, int a_tier);
 	void RequestUnsocket(const std::string& a_itemKey, int a_slot);
+
+	// D22 revised: grind one (or every) copy of a soul gem kind into dust; cut a stone of a learned word (1 orichalcum
+	// ingot + dust of the tier). Refused unless the service is open. Safe from any thread.
+	void RequestGrind(RE::FormID a_gem, bool a_all);
+	void RequestCraft(int a_word, int a_tier);
+	// The tab the runesmith's line asked the window to open on (0 socket, 1 grind, 2 craft), once; -1 = none.
+	int TakeRequestedTab();
+
+	// D28: while Enchanting is off a kill by the player or a follower rolls for a stone on the corpse; DevBench forces the
+	// next roll (op=stonesdrop).
+	void ForceNextDrop(bool a_force);
+	// ENCHANTING-OFF.md 7: the runesmith adds one stone slot to an item (both modes; up to three). Safe from any thread.
+	void RequestAddSlot(const std::string& a_itemKey);
 
 	// The runesmith opens the service (his dialogue after the quest); DevBench may open it for a test.
 	void SetServiceOpen(bool a_open);

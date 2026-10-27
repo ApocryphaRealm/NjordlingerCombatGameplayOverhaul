@@ -579,7 +579,8 @@ if (File.Exists(stonesPath))
     var runesmithPath = Path.Combine(repo, "config", "runesmith.json");
     StoneBuild.Run(mod, modKey, repo, JsonNode.Parse(File.ReadAllText(stonesPath))!, JsonNode.Parse(File.ReadAllText(schemePath))!,
         keywords, forms, stubs, approx, dllDone, MakeCondition, TabCount,
-        () => { if (File.Exists(runesmithPath)) { RunesmithBuild.Run(mod, modKey, repo, JsonNode.Parse(File.ReadAllText(runesmithPath))!, forms, keywords); } });
+        () => { if (File.Exists(runesmithPath)) { RunesmithBuild.Run(mod, modKey, repo, JsonNode.Parse(File.ReadAllText(runesmithPath))!, forms, keywords); } },
+        () => RunesmithBuild.RunLate(forms));
 }
 
 forms["dll"] =new JsonArray(dllDone.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
