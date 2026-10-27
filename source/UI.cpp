@@ -884,9 +884,9 @@ namespace UI
 			if (ImGuiMCP::Selectable(row.c_str(), o.key == picked)) { picked = o.key; }
 			(void)can;
 		}
-		// 02:48: the card of the item picked here (the same card as on the Socket tab)
+		// 02:48 / eacb: the card of the item picked here (each offer carries its own - a 0-slot item has no socket row)
 		const ::SoulStones::ItemView* sel = nullptr;
-		for (const auto& it : a_s.items) { if (it.key == picked) { sel = &it; } }
+		for (const auto& o : a_s.slotOffers) { if (o.key == picked) { sel = &o.card; } }
 		ItemCard(sel);
 	}
 

@@ -15,9 +15,8 @@ import os
 import re
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VANILLA = ["Illusion", "Conjuration", "Destruction", "Restoration", "Alteration", "Enchanting", "Smithing", "HeavyArmor",
-           "Block", "TwoHanded", "OneHanded", "Marksman", "LightArmor", "Sneak", "Lockpicking", "Pickpocket", "Speechcraft",
-           "Alchemy"]
+VANILLA = ["Enchanting", "Smithing", "HeavyArmor", "Block", "TwoHanded", "OneHanded", "Marksman", "LightArmor", "Sneak", "Lockpicking",
+           "Pickpocket", "Speechcraft", "Alchemy", "Illusion", "Conjuration", "Destruction", "Restoration", "Alteration"]   # the game's own order (combined run eacb, logged with the ring unticked) - the vanilla sky's cImage00-17 follow it
 SKY = "Interface/NjordlingerCGO/intperkskydome20.nif"
 
 

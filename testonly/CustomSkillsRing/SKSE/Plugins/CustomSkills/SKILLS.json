@@ -6,11 +6,6 @@
     "cameraRightPoint": 1
   },
   "skills": [
-    "Illusion",
-    "Conjuration",
-    "Destruction",
-    "Restoration",
-    "Alteration",
     "Enchanting",
     "Smithing",
     "HeavyArmor",
@@ -24,6 +19,11 @@
     "Pickpocket",
     "Speechcraft",
     "Alchemy",
+    "Illusion",
+    "Conjuration",
+    "Destruction",
+    "Restoration",
+    "Alteration",
     {
       "id": "diving",
       "name": "Diving",

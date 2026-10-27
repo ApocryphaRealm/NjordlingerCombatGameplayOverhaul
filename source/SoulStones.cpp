@@ -1267,6 +1267,9 @@ namespace SoulStones
 				// eligible items: every instance with an extra list, plus one row per plain stack
 				std::unordered_map<RE::TESBoundObject*, int> listed;
 				ForEachInstance([&](RE::InventoryEntryData* e, RE::ExtraDataList* x) {
+					// eacb: an entry the player no longer carries (a base-container item removed, count 0) keeps its extra
+					// lists - "Necromancer Necklace" was listed and picked by default; only carried items are listed
+					if (auto c = counts.find(e->object); c == counts.end() || c->second <= 0) { return; }
 					listed[e->object] += std::max(1, static_cast<int>(x->GetCount()));
 					std::string ikey;
 					const Entry* ent = nullptr;
@@ -1281,6 +1284,13 @@ namespace SoulStones
 						so.slots = slots;
 						so.added = ent ? ent->added : 0;
 						so.gemTier = std::clamp(so.added, 0, 2);
+						// eacb: the Add slot tab's card (a 0-slot item has no row in the socket list to borrow one from)
+						so.card.key = so.key;
+						so.card.name = so.name;
+						so.card.host = HostOf(e->object);
+						so.card.slots = slots;
+						if (ent) { so.card.stones = ent->stones; }
+						FillCard(so.card, e->object, ent, e);
 						s.slotOffers.push_back(std::move(so));
 					}
 					if (slots <= 0) { return; }
@@ -1324,6 +1334,11 @@ namespace SoulStones
 					so.key = fmt::format("{:08X}:plain", obj->GetFormID());
 					so.name = obj->GetName();
 					so.slots = SlotsOf(obj);
+					so.card.key = so.key;
+					so.card.name = so.name;
+					so.card.host = HostOf(obj);
+					so.card.slots = so.slots;
+					FillCard(so.card, obj, nullptr);
 					s.slotOffers.push_back(std::move(so));
 				}
 				s.addIngots = g_t.addIngot ? CountOf(g_t.addIngot) : 0;

@@ -44,24 +44,12 @@ namespace RowTint
 
 		void DrawBar(RE::GFxValue& a_row, RE::GFxValue& a_entry)
 		{
-			RE::GFxValue bar;
-			if (!a_row.GetMember("njTierBar", &bar) || !bar.IsDisplayObject())
-			{
-				// below every timeline clip of the row (they sit at -16384 and up)
-				std::array<RE::GFxValue, 2> args{ RE::GFxValue("njTierBar"), RE::GFxValue(-16385.0) };
-				if (!a_row.Invoke("createEmptyMovieClip", &bar, args.data(), args.size()) || !bar.IsDisplayObject())
-				{
-					if (!g_layerWarned.exchange(true)) { logger::warn("row tint: a bar could not be made under the row's clips - rows stay untinted"); }
-					return;
-				}
-				static std::atomic<bool> s_told{ false };
-				if (!s_told.exchange(true))
-				{
-					RE::GFxValue depth;
-					bar.Invoke("getDepth", &depth);
-					logger::info("row tint: the first bar sits at depth {} (the row's own clips start at -16384)", depth.IsNumber() ? depth.GetNumber() : 0.0);
-				}
-			}
+			// eacb: a child clip below depth -16384 could not be made ("rows stay untinted"). The row clip's own drawing-API
+			// content is rendered beneath all of its children, so the bar is drawn on the row itself (its timeline shapes and
+			// clips are children; clear() only removes what the drawing API drew).
+			RE::GFxValue& bar = a_row;
+			static std::atomic<bool> s_told{ false };
+			if (!s_told.exchange(true)) { logger::info("row tint: bars are drawn on the row clips themselves (beneath their children)"); }
 			bar.Invoke("clear");
 			RE::GFxValue formId;
 			const std::uint32_t colour = settings::gear::tierRows && a_entry.GetMember("formId", &formId) && formId.IsNumber()

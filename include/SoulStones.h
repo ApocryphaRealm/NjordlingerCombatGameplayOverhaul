@@ -74,6 +74,16 @@ namespace SoulStones
 		std::vector<std::string> enchantLines;   // the item's own enchantment, effect by effect (name and magnitude)
 	};
 
+	struct SlotOffer              // ENCHANTING-OFF.md 7: an item the runesmith can add a slot to
+	{
+		std::string key;
+		std::string name;
+		int slots = 0;                // now
+		int added = 0;                // added so far
+		int gemTier = 0;              // the next slot's gem: 0 lesser, 1 greater, 2 grand
+		ItemView card;                // eacb: the item card the Add slot tab shows
+	};
+
 	struct StoneView
 	{
 		int word = 0;
@@ -99,15 +109,6 @@ namespace SoulStones
 		int filled = 0, empty = 0;
 		int tier = 0;                 // the dust it becomes
 		int dust = 0;                 // what grinding every copy gives
-	};
-
-	struct SlotOffer              // ENCHANTING-OFF.md 7: an item the runesmith can add a slot to
-	{
-		std::string key;
-		std::string name;
-		int slots = 0;                // now
-		int added = 0;                // added so far
-		int gemTier = 0;              // the next slot's gem: 0 lesser, 1 greater, 2 grand
 	};
 
 	struct Snapshot
