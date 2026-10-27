@@ -42,7 +42,8 @@ namespace SoulStones
 		// ---- the table read from stones.json (main thread after Install; read-only afterwards) --------------------------
 		struct Proc
 		{
-			enum class On { kHit, kHitBy, kKill, kCooldown, kTick } on = On::kHit;   // kTick: once a second while equipped
+			enum class On { kHit, kHitBy, kKill, kCooldown, kTick, kNearDeath, kSprint } on = On::kHit;   // kTick: once a second while equipped;
+			// stub batch 2: kNearDeath - anyone but the player's side dies within the radius; kSprint - a sprint begins
 			bool power = false, sneak = false, blocked = false, lowHealth = false, storm = false;
 			RE::BGSKeyword* targetKeyword = nullptr;
 			int chance = 0;
@@ -313,7 +314,8 @@ namespace SoulStones
 				const auto& p = a_c["proc"];
 				c.hasProc = true;
 				const auto on = p.value("on", std::string("hit"));
-				c.proc.on = on == "hitBy" ? Proc::On::kHitBy : on == "kill" ? Proc::On::kKill : on == "cooldown" ? Proc::On::kCooldown : on == "tick" ? Proc::On::kTick : Proc::On::kHit;
+				c.proc.on = on == "hitBy" ? Proc::On::kHitBy : on == "kill" ? Proc::On::kKill : on == "cooldown" ? Proc::On::kCooldown : on == "tick" ? Proc::On::kTick :
+				            on == "nearDeath" ? Proc::On::kNearDeath : on == "sprint" ? Proc::On::kSprint : Proc::On::kHit;
 				c.proc.op = p.value("op", std::string());
 				c.proc.shaderDur = p.value("shaderDur", 3.0F);
 				c.proc.radius = p.value("radius", 1024.0F);
@@ -1992,6 +1994,43 @@ namespace SoulStones
 			bool power = false, sneak = false, blocked = false;
 		};
 
+		// stub batch 2 (Ah): a carcass gives more - each pelt, hide, meat or other ingredient / misc item the animal carries
+		// is added a_extra more times. Once per death (the kill event comes once).
+		void ExtraYield(RE::Actor* a_corpse, int a_extra)
+		{
+			if (!a_corpse || a_extra <= 0) { return; }
+			std::vector<std::pair<RE::TESBoundObject*, std::int32_t>> add;
+			for (auto& [obj, entry] : a_corpse->GetInventory())
+			{
+				if (!obj || entry.first <= 0 || entry.second->IsWorn() || entry.second->IsQuestObject()) { continue; }
+				if (!obj->Is(RE::FormType::Ingredient) && !obj->Is(RE::FormType::Misc)) { continue; }
+				if (obj->IsGold()) { continue; }
+				add.emplace_back(obj, a_extra);
+			}
+			for (auto& [obj, n] : add) { a_corpse->AddObjectToContainer(obj, nullptr, n, nullptr); }
+			logger::info("soul stones: carcass yield - {} item kind(s) on {} gained {} each", add.size(), a_corpse->GetName(), a_extra);
+		}
+
+		// stub batch 2 (Fiik, bow): an arrow marks the target; the next blow it lands on the player is returned to it
+		struct MarkState { Clock::time_point until; float damage = 0.0F; };
+		std::unordered_map<RE::FormID, MarkState> g_marks;
+		void Mark(RE::Actor* a_target, float a_damage)
+		{
+			if (!a_target || a_damage <= 0.0F) { return; }
+			g_marks[a_target->GetFormID()] = { Clock::now() + std::chrono::seconds(10), a_damage };
+		}
+		void Mirror(RE::Actor* a_attacker)
+		{
+			if (!a_attacker) { return; }
+			const auto it = g_marks.find(a_attacker->GetFormID());
+			if (it == g_marks.end()) { return; }
+			const auto m = it->second;
+			g_marks.erase(it);
+			if (Clock::now() > m.until || a_attacker->IsDead()) { return; }
+			Damage(a_attacker, m.damage);
+			logger::info("soul stones: a marked attacker's blow mirrored back ({} damage to {})", m.damage, a_attacker->GetName());
+		}
+
 		void Fire(const std::string& a_key, const Cell& a_cell, int a_tier, const Event& a_ev, RE::Actor* a_other)
 		{
 			const auto& pr = a_cell.proc;
@@ -2010,6 +2049,7 @@ namespace SoulStones
 				if (!p->IsBlocking() && st != AS::kBowDraw && st != AS::kBowAttached && st != AS::kBowDrawn && st != AS::kBowReleasing) { return; }
 			}
 			if (pr.targetKeyword && (!a_other || !a_other->HasKeyword(pr.targetKeyword))) { return; }
+			if (pr.on == Proc::On::kNearDeath && (!a_other || a_other->GetPosition().GetDistance(p->GetPosition()) > pr.radius)) { return; }
 			const auto now = Clock::now();
 			if (pr.every > 0)
 			{
@@ -2054,13 +2094,15 @@ namespace SoulStones
 				if (!close.empty()) { targets.push_back(close.front()); }
 			}
 			else if (a_other && !a_other->IsDead()) { targets.push_back(a_other); }
-			else if (a_other && pr.on == Proc::On::kKill) { targets.push_back(a_other); }   // raise the dead
+			else if (a_other && (pr.on == Proc::On::kKill || pr.on == Proc::On::kNearDeath)) { targets.push_back(a_other); }   // raise the dead
 			if (targets.empty()) { return; }
 			auto* caster = p->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
 			for (auto* t : targets)
 			{
 				if (pr.op == "shader" && pr.shader) { t->ApplyEffectShader(pr.shader, pr.shaderDur); }
 				if (pr.op == "calm" && t->IsInCombat()) { t->StopCombat(); }
+				if (pr.op == "yield") { ExtraYield(t, static_cast<int>(std::lround(std::max(1.0F, mag)))); continue; }
+				if (pr.op == "mark") { Mark(t, mag); continue; }
 				if (pr.damage > 0.0F) { Damage(t, pr.damage); }
 				// bfbb: a tick proc re-cast every second stacked (Elemental Fury's speed 115 -> 265) - a target that still carries
 				// the helper's effect is skipped until it lapses
@@ -2083,6 +2125,7 @@ namespace SoulStones
 			if (!g_t.loaded || !settings::stones::enabled) { return; }
 			auto ref = a_ev.other.get();
 			auto* other = ref ? ref->As<RE::Actor>() : nullptr;
+			if (a_ev.on == Proc::On::kHitBy && other && !g_marks.empty()) { Mirror(other); }
 			for (const auto& eq : g_equipped)
 			{
 				const bool weapon = eq.host != Host::kArmour;
@@ -2150,6 +2193,18 @@ namespace SoulStones
 						auto ref = victim.get();
 						if (auto* a = ref ? ref->As<RE::Actor>() : nullptr) { DropFrom(a); }
 					});
+				}
+				// stub batch 2 (Zol): a death near the player that is not the player's or a follower's
+				if (a_e->actorDying && a_e->actorDying.get() != p && !g_equipped.empty())
+				{
+					auto* dying = a_e->actorDying->As<RE::Actor>();
+					if (dying && !dying->IsPlayerTeammate())
+					{
+						Event nd;
+						nd.on = Proc::On::kNearDeath;
+						nd.other = a_e->actorDying->GetHandle();
+						Queue([nd]() { HandleEvent(nd); });
+					}
 				}
 				if (killerRef != p) { return RE::BSEventNotifyControl::kContinue; }
 				Event ev;
@@ -2277,6 +2332,17 @@ namespace SoulStones
 				std::this_thread::sleep_for(std::chrono::milliseconds(250));
 				static int ticks = 0;
 				++ticks;
+				if (!g_equipped.empty())
+				{
+					Queue([]() {
+						// stub batch 2 (Wuld Nah Kest armour): a sprint beginning, seen within a quarter second
+						static bool was = false;
+						auto* p = Player();
+						const bool now = p && p->AsActorState()->IsSprinting();
+						if (now && !was) { Event ev; ev.on = Proc::On::kSprint; HandleEvent(ev); }
+						was = now;
+					});
+				}
 				if (ticks % 4 == 0)
 				{
 					Queue([]() {
@@ -2551,6 +2617,7 @@ namespace SoulStones
 		g_service = false;
 		g_cooldowns.clear();
 		g_streaks.clear();
+		g_marks.clear();
 		g_composed.clear();
 		for (auto* w : g_t.phrases[0].real)
 		{

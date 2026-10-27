@@ -1873,9 +1873,23 @@
           ]
         },
         "armour": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xA92",
-          "text": "Animal carcasses yield more. (dormant)"
+          "text": "Animal carcasses yield more.",
+          "proc": {
+            "on": "kill",
+            "targetKeyword": "Skyrim.esm|0x13798",
+            "op": "yield",
+            "mag": [
+              1,
+              1.25,
+              1.5,
+              1.75,
+              2
+            ],
+            "at": "target",
+            "cd": 0
+          }
         }
       }
     },
@@ -3219,9 +3233,16 @@
           }
         },
         "armour": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xB6C",
-          "text": "The dead near you rise to fight for you once. (dormant)"
+          "text": "The dead near you rise to fight for you once.",
+          "proc": {
+            "on": "nearDeath",
+            "radius": 1024,
+            "at": "target",
+            "cd": 30,
+            "spell": "Skyrim.esm|0xC969E"
+          }
         }
       }
     },
@@ -4121,9 +4142,22 @@
           }
         },
         "ranged": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xC33",
-          "text": "Arrows mark the target: its next attack on you is mirrored back. (dormant)"
+          "text": "Arrows mark the target: its next attack on you is mirrored back.",
+          "proc": {
+            "on": "hit",
+            "op": "mark",
+            "mag": [
+              10,
+              17.5,
+              25,
+              32.5,
+              40
+            ],
+            "at": "target",
+            "cd": 0
+          }
         },
         "armour": {
           "kind": "rec",
@@ -4849,9 +4883,16 @@
           "text": "Wuld Nah Kest: a shot fired after a sprint dash has no sway. (dormant)"
         },
         "armour": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xABB",
-          "text": "Wuld Nah Kest: a short dash when a sprint begins (every 20 s). (dormant)"
+          "text": "Wuld Nah Kest: a short dash when a sprint begins (every 20 s).",
+          "proc": {
+            "on": "sprint",
+            "at": "self",
+            "cd": 20,
+            "shoutForm": "Skyrim.esm|0x2F7BA",
+            "level": 1
+          }
         }
       }
     },
