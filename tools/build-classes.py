@@ -47,6 +47,7 @@ DEFAULTS = [
     ("QuestRewards", "bEnableQuestRewards", "1", "questrewards::enabled", "rows: quest-rewards.json; a row you change is kept under [QuestRewardRows] as <EditorID>=<points>"),
     ("Gear", "bSetBonuses", "1", "gear::sets", "unique armour sets: a bonus at two worn pieces and another at four"),
     ("Gear", "bUniqueEffects", "1", "gear::uniques", "named unique items carry an effect of their own"),
+    ("Gear", "bTierRows", "1", "gear::tierRows", "inventory, container and barter rows carry a bar in the item tier's colour (magic blue, epic purple, legendary orange, unique red)"),
     ("Gear", "fSetStrength", "1.00", "gear::setStrength", "0.25 to 2.00 - scales every set bonus from the value in the plugin (1.00 = as written)"),
     ("Gear", "fUniqueStrength", "1.00", "gear::uniqueStrength", "0.25 to 2.00 - scales every unique effect"),
     ("Shouting", "bShouting", "1", "shouting::enabledDefault", "a NEW save's Shouting: 1 = shout as in the game (the default); 0 = the shout key is refused (the Shouts your soul stones grant and the ones a quest needs still work); each save keeps its own choice"),

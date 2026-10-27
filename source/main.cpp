@@ -25,6 +25,7 @@
 #include "CardEnchantment.h"
 #include "EffectFilter.h"
 #include "GuildRoutes.h"
+#include "RowTint.h"
 #include "SoulStones.h"
 #include "UI.h"
 
@@ -59,6 +60,7 @@ namespace
 			CardEnchantment::Install();
 			EffectFilter::Install();
 			GuildRoutes::Install();
+			RowTint::Install();
 			Shouting::Install();
 			CarryWeight::Install();
 			QuestRewards::Install();

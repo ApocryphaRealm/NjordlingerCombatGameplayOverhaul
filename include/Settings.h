@@ -84,6 +84,7 @@ namespace settings
 	{
 		inline bool sets = true;                           // bSetBonuses:Gear
 		inline bool uniques = true;                        // bUniqueEffects:Gear
+		inline bool tierRows = true;                       // bTierRows:Gear - inventory rows tinted by item tier
 		inline float setStrength = 1.0F;                   // fSetStrength:Gear - 0.25 to 2.00
 		inline float uniqueStrength = 1.0F;                // fUniqueStrength:Gear - 0.25 to 2.00
 	}

@@ -592,6 +592,9 @@ namespace UI
 								   st.has4 ? strings::TR("NJ_GearActive", "active") : strings::TR("NJ_GearInactive", "inactive"));
 		}
 
+		ImGuiMCP::SeparatorText(strings::TR("NJ_TierRowsTitle", "Item tiers in the inventory"));
+		ImGuiMCP::Toggle(strings::TR("NJ_TierRows", "Tint rows by tier"), &gear::tierRows);
+		HelpMarker(strings::TR("NJ_HelpTierRows", "Rows in the inventory, containers and shops carry a faint bar in the item tier's colour: magic blue, epic purple, legendary orange, unique red. Common items have none. Applies the next time a list is drawn."));
 		ImGuiMCP::SeparatorText(strings::TR("NJ_GearUniquesTitle", "Unique effects"));
 		if (ImGuiMCP::Toggle(strings::TR("NJ_GearUniques", "Unique effects"), &gear::uniques)) { Gear::RequestApply(); }
 		HelpMarker(strings::TR("NJ_HelpGearUniques", "Off: named unique items lose their own effects (their enchantments stay). Uniques still cannot be enchanted."));

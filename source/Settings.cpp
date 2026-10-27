@@ -126,6 +126,7 @@ namespace settings
 			questrewards::overrides.clear();
 			gear::sets = true;
 			gear::uniques = true;
+			gear::tierRows = true;
 			gear::setStrength = 1.0F;
 			gear::uniqueStrength = 1.0F;
 			shouting::enabledDefault = true;
@@ -209,6 +210,7 @@ namespace settings
 			get("benablequestrewards:questrewards", questrewards::enabled, ParseBool);
 			get("bsetbonuses:gear", gear::sets, ParseBool);
 			get("buniqueeffects:gear", gear::uniques, ParseBool);
+			get("btierrows:gear", gear::tierRows, ParseBool);
 			get("fsetstrength:gear", gear::setStrength, ParseFloat);
 			get("funiquestrength:gear", gear::uniqueStrength, ParseFloat);
 			get("bshouting:shouting", shouting::enabledDefault, ParseBool);
@@ -329,6 +331,7 @@ namespace settings
 		ok &= WriteKey(lines, "QuestRewards", "bEnableQuestRewards", questrewards::enabled ? "1" : "0");
 		ok &= WriteKey(lines, "Gear", "bSetBonuses", gear::sets ? "1" : "0");
 		ok &= WriteKey(lines, "Gear", "bUniqueEffects", gear::uniques ? "1" : "0");
+		ok &= WriteKey(lines, "Gear", "bTierRows", gear::tierRows ? "1" : "0");
 		ok &= WriteKey(lines, "Gear", "fSetStrength", FormatFloat(gear::setStrength));
 		ok &= WriteKey(lines, "Gear", "fUniqueStrength", FormatFloat(gear::uniqueStrength));
 		ok &= WriteKey(lines, "Shouting", "bShouting", shouting::enabledDefault ? "1" : "0");

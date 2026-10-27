@@ -1,0 +1,41 @@
+{
+  "NJ_TierRowsTitle": {
+    "english": "Item tiers in the inventory",
+    "french": "Rangs des objets dans l'inventaire",
+    "german": "Gegenstandsstufen im Inventar",
+    "italian": "Gradi degli oggetti nell'inventario",
+    "spanish": "Rangos de objetos en el inventario",
+    "polish": "Poziomy przedmiotów w ekwipunku",
+    "russian": "Ранги предметов в инвентаре",
+    "czech": "Úrovně předmětů v inventáři",
+    "japanese": "インベントリのアイテム等級",
+    "chinese": "物品品级显示",
+    "korean": "인벤토리의 아이템 등급"
+  },
+  "NJ_TierRows": {
+    "english": "Tint rows by tier",
+    "french": "Teinter les lignes selon le rang",
+    "german": "Zeilen nach Stufe einfärben",
+    "italian": "Colora le righe per grado",
+    "spanish": "Teñir filas por rango",
+    "polish": "Barwij wiersze według poziomu",
+    "russian": "Подсвечивать строки по рангу",
+    "czech": "Obarvit řádky podle úrovně",
+    "japanese": "等級で行に色を付ける",
+    "chinese": "按品级为行着色",
+    "korean": "등급별로 행 색칠"
+  },
+  "NJ_HelpTierRows": {
+    "english": "Rows in the inventory, containers and shops carry a faint bar in the item tier's colour: magic blue, epic purple, legendary orange, unique red. Common items have none. Applies the next time a list is drawn.",
+    "french": "Les lignes de l'inventaire, des conteneurs et des boutiques portent une légère barre de la couleur du rang de l'objet : magique bleu, épique violet, légendaire orange, unique rouge. Les objets communs n'en ont pas. S'applique au prochain affichage d'une liste.",
+    "german": "Zeilen im Inventar, in Behältern und Läden tragen einen blassen Balken in der Farbe der Gegenstandsstufe: magisch blau, episch lila, legendär orange, einzigartig rot. Gewöhnliche Gegenstände haben keinen. Wirkt beim nächsten Aufbau einer Liste.",
+    "italian": "Le righe di inventario, contenitori e negozi hanno una lieve barra del colore del grado dell'oggetto: magico blu, epico viola, leggendario arancione, unico rosso. Gli oggetti comuni non ne hanno. Si applica alla prossima visualizzazione di un elenco.",
+    "spanish": "Las filas del inventario, los contenedores y las tiendas llevan una barra tenue del color del rango del objeto: mágico azul, épico morado, legendario naranja, único rojo. Los objetos comunes no la tienen. Se aplica la próxima vez que se dibuja una lista.",
+    "polish": "Wiersze w ekwipunku, pojemnikach i sklepach mają delikatny pasek w kolorze poziomu przedmiotu: magiczny niebieski, epicki fioletowy, legendarny pomarańczowy, unikatowy czerwony. Zwykłe przedmioty go nie mają. Działa przy następnym wyświetleniu listy.",
+    "russian": "Строки в инвентаре, контейнерах и магазинах получают бледную полосу цвета ранга предмета: магический синий, эпический фиолетовый, легендарный оранжевый, уникальный красный. У обычных предметов её нет. Применяется при следующем показе списка.",
+    "czech": "Řádky v inventáři, nádobách a obchodech mají slabý pruh v barvě úrovně předmětu: magický modrý, epický fialový, legendární oranžový, unikátní červený. Běžné předměty žádný nemají. Projeví se při dalším zobrazení seznamu.",
+    "japanese": "インベントリ、容器、店の各行にアイテム等級の色の淡い帯が付く: 魔法は青、叙事は紫、伝説は橙、固有は赤。一般品には付かない。次にリストが描かれたときに反映される。",
+    "chinese": "物品栏、容器和商店中的每一行会带有物品品级颜色的淡色条：魔法蓝、史诗紫、传说橙、独特红。普通物品没有。下次列表绘制时生效。",
+    "korean": "인벤토리, 보관함, 상점의 각 행에 아이템 등급 색의 옅은 막대가 붙습니다: 마법 파랑, 영웅 보라, 전설 주황, 고유 빨강. 일반 아이템에는 없습니다. 다음에 목록이 그려질 때 적용됩니다."
+  }
+}
