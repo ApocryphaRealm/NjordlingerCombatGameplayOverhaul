@@ -1,0 +1,6 @@
+{
+  "NJ_SS_CardTitle": { "english": "Item card", "french": "Fiche de l'objet", "german": "Gegenstandskarte", "italian": "Scheda oggetto", "spanish": "Ficha del objeto", "polish": "Karta przedmiotu", "russian": "Карточка предмета", "czech": "Karta předmětu", "japanese": "アイテムカード", "chinese": "物品卡片", "korean": "아이템 카드" },
+  "NJ_SS_CardArmour": { "english": "Armour %.0f", "french": "Armure %.0f", "german": "Rüstung %.0f", "italian": "Armatura %.0f", "spanish": "Armadura %.0f", "polish": "Pancerz %.0f", "russian": "Броня %.0f", "czech": "Zbroj %.0f", "japanese": "防御力 %.0f", "chinese": "护甲 %.0f", "korean": "방어력 %.0f" },
+  "NJ_SS_CardDamage": { "english": "Damage %.0f", "french": "Dégâts %.0f", "german": "Schaden %.0f", "italian": "Danno %.0f", "spanish": "Daño %.0f", "polish": "Obrażenia %.0f", "russian": "Урон %.0f", "czech": "Poškození %.0f", "japanese": "攻撃力 %.0f", "chinese": "伤害 %.0f", "korean": "피해 %.0f" },
+  "NJ_SS_CardNoSlots": { "english": "no stone slots", "french": "aucun emplacement de pierre", "german": "keine Fassungen", "italian": "nessun castone", "spanish": "sin engastes", "polish": "brak gniazd", "russian": "нет гнёзд", "czech": "žádná lůžka", "japanese": "スロットなし", "chinese": "无镶孔", "korean": "슬롯 없음" }
+}

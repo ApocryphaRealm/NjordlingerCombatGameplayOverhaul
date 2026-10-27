@@ -129,6 +129,10 @@ namespace UI
 				"igIsItemHovered",
 				"igButton",
 				"igRadioButton_IntPtr",  // the runesmith's Craft tab
+				"igGetIO",               // the runesmith window fits the screen
+				"igSetNextWindowPos",
+				"igSetNextWindowSize",
+				"igNewLine",
 				"igSeparator",
 				"igSameLine",
 				"igSpacing",
@@ -581,6 +585,42 @@ namespace UI
 		RenderButtons();
 	}
 
+	// The owner 22:36: Font Awesome icons through AMF's own fonts (icons/fa-solid-900.ttf ships with AMF). An icon is drawn
+	// in the icon font, the label beside it in the page's font, so every language keeps its text.
+	namespace fa
+	{
+		inline constexpr unsigned kGem = 0xf3a5, kGrind = 0xf5a7, kHammer = 0xf6e3, kAdd = 0xf067, kSet = 0xf055, kTakeOut = 0xf056, kEmpty = 0xf111, kScroll = 0xf70e;
+	}
+
+	void Icon(unsigned a_cp, const ImGuiMCP::ImVec4* a_colour = nullptr)
+	{
+		const std::string glyph = FontAwesome::UnicodeToUtf8(a_cp);
+		FontAwesome::PushSolid();
+		if (a_colour) { ImGuiMCP::TextColored(*a_colour, "%s", glyph.c_str()); }
+		else { ImGuiMCP::Text("%s", glyph.c_str()); }
+		FontAwesome::Pop();
+		ImGuiMCP::SameLine();
+	}
+
+	// An icon button and its label button; either click acts.
+	bool IconButton(unsigned a_cp, const char* a_label, const std::string& a_id, bool a_small = true)
+	{
+		const std::string glyph = FontAwesome::UnicodeToUtf8(a_cp) + "##i" + a_id;
+		FontAwesome::PushSolid();
+		bool hit = a_small ? ImGuiMCP::SmallButton(glyph.c_str()) : ImGuiMCP::Button(glyph.c_str());
+		FontAwesome::Pop();
+		ImGuiMCP::SameLine();
+		const std::string label = std::string(a_label) + "##l" + a_id;
+		hit |= a_small ? ImGuiMCP::SmallButton(label.c_str()) : ImGuiMCP::Button(label.c_str());
+		return hit;
+	}
+
+	ImGuiMCP::ImVec4 TierColour(int a_tier)
+	{
+		static const ImGuiMCP::ImVec4 c[5] = { { 0.81F, 0.89F, 0.96F, 1.0F }, { 0.31F, 0.55F, 1.0F, 1.0F }, { 0.42F, 0.36F, 1.0F, 1.0F }, { 0.61F, 0.30F, 1.0F, 1.0F }, { 0.42F, 0.12F, 0.72F, 1.0F } };
+		return c[std::clamp(a_tier, 0, 4)];
+	}
+
 	// D22 revised (STONE-CRAFTING.md): the Grind tab - soul gems in, dust out (a filled gem gives two, black two grand).
 	void GrindTab(const ::SoulStones::Snapshot& a_s, const char* (*a_tier)(int))
 	{
@@ -590,11 +630,9 @@ namespace UI
 		{
 			ImGuiMCP::Text(strings::TR("NJ_SS_GemLine", "%s - %d filled, %d empty: %d %s dust"), g.name.c_str(), g.filled, g.empty, g.dust, a_tier(g.tier));
 			ImGuiMCP::SameLine();
-			const std::string one = std::string(strings::TR("NJ_SS_GrindOne", "Grind one")) + "##g1_" + std::to_string(g.form);
-			if (ImGuiMCP::SmallButton(one.c_str())) { ::SoulStones::RequestGrind(g.form, false); }
+			if (IconButton(fa::kGrind, strings::TR("NJ_SS_GrindOne", "Grind one"), "g1_" + std::to_string(g.form))) { ::SoulStones::RequestGrind(g.form, false); }
 			ImGuiMCP::SameLine();
-			const std::string all = std::string(strings::TR("NJ_SS_GrindAll", "Grind all")) + "##ga_" + std::to_string(g.form);
-			if (ImGuiMCP::SmallButton(all.c_str())) { ::SoulStones::RequestGrind(g.form, true); }
+			if (IconButton(fa::kGrind, strings::TR("NJ_SS_GrindAll", "Grind all"), "ga_" + std::to_string(g.form))) { ::SoulStones::RequestGrind(g.form, true); }
 		}
 	}
 
@@ -614,9 +652,9 @@ namespace UI
 		const bool can = a_s.ingots >= 1 && a_s.feeGems[tier] >= a_s.craftDust[tier];
 		for (const int w : a_s.learnedWords)
 		{
-			const std::string b = std::string(strings::TR("NJ_SS_Make", "Make")) + "##mk" + std::to_string(w);
-			if (ImGuiMCP::SmallButton(b.c_str())) { ::SoulStones::RequestCraft(w, tier); }
+			if (IconButton(fa::kHammer, strings::TR("NJ_SS_Make", "Make"), "mk" + std::to_string(w))) { ::SoulStones::RequestCraft(w, tier); }
 			ImGuiMCP::SameLine();
+			{ const auto col = TierColour(tier); Icon(fa::kGem, &col); }
 			if (can) { ImGuiMCP::Text("%s (%s)", a_s.words[w].c_str(), a_tier(tier)); }
 			else { ImGuiMCP::TextDisabled("%s (%s)", a_s.words[w].c_str(), a_tier(tier)); }
 		}
@@ -633,8 +671,7 @@ namespace UI
 		if (a_s.slotOffers.empty()) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoSlotOffers", "Nothing in your pack can take another slot.")); }
 		for (const auto& o : a_s.slotOffers)
 		{
-			const std::string b = std::string(strings::TR("NJ_SS_AddSlot", "Add")) + "##as_" + o.key;
-			if (ImGuiMCP::SmallButton(b.c_str())) { ::SoulStones::RequestAddSlot(o.key); }
+			if (IconButton(fa::kAdd, strings::TR("NJ_SS_AddSlot", "Add"), "as_" + o.key)) { ::SoulStones::RequestAddSlot(o.key); }
 			ImGuiMCP::SameLine();
 			const bool can = a_s.addIngots >= 1 && a_s.addGems[o.gemTier] >= 1;
 			char line[256];
@@ -652,14 +689,23 @@ namespace UI
 		bool open = true;
 		g_windowDrawn = g_windowAsk.load();
 		if (const int asked = ::SoulStones::TakeRequestedTab(); asked >= 0) { g_runesmithTab = asked; }
-		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), &open, 0))
+		// The owner 22:36: the whole frame fits on any screen and any AMF text size - a fixed share of the screen on the LEFT
+		// (Thorvar stands in the right third, SoulStones turns the player for that), the contents scroll inside it
+		if (auto* io = ImGuiMCP::GetIO(); io && io->DisplaySize.x > 0.0F && io->DisplaySize.y > 0.0F)
+		{
+			const float w = io->DisplaySize.x, h = io->DisplaySize.y;
+			ImGuiMCP::SetNextWindowPos(ImGuiMCP::ImVec2(w * 0.03F, h * 0.06F), ImGuiMCP::ImGuiCond_Always);
+			ImGuiMCP::SetNextWindowSize(ImGuiMCP::ImVec2(std::clamp(w * 0.46F, 420.0F, w * 0.6F), h * 0.86F), ImGuiMCP::ImGuiCond_Always);
+		}
+		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), &open, ImGuiMCP::ImGuiWindowFlags_NoCollapse))
 		{
 			const char* tabs[] = { strings::TR("NJ_SS_TabSocket", "Socket"), strings::TR("NJ_SS_TabGrind", "Grind"), strings::TR("NJ_SS_TabCraft", "Craft"), strings::TR("NJ_SS_TabAddSlot", "Add slot") };
+			const unsigned tabIcons[] = { fa::kGem, fa::kGrind, fa::kHammer, fa::kAdd };
 			for (int t = 0; t < 4; ++t)
 			{
 				if (t > 0) { ImGuiMCP::SameLine(); }
-				const std::string label = (g_runesmithTab == t ? std::string("[ ") + tabs[t] + " ]" : std::string(tabs[t])) + "##tab" + std::to_string(t);
-				if (ImGuiMCP::Button(label.c_str())) { g_runesmithTab = t; }
+				const std::string label = g_runesmithTab == t ? std::string("[ ") + tabs[t] + " ]" : std::string(tabs[t]);
+				if (IconButton(tabIcons[t], label.c_str(), "tab" + std::to_string(t), false)) { g_runesmithTab = t; }
 			}
 			ImGuiMCP::Separator();
 			auto tierName = [](int a_t) -> const char* {
@@ -785,6 +831,8 @@ namespace UI
 					label = buf;
 				}
 				label += "##slot" + std::to_string(k);
+				if (st.word >= 0) { const auto col = TierColour(st.tier); Icon(fa::kGem, &col); }
+				else { Icon(fa::kEmpty); }
 				if (ImGuiMCP::Selectable(label.c_str(), targetSlot == k)) { targetSlot = k; }
 				if (st.word >= 0)
 				{
@@ -792,8 +840,7 @@ namespace UI
 					if (s.canSocket)
 					{
 						ImGuiMCP::SameLine();
-						const std::string b = std::string(strings::TR("NJ_SS_TakeOut", "Take out")) + "##out" + std::to_string(k);
-						if (ImGuiMCP::SmallButton(b.c_str())) { ::SoulStones::RequestUnsocket(sel->key, k); }
+						if (IconButton(fa::kTakeOut, strings::TR("NJ_SS_TakeOut", "Take out"), "out" + std::to_string(k))) { ::SoulStones::RequestUnsocket(sel->key, k); }
 					}
 				}
 			}
@@ -804,6 +851,49 @@ namespace UI
 			}
 		}
 		ImGuiMCP::EndChild();
+
+		// The owner 22:39: an item card in a fixed place - tier colour, stat, its own enchantment, the stone lines, the phrase,
+		// and the slots as icons (filled in the stone's tier colour, empty, added ones marked +)
+		if (sel)
+		{
+			static const ImGuiMCP::ImVec4 tierCol[5] = { { 0.85F, 0.85F, 0.85F, 1.0F }, { 0.35F, 0.6F, 1.0F, 1.0F }, { 0.7F, 0.4F, 1.0F, 1.0F }, { 1.0F, 0.65F, 0.2F, 1.0F }, { 0.95F, 0.3F, 0.3F, 1.0F } };
+			const char* tierNames[5] = { "Common", "Magic", "Epic", "Legendary", "Unique" };
+			int ti = 0;
+			for (int t = 0; t < 5; ++t) { if (sel->itemTier == tierNames[t]) { ti = t; } }
+			ImGuiMCP::SeparatorText(strings::TR("NJ_SS_CardTitle", "Item card"));
+			if (ImGuiMCP::BeginChild("njss_card", ImGuiMCP::ImVec2(0.0F, 170.0F), true))
+			{
+				ImGuiMCP::TextColored(tierCol[ti], "%s", sel->name.c_str());
+				if (sel->stat > 0.0F)
+				{
+					ImGuiMCP::TextDisabled(sel->host == ::SoulStones::Host::kArmour ? strings::TR("NJ_SS_CardArmour", "Armour %.0f") : strings::TR("NJ_SS_CardDamage", "Damage %.0f"), sel->stat);
+				}
+				for (int k = 0; k < sel->slots; ++k)
+				{
+					const auto& st = sel->stones[k];
+					if (st.word >= 0) { const auto col = TierColour(st.tier); Icon(fa::kGem, &col); }
+					else { Icon(fa::kEmpty); }
+					if (k >= sel->naturalSlots) { ImGuiMCP::TextDisabled("+"); ImGuiMCP::SameLine(); }
+				}
+				if (sel->slots == 0) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_CardNoSlots", "no stone slots")); }
+				else { ImGuiMCP::NewLine(); }
+				for (const auto& l : sel->enchantLines) { ImGuiMCP::Text("%s", l.c_str()); }
+				for (int k = 0; k < sel->slots; ++k)
+				{
+					const auto& st = sel->stones[k];
+					if (st.word < 0) { continue; }
+					const auto col = TierColour(st.tier);
+					Icon(fa::kGem, &col);
+					ImGuiMCP::TextWrapped("%s", ::SoulStones::CellText(st.word, sel->host, st.tier).c_str());
+				}
+				if (sel->phrase >= 0)
+				{
+					Icon(fa::kScroll, sel->phraseKnown ? &known : &unknown);
+					ImGuiMCP::TextColored(sel->phraseKnown ? known : unknown, "%s", sel->phraseKnown ? ::SoulStones::PhraseName(sel->phrase).c_str() : strings::TR("NJ_SS_PhraseUnknown", "The stones spell a phrase you do not yet know."));
+				}
+			}
+			ImGuiMCP::EndChild();
+		}
 
 		if (sel && s.canSocket && sel->stones[targetSlot].word < 0 && sel->key.find(":plain") == std::string::npos)
 		{
@@ -825,9 +915,9 @@ namespace UI
 					for (int k = 0; k < targetSlot; ++k) { fits &= sel->stones[k].word == pv.words[k]; }
 					continues |= fits;
 				}
-				const std::string b = std::string(strings::TR("NJ_SS_Set", "Set")) + "##set" + std::to_string(v.word) + "_" + std::to_string(v.tier);
-				if (ImGuiMCP::SmallButton(b.c_str())) { ::SoulStones::RequestSocket(sel->key, targetSlot, v.word, v.tier); }
+				if (IconButton(fa::kSet, strings::TR("NJ_SS_Set", "Set"), "set" + std::to_string(v.word) + "_" + std::to_string(v.tier))) { ::SoulStones::RequestSocket(sel->key, targetSlot, v.word, v.tier); }
 				ImGuiMCP::SameLine();
+				{ const auto col = TierColour(v.tier); Icon(fa::kGem, &col); }
 				if (continues) { ImGuiMCP::TextColored(known, "%s (%s) x%d - %s", s.words[v.word].c_str(), tierName(v.tier), v.count, ::SoulStones::CellText(v.word, sel->host, v.tier).c_str()); }
 				else { ImGuiMCP::Text("%s (%s) x%d - %s", s.words[v.word].c_str(), tierName(v.tier), v.count, ::SoulStones::CellText(v.word, sel->host, v.tier).c_str()); }
 			}
@@ -842,6 +932,7 @@ namespace UI
 			if (p.learned < 3) { continue; }   // the blueprint: a phrase is named only once all three words are learned
 			++shown;
 			const auto name = ::SoulStones::PhraseName(static_cast<int>(i));
+			Icon(fa::kScroll, &known);
 			ImGuiMCP::TextColored(known, strings::TR("NJ_SS_PhraseWorks", "%s (%s) - its words are learned: it works in any item"), name.c_str(), p.shout.c_str());
 			if (p.granted > 0) { ImGuiMCP::TextDisabled(strings::TR("NJ_SS_Granted", "    your armour's stones let you shout it: %d word(s)"), p.granted); }
 		}

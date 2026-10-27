@@ -107,6 +107,7 @@ namespace SoulStones
 			std::array<Tier, kTiers> tiers;
 			std::vector<std::string> wordNames, tierNames;
 			std::vector<std::pair<RE::BGSKeyword*, int>> itemTierSlots;   // item tier keyword -> slots
+			std::vector<std::pair<RE::BGSKeyword*, std::string>> itemTierNames;   // item tier keyword -> tier name
 			RE::EffectSetting* unknownWeapon = nullptr;
 			RE::EffectSetting* unknownArmour = nullptr;
 			std::unordered_map<RE::FormID, std::pair<int, int>> stoneForm;  // stone MISC -> (word, tier)
@@ -383,6 +384,30 @@ namespace SoulStones
 			const auto open = a_name.rfind(" [");
 			if (open != std::string::npos && !a_name.empty() && a_name.back() == ']') { a_name.resize(open); }
 			return a_name;
+		}
+
+		// The preview card's data (the owner 22:39): tier, natural slots, the base's stat, the item's own enchantment.
+		void FillCard(ItemView& a_v, RE::TESBoundObject* a_obj, const Entry* a_e)
+		{
+			a_v.naturalSlots = SlotsOf(a_obj);
+			if (auto* kf = a_obj->As<RE::BGSKeywordForm>())
+			{
+				for (const auto& [kw, name] : g_t.itemTierNames) { if (kw && kf->HasKeyword(kw)) { a_v.itemTier = name; } }
+			}
+			if (auto* w = a_obj->As<RE::TESObjectWEAP>()) { a_v.stat = static_cast<float>(w->GetAttackDamage()); }
+			else if (auto* ar = a_obj->As<RE::TESObjectARMO>()) { a_v.stat = static_cast<float>(ar->GetArmorRating()) / 100.0F; }
+			auto line = [&](RE::EffectSetting* a_mg, float a_mag) {
+				if (!a_mg || a_mg->data.flags.any(RE::EffectSetting::EffectSettingData::Flag::kHideInUI)) { return; }
+				a_v.enchantLines.push_back(a_mag > 0.0F ? fmt::format("{} {:g}", a_mg->GetName(), std::round(a_mag * 10.0F) / 10.0F) : std::string(a_mg->GetName()));
+			};
+			if (a_e && a_e->hadEnchant)
+			{
+				for (const auto& s : a_e->orig) { line(RE::TESForm::LookupByID<RE::EffectSetting>(s.effect), s.magnitude); }
+			}
+			else if (auto* ef = a_obj->As<RE::TESEnchantableForm>(); ef && ef->formEnchanting)
+			{
+				for (auto* fx : ef->formEnchanting->effects) { if (fx) { line(fx->baseEffect, fx->effectItem.magnitude); } }
+			}
 		}
 
 		// The tier's slots plus what the runesmith added to this instance, at most three.
@@ -1203,6 +1228,7 @@ namespace SoulStones
 					else { v.key = fmt::format("{:08X}:list:{:X}", e->object->GetFormID(), reinterpret_cast<std::uintptr_t>(x)); }
 					v.phrase = SpelledPhrase(v.stones);
 					v.phraseKnown = v.phrase >= 0 && PhraseUnlocked(v.phrase);
+					FillCard(v, e->object, ent);
 					s.items.push_back(std::move(v));
 				});
 				for (const auto& [obj, n] : counts)
@@ -1216,6 +1242,7 @@ namespace SoulStones
 					v.host = HostOf(obj);
 					v.slots = SlotsOf(obj);
 					v.count = plain;
+					FillCard(v, obj, nullptr);
 					s.items.push_back(std::move(v));
 				}
 				for (const auto& [obj, n] : counts)
@@ -1829,6 +1856,23 @@ namespace SoulStones
 			}
 		};
 
+		// The owner 22:36: the window sits on the left of the screen and Thorvar in the right third, the way Show Player In
+		// Menus frames the player. The simplest safe method: no camera state is touched - the player turns to face a point
+		// a little LEFT of Thorvar (about 15 degrees, the right third of a 16:9 view), so the normal camera (first or third
+		// person) shows him on the right; nothing needs restoring when the window closes.
+		void FaceRunesmith()
+		{
+			auto* p = Player();
+			auto* ref = g_rs.npcRef ? RE::TESForm::LookupByID<RE::TESObjectREFR>(g_rs.npcRef) : nullptr;
+			if (!p || !ref || ref->GetParentCell() != p->GetParentCell()) { return; }
+			const auto d = ref->GetPosition() - p->GetPosition();
+			if (std::fabs(d.x) + std::fabs(d.y) < 1.0F) { return; }
+			constexpr float kOffset = 0.26F;   // radians, ~15 degrees: he stands right of centre
+			const float bearing = std::atan2(d.x, d.y);   // 0 = north (+y), clockwise
+			p->SetHeading(bearing - kOffset);
+			logger::info("soul stones: the player turns so the runesmith stands right of the window");
+		}
+
 		class MenuSink : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 		{
 		public:
@@ -1838,7 +1882,11 @@ namespace SoulStones
 				if (a_e && !a_e->opening) { g_knowledgeDirty = true; }
 				if (a_e && !a_e->opening && a_e->menuName == RE::DialogueMenu::MENU_NAME && g_windowPending.exchange(false))
 				{
-					Queue([]() { if (g_service && g_windowOpener) { g_windowOpener(true); } });
+					Queue([]() {
+						if (!g_service || !g_windowOpener) { return; }
+						FaceRunesmith();
+						g_windowOpener(true);
+					});
 				}
 				return RE::BSEventNotifyControl::kContinue;
 			}
@@ -1947,7 +1995,7 @@ namespace SoulStones
 			g_t.lowHealth = j.value("lowHealth", 0.30F);
 			for (auto& [name, slots] : j["slotsByItemTier"].items())
 			{
-				if (auto* kw = Form<RE::BGSKeyword>(j["itemTierKeywords"].value(name, nlohmann::json()), "item tier keyword")) { g_t.itemTierSlots.emplace_back(kw, slots.get<int>()); }
+				if (auto* kw = Form<RE::BGSKeyword>(j["itemTierKeywords"].value(name, nlohmann::json()), "item tier keyword")) { g_t.itemTierSlots.emplace_back(kw, slots.get<int>()); g_t.itemTierNames.emplace_back(kw, name); }
 			}
 			const auto& tiers = j["tiers"];
 			for (int t = 0; t < kTiers && t < static_cast<int>(tiers.size()); ++t)

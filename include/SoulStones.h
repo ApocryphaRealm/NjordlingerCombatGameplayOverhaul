@@ -67,6 +67,11 @@ namespace SoulStones
 		std::array<StoneRef, 3> stones{};
 		int phrase = -1;          // the phrase slots 1-3 spell in word order, or -1
 		bool phraseKnown = false; // ... and the player has unlocked all three of its words
+		// the preview card (the owner 22:39)
+		std::string itemTier;     // Common, Magic, Epic, Legendary, Unique ("" = none)
+		int naturalSlots = 0;     // the tier's slots; slots - naturalSlots were added by the runesmith
+		float stat = 0.0F;        // weapon damage or armour rating of the base item
+		std::vector<std::string> enchantLines;   // the item's own enchantment, effect by effect (name and magnitude)
 	};
 
 	struct StoneView
