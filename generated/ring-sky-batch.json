@@ -1,0 +1,170 @@
+[
+  {
+    "out": "D:\\Claude output\\6. current wip mods\\NjordlingerCombatGameplayOverhaul\\testonly\\CustomSkillsRing\\meshes\\interface\\NjordlingerCGO\\ring_fffff.nif",
+    "map": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "diving",
+      "necromancer"
+    ]
+  },
+  {
+    "out": "D:\\Claude output\\6. current wip mods\\NjordlingerCombatGameplayOverhaul\\testonly\\CustomSkillsRing\\meshes\\interface\\NjordlingerCGO\\ring_7e402.nif",
+    "map": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "9",
+      "diving"
+    ]
+  },
+  {
+    "out": "D:\\Claude output\\6. current wip mods\\NjordlingerCombatGameplayOverhaul\\testonly\\CustomSkillsRing\\meshes\\interface\\NjordlingerCGO\\ring_fe47f.nif",
+    "map": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "9",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "diving",
+      "necromancer"
+    ]
+  },
+  {
+    "out": "D:\\Claude output\\6. current wip mods\\NjordlingerCombatGameplayOverhaul\\testonly\\CustomSkillsRing\\meshes\\interface\\NjordlingerCGO\\ring_7ff82.nif",
+    "map": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "diving"
+    ]
+  },
+  {
+    "out": "D:\\Claude output\\6. current wip mods\\NjordlingerCombatGameplayOverhaul\\testonly\\CustomSkillsRing\\meshes\\interface\\NjordlingerCGO\\ring_8007f.nif",
+    "map": [
+      "0",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "diving",
+      "necromancer"
+    ]
+  },
+  {
+    "out": "D:\\Claude output\\6. current wip mods\\NjordlingerCombatGameplayOverhaul\\testonly\\CustomSkillsRing\\meshes\\interface\\NjordlingerCGO\\ring_81bff.nif",
+    "map": [
+      "0",
+      "7",
+      "8",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "diving",
+      "necromancer"
+    ]
+  },
+  {
+    "out": "D:\\Claude output\\6. current wip mods\\NjordlingerCombatGameplayOverhaul\\testonly\\CustomSkillsRing\\meshes\\interface\\NjordlingerCGO\\ring_81fff.nif",
+    "map": [
+      "0",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "diving",
+      "necromancer"
+    ]
+  },
+  {
+    "out": "D:\\Claude output\\6. current wip mods\\NjordlingerCombatGameplayOverhaul\\testonly\\CustomSkillsRing\\meshes\\interface\\NjordlingerCGO\\ring_01b82.nif",
+    "map": [
+      "7",
+      "8",
+      "10",
+      "11",
+      "12",
+      "diving"
+    ]
+  },
+  {
+    "out": "D:\\Claude output\\6. current wip mods\\NjordlingerCombatGameplayOverhaul\\testonly\\CustomSkillsRing\\meshes\\interface\\NjordlingerCGO\\ring_03b82.nif",
+    "map": [
+      "6",
+      "7",
+      "8",
+      "10",
+      "11",
+      "12",
+      "diving"
+    ]
+  },
+  {
+    "out": "D:\\Claude output\\6. current wip mods\\NjordlingerCombatGameplayOverhaul\\testonly\\CustomSkillsRing\\meshes\\interface\\NjordlingerCGO\\ring_83bff.nif",
+    "map": [
+      "0",
+      "6",
+      "7",
+      "8",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "diving",
+      "necromancer"
+    ]
+  }
+]

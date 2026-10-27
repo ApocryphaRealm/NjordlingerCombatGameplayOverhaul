@@ -23,4 +23,7 @@ namespace StatsMenuClass
 	void RequestPick(int a_index);
 
 	std::string StatusJson();
+
+	// PLAN.md D32: write SKILLS.json for the current class's ring (main thread; Classes::Apply calls it)
+	void ApplyRing();
 }

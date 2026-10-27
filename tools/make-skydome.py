@@ -1,7 +1,15 @@
 r"""Build the perk-menu sky (constellation skydome) with N tree slots for the Custom Skills Framework ring - ONE command.
 
   py -3 tools\make-skydome.py [--bsa "<Stock Game>\Data\Skyrim - Meshes1.bsa" | --src <loose intperkskydome.nif>]
-                              [--slots 20] [--pictures blank,mirror:14] [--out testonly\CustomSkillsRing\meshes\interface\NjordlingerCGO\intperkskydome20.nif]
+                              [--map 0..17,diving,necromancer] [--out <nif>]   (one sky)
+  py -3 tools\make-skydome.py [--bsa ... | --src ...] --batch <jobs.json>        (several skies in one run)
+
+--map lists the ring's trees in slot order, 2 to 20 entries: a vanilla tree index 0-17 (the game's own order:
+0 Enchanting, 1 Smithing, 2 HeavyArmor, 3 Block, 4 TwoHanded, 5 OneHanded, 6 Archery, 7 LightArmor, 8 Sneak,
+9 Lockpicking, 10 Pickpocket, 11 Speech, 12 Alchemy, 13 Illusion, 14 Conjuration, 15 Destruction, 16 Restoration,
+17 Alteration; a..b ranges allowed), diving, necromancer, or the raw forms blank, copy:<0-17>, mirror:<0-17>.
+--out defaults to testonly\CustomSkillsRing\meshes\interface\NjordlingerCGO\intperkskydome20.nif. --batch takes a JSON
+list of {"out": <path, relative to the repo unless absolute>, "map": [...]}.
 
 Base: the VANILLA meshes\interface\intperkskydome.nif, read straight out of the game's Skyrim - Meshes1.bsa (nothing is
 unpacked anywhere). --bsa defaults to <NJCGO_MO2_INSTANCE>\Stock Game\Data\Skyrim - Meshes1.bsa. --src takes a loose
@@ -17,24 +25,30 @@ and cImage00..cImageN-1, spaced evenly at 360/N degrees.
 
 What this script does, at the NIF block level (no third-party NIF library; the file's header lists every block's
 size, so blocks this script does not touch are copied byte for byte):
- 1. Re-spaces the 18 vanilla slots from 20 degrees to 360/N: slot i is turned about the dome's vertical axis by
-    (20 - 360/N) * i degrees (both its Point and its cImage, translation and rotation), so each picture keeps its
-    vanilla offset from its own tree.
- 2. Adds slots 18..N-1: a copy of Point00 turned to its angle, and a cImage per --pictures entry (in slot order):
-      copy:<v>    a copy of vanilla cImage<v>, turned from its vanilla angle to the new slot's angle;
+ 1. Points: slot n uses vanilla Point<n> (n < 18) turned about the dome's vertical axis from its vanilla angle
+    (90 - 20n degrees) to 90 - (360/N)n, or a copy of Point00 turned there (n >= 18). Vanilla Points past N are renamed
+    PointUnusedNN and hidden.
+ 2. Pictures, per --map entry in slot order:
+      vanilla v   the vanilla cImage<v> block itself, renamed cImage<n> and turned from 90-20v to slot n's angle
+                  (so it keeps its small vanilla offset from its tree); a second use of the same v is a copy;
+      copy:<v>    a copy of vanilla cImage<v>, turned the same way;
       mirror:<v>  the same, with the picture mirrored left-right (vertices, normals, tangents reflected across the
                   vertical plane through the dome axis and the picture's centre; triangle winding reversed);
       blank       a copy of cImage00 with the hidden (APP_CULLED) flag set: the slot exists, so the framework has a
                   shader to fade and nothing can reach a missing slot, but no picture shows.
-    Each new cImage has its own copies of the shader and alpha property, so each slot fades on its own. The new
-    blocks are appended to OrderedRenderingNode's children and to the object palette. No texture outside the vanilla
-    constellation atlas (textures\interface\INTConstellationImages.dds) is referenced.
-    Defaults for the 20-tree ring (18 = Diving, 19 = Necromancer): blank,mirror:14. Diving has no constellation
-    picture anywhere (Underwater NG's own DivingSkydome.nif has no cImage shape at all; its art is a whole-sky water
-    panorama licensed only as part of Underwater NG), so its slot is blank like its own sky. Necromancer has no art of
-    its own (its sky is the vanilla mesh), so it gets Conjuration's picture (vanilla slot 14) mirrored.
- 3. Checks its own output: re-reads it, refuses if any block other than the ones it meant to change differs from the
-    source, and prints the per-slot list.
+    Copies get their own shader and alpha property, so each slot fades on its own, and are appended to
+    OrderedRenderingNode's children and to the object palette. Vanilla pictures no slot uses are renamed
+    cImageUnusedNN and hidden (blocks are never deleted, so no reference anywhere has to be renumbered); the object
+    palette carries every rename. No texture outside the vanilla constellation atlas
+    (textures\interface\INTConstellationImages.dds) is referenced.
+    diving = blank: Diving has no constellation picture anywhere (Underwater NG's own DivingSkydome.nif has no cImage
+    shape at all; its art is a whole-sky water panorama licensed only as part of Underwater NG), so its slot is blank
+    like its own sky. necromancer = mirror:14: Necromancer has no art of its own (its sky is the vanilla mesh), so it
+    gets Conjuration's picture mirrored.
+ 3. Checks its own output: re-reads it, refuses if any source block other than the ones it meant to change differs
+    (and those only in name, hidden flag and transform), if any Point/cImage name lies outside 00..N-1, if the Points
+    are not evenly spaced, if a shown picture sits more than 4 degrees from its Point, or if two slots share a shader;
+    prints each slot's source.
 No machine path is written into the output.
 """
 import argparse, math, os, struct, sys
@@ -262,24 +276,59 @@ def picture_angle(nif, i):
     return math.degrees(math.atan2(w[1], w[0]))
 
 
-def parse_pictures(spec):
+TREE_NAMES = ['Enchanting', 'Smithing', 'HeavyArmor', 'Block', 'TwoHanded', 'OneHanded', 'Archery', 'LightArmor',
+              'Sneak', 'Lockpicking', 'Pickpocket', 'Speech', 'Alchemy', 'Illusion', 'Conjuration', 'Destruction',
+              'Restoration', 'Alteration']
+# Pictures for the custom trees (see the module notes): Diving has no constellation picture anywhere, so its slot is
+# a hidden picture; Necromancer has none of its own, so it shows Conjuration's picture mirrored.
+ALIASES = {'diving': ('blank', 0), 'necromancer': ('mirror', 14)}
+DEFAULT_MAP = [str(i) for i in range(VANILLA_SLOTS)] + ['diving', 'necromancer']
+MAX_SLOTS = 20
+
+
+def parse_map(items):
+    """Map entries -> [(mode, vanilla index, label)]. Entries: 0-17 (vanilla picture), diving, necromancer,
+    blank, copy:<0-17>, mirror:<0-17>; a string may also be one comma list, with a..b ranges (0..17)."""
+    if isinstance(items, str):
+        items = items.split(',')
+    flat = []
+    for it in items:
+        it = str(it).strip().lower()
+        if '..' in it:
+            a, b = it.split('..')
+            flat += [str(x) for x in range(int(a), int(b) + 1)]
+        else:
+            flat.append(it)
     out = []
-    for item in spec.split(','):
-        item = item.strip()
-        if item == 'blank':
-            out.append(('blank', 0))
-            continue
-        mode, _, v = item.partition(':')
-        if mode not in ('copy', 'mirror') or not v.isdigit() or int(v) >= VANILLA_SLOTS:
-            sys.exit('bad --pictures entry %r (use blank, copy:<0-17> or mirror:<0-17>)' % item)
-        out.append((mode, int(v)))
+    for it in flat:
+        if it.isdigit() and int(it) < VANILLA_SLOTS:
+            out.append(('vanilla', int(it), '%s (vanilla %02d)' % (TREE_NAMES[int(it)], int(it))))
+        elif it in ALIASES:
+            m, v = ALIASES[it]
+            out.append((m, v, '%s (%s)' % (it.capitalize(), 'hidden' if m == 'blank' else '%s %02d %s' % (m, v, TREE_NAMES[v]))))
+        elif it == 'blank':
+            out.append(('blank', 0, 'blank (hidden)'))
+        elif it.partition(':')[0] in ('copy', 'mirror') and it.partition(':')[2].isdigit() and int(it.partition(':')[2]) < VANILLA_SLOTS:
+            m, _, v = it.partition(':')
+            out.append((m, int(v), '%s %02d %s' % (m, int(v), TREE_NAMES[int(v)])))
+        else:
+            sys.exit('bad --map entry %r (use 0-17, diving, necromancer, blank, copy:<0-17> or mirror:<0-17>)' % it)
+    if not 2 <= len(out) <= MAX_SLOTS:
+        sys.exit('--map gives %d slots; it must give 2 to %d' % (len(out), MAX_SLOTS))
     return out
 
 
-def build(src_bytes, slots, pictures):
+def set_hidden(nif, i):
+    fo = nif.net_end(i)
+    struct.pack_into('<I', nif.blocks[i], fo, struct.unpack_from('<I', nif.blocks[i], fo)[0] | 1)
+
+
+def build(src_bytes, slot_map):
+    """slot_map: [(mode, vanilla index, label)] for output slots 0..N-1."""
     nif = Nif(src_bytes)
     if nif.write() != src_bytes:
         sys.exit('round trip of the unmodified source is not byte-identical - refusing to edit it')
+    slots = len(slot_map)
     step = 360.0 / slots
     changed = set()
 
@@ -292,56 +341,96 @@ def build(src_bytes, slots, pictures):
         pi, ci = slot_blocks(nif, n)
         vanilla[n] = (pi, ci, nif.transform(pi), nif.transform(ci))
 
-    # 1. re-space the vanilla slots
-    for n in range(VANILLA_SLOTS):
-        pi, ci, (pt, pr, _), (ct, cr, _) = vanilla[n]
-        delta = (VANILLA_STEP - step) * n          # vanilla angle 90-20n -> new angle 90-step*n
-        nif.set_transform(pi, *rotz(delta, pt, pr))
-        nif.set_transform(ci, *rotz(delta, ct, cr))
-        changed.update((pi, ci))
+    def delta(v, n):
+        # vanilla angle 90-20v -> new angle 90-step*n (same float steps as the plain re-space when v == n)
+        return (VANILLA_STEP - step) * n if v == n else VANILLA_STEP * v - step * n
 
-    # 2. add the extra slots
-    new_kids, new_palette, modes = [], [], {}
-    for k, n in enumerate(range(VANILLA_SLOTS, slots)):
-        mode, src = pictures[k] if k < len(pictures) else ('blank', 0)
-        # Point: copy of Point00 (identity rotation at the 12 o'clock position) turned to -step*n
-        p0, _, (pt, pr, _), _ = vanilla[0]
-        pnew = nif.add_block(nif.type(p0), nif.blocks[p0])
-        nif.set_name(pnew, 'Point%02d' % n)
-        nif.set_transform(pnew, *rotz(-step * n, pt, pr))
-        # cImage: copy of cImage<src> with its own shader + alpha property, turned from 90-20*src to 90-step*n
-        _, cs, _, (ct, cr, _) = vanilla[src]
-        q = nif.shape_refs_at(cs)
-        skin, shader, alpha = struct.unpack_from('<3i', nif.blocks[cs], q)
-        if skin != -1:
-            sys.exit('cImage%02d is skinned - not expected' % src)
-        snew = nif.add_block(nif.type(shader), nif.blocks[shader])
-        anew = nif.add_block(nif.type(alpha), nif.blocks[alpha])
-        cnew = nif.add_block(nif.type(cs), nif.blocks[cs])
-        struct.pack_into('<3i', nif.blocks[cnew], q, -1, snew, anew)
-        nif.set_name(cnew, 'cImage%02d' % n)
-        if mode == 'mirror':
-            mirror_shape(nif, cnew, picture_angle(nif, cnew))  # mirrored where it stands, then turned into place
-        nif.set_transform(cnew, *rotz(-step * n + VANILLA_STEP * src, ct, cr))
-        if mode == 'blank':
-            fo = nif.net_end(cnew)
-            struct.pack_into('<I', nif.blocks[cnew], fo, struct.unpack_from('<I', nif.blocks[cnew], fo)[0] | 1)
-        modes[n] = 'blank (hidden)' if mode == 'blank' else '%s:%02d' % (mode, src)
-        new_kids += [pnew, cnew]
-        new_palette += [('Point%02d' % n, pnew), ('cImage%02d' % n, cnew)]
+    new_kids, renamed, modes = [], {}, {}
+    used_vanilla_pics = set()
 
-    nif.set_children(ordered, nif.children(ordered) + new_kids)
-    changed.add(ordered)
+    # 1. Points: vanilla Point<n> re-spaced for n < 18, copies of Point00 beyond; spare vanilla Points renamed + hidden
+    for n in range(max(slots, VANILLA_SLOTS)):
+        if n < VANILLA_SLOTS:
+            pi, _, (pt, pr, _), _ = vanilla[n]
+            if n < slots:
+                nif.set_transform(pi, *rotz(delta(n, n), pt, pr))
+            else:
+                nif.set_name(pi, 'PointUnused%02d' % n)
+                set_hidden(nif, pi)
+                renamed[pi] = 'PointUnused%02d' % n
+            changed.add(pi)
+
+    # 2. pictures, in slot order; extra Points are appended just before each new slot's picture
+    for n, (mode, v, label) in enumerate(slot_map):
+        if n >= VANILLA_SLOTS:
+            p0, _, (pt, pr, _), _ = vanilla[0]
+            pnew = nif.add_block(nif.type(p0), nif.blocks[p0])
+            nif.set_name(pnew, 'Point%02d' % n)
+            nif.set_transform(pnew, *rotz(-step * n, pt, pr))
+            new_kids.append(pnew)
+            renamed[pnew] = 'Point%02d' % n
+        _, cs, _, (ct, cr, _) = vanilla[v]
+        if mode == 'vanilla' and v not in used_vanilla_pics:
+            used_vanilla_pics.add(v)
+            ci = cs                                   # reuse the vanilla block itself
+            if v != n:
+                nif.set_name(ci, 'cImage%02d' % n)
+                renamed[ci] = 'cImage%02d' % n
+            nif.set_transform(ci, *rotz(delta(v, n), ct, cr))
+            changed.add(ci)
+        else:                                         # a copy with its own shader + alpha property
+            q = nif.shape_refs_at(cs)
+            skin, shader, alpha = struct.unpack_from('<3i', nif.blocks[cs], q)
+            if skin != -1:
+                sys.exit('cImage%02d is skinned - not expected' % v)
+            snew = nif.add_block(nif.type(shader), nif.blocks[shader])
+            anew = nif.add_block(nif.type(alpha), nif.blocks[alpha])
+            ci = nif.add_block(nif.type(cs), nif.blocks[cs])
+            struct.pack_into('<3i', nif.blocks[ci], q, -1, snew, anew)
+            nif.set_name(ci, 'cImage%02d' % n)
+            if mode == 'mirror':
+                mirror_shape(nif, ci, picture_angle(nif, ci))  # mirrored where it stands, then turned into place
+            nif.set_transform(ci, *rotz(delta(v, n), ct, cr))
+            if mode == 'blank':
+                set_hidden(nif, ci)
+            new_kids.append(ci)
+            renamed[ci] = 'cImage%02d' % n
+        modes[n] = label
+
+    # 3. vanilla pictures no slot uses: renamed out of the cImage00.. range and hidden
+    for v in range(VANILLA_SLOTS):
+        if v not in used_vanilla_pics:
+            ci = vanilla[v][1]
+            nif.set_name(ci, 'cImageUnused%02d' % v)
+            set_hidden(nif, ci)
+            renamed[ci] = 'cImageUnused%02d' % v
+            changed.add(ci)
+
+    if new_kids:
+        nif.set_children(ordered, nif.children(ordered) + new_kids)
+        changed.add(ordered)
+    # palette: existing entries keep their order (renamed blocks get their new name), new blocks appended in order
     for pal in palette:
         b = nif.blocks[pal]
         scene, cnt = struct.unpack_from('<iI', b, 0)
-        tail = b''.join(struct.pack('<I', len(nm)) + nm.encode() + struct.pack('<i', ref) for nm, ref in new_palette)
-        nif.blocks[pal] = b[:4] + struct.pack('<I', cnt + len(new_palette)) + b[8:] + tail
-        changed.add(pal)
+        p, entries = 8, []
+        for _ in range(cnt):
+            l, = struct.unpack_from('<I', b, p)
+            nm = b[p + 4:p + 4 + l].decode()
+            ref, = struct.unpack_from('<i', b, p + 4 + l)
+            p += 8 + l
+            entries.append((renamed.get(ref, nm), ref))
+        listed = {ref for _, ref in entries}
+        entries += [(renamed[k], k) for k in new_kids if k not in listed]
+        body = b''.join(struct.pack('<I', len(nm)) + nm.encode() + struct.pack('<i', ref) for nm, ref in entries)
+        nb = b[:4] + struct.pack('<I', len(entries)) + body
+        if nb != b:
+            nif.blocks[pal] = bytearray(nb)
+            changed.add(pal)
     return nif, changed, modes
 
 
-def verify(src_bytes, out_bytes, slots, changed, modes):
+def verify(src_bytes, out_bytes, slots, changed, modes, quiet=False):
     a, b = Nif(src_bytes), Nif(out_bytes)
     if b.write() != out_bytes:
         sys.exit('VERIFY: written file does not round-trip')
@@ -357,58 +446,78 @@ def verify(src_bytes, out_bytes, slots, changed, modes):
             same += 1
         elif i not in changed:
             problems.append('block %d (%s) changed unexpectedly' % (i, a.type(i)))
-    # for the changed slot blocks: everything except the transform must be identical
+    # changed slot blocks: only the name, the hidden flag and the transform may differ
     for i in changed:
         if a.type(i) in NODE_TYPES + SHAPE_TYPES and a.name(i) and a.name(i)[:5] in ('Point', 'cImag'):
             x, y = bytearray(a.blocks[i]), bytearray(b.blocks[i])
-            p = a.net_end(i) + 4
-            x[p:p + 48] = y[p:p + 48] = b'\0' * 48
+            p = a.net_end(i)
+            for z in (x, y):
+                z[0:4] = b'\0' * 4
+                z[p:p + 4] = bytes([z[p] & 0xFE]) + bytes(z[p + 1:p + 4])
+                z[p + 4:p + 52] = b'\0' * 48
             if x != y:
-                problems.append('block %d %s changed outside its transform' % (i, a.name(i)))
+                problems.append('block %d %s changed outside its name, hidden flag and transform' % (i, a.name(i)))
+    # no slot-named node or picture outside 00..N-1, exactly one of each inside
+    for i in range(len(b.blocks)):
+        if b.type(i) in NODE_TYPES + SHAPE_TYPES:
+            nm = b.name(i) or ''
+            for pre in ('Point', 'cImage'):
+                if nm.startswith(pre) and nm[len(pre):].isdigit() and int(nm[len(pre):]) >= slots:
+                    problems.append('%s is outside the %d-slot range' % (nm, slots))
     rows = []
     for n in range(slots):
         pi, ci = slot_blocks(b, n)
         pt, _, _ = b.transform(pi)
         q = b.shape_refs_at(ci)
         _, sh, al = struct.unpack_from('<3i', b.blocks[ci], q)
-        # picture centre in dome space (bound-sphere centre through the shape's transform)
-        c = struct.unpack_from('<3f', b.blocks[ci], b.av_end(ci))
-        ct, cr, cs = b.transform(ci)
-        w = [ct[r] + cs * sum(cr[3 * r + k] * c[k] for k in range(3)) for r in range(3)]
         hidden = struct.unpack_from('<I', b.blocks[ci], b.net_end(ci))[0] & 1
-        if bool(hidden) != (modes.get(n) == 'blank (hidden)'):
+        if bool(hidden) != ('hidden' in modes.get(n, '')):
             problems.append('cImage%02d hidden flag is %d, not what was asked' % (n, hidden))
-        rows.append((n, pi, ci, sh, al, math.degrees(math.atan2(pt[1], pt[0])), math.degrees(math.atan2(w[1], w[0]))))
-    shaders = [r[3] for r in rows]
-    if len(set(shaders)) != slots:
+        if struct.unpack_from('<I', b.blocks[pi], b.net_end(pi))[0] & 1:
+            problems.append('Point%02d is hidden' % n)
+        pang, cang = math.degrees(math.atan2(pt[1], pt[0])), picture_angle(b, ci)
+        if not hidden and abs((cang - pang + 180.0) % 360.0 - 180.0) > 4.0:
+            problems.append('cImage%02d sits at %.2f deg, too far from its Point at %.2f' % (n, cang, pang))
+        rows.append((n, pi, ci, sh, al, pang, cang))
+    if len(set(r[3] for r in rows)) != slots:
         problems.append('two slots share a shader property (they would fade together)')
     step = 360.0 / slots
     for n, pi, ci, sh, al, pang, cang in rows:
         want = (90.0 - step * n + 180.0) % 360.0 - 180.0
         if abs(((pang - want + 180.0) % 360.0) - 180.0) > 0.01:
             problems.append('Point%02d at %.2f deg, expected %.2f' % (n, pang, want))
-    print('slot  Point blk  cImage blk  shader  alpha  Point angle  picture angle  picture')
-    for n, pi, ci, sh, al, pang, cang in rows:
-        print('%4d  %9d  %10d  %6d  %5d  %11.2f  %13.2f  %s'
-              % (n, pi, ci, sh, al, pang, cang, modes.get(n, 'vanilla %02d' % n)))
+    if not quiet:
+        print('slot  Point blk  cImage blk  shader  alpha  Point angle  picture angle  picture source')
+        for n, pi, ci, sh, al, pang, cang in rows:
+            print('%4d  %9d  %10d  %6d  %5d  %11.2f  %13.2f  %s' % (n, pi, ci, sh, al, pang, cang, modes.get(n, '?')))
     print('blocks: source %d, output %d; unchanged source blocks %d, changed %d (allowed: %d)'
           % (nsrc, len(b.blocks), same, nsrc - same, len(changed)))
     if problems:
         sys.exit('VERIFY FAILED:\n  ' + '\n  '.join(problems))
-    print('VERIFY OK: %d Point/cImage pairs, evenly spaced at %.1f degrees; nothing else changed' % (slots, step))
+    print('VERIFY OK: %d Point/cImage pairs, evenly spaced at %.2f degrees; nothing else changed' % (slots, step))
+
+
+def make_one(src, slot_map, out, quiet=False):
+    nif, changed, modes = build(src, slot_map)
+    data = nif.write()
+    verify(src, data, len(slot_map), changed, modes, quiet)
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+    with open(out, 'wb') as f:
+        f.write(data)
+    print('wrote %s (%d bytes, %d slots)' % (os.path.relpath(out, REPO) if os.path.abspath(out).startswith(REPO) else out,
+                                             len(data), len(slot_map)))
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--bsa', help='Skyrim - Meshes1.bsa holding the vanilla skydome')
     ap.add_argument('--src', help='a loose skydome NIF to use instead of the BSA')
-    ap.add_argument('--slots', type=int, default=20)
-    ap.add_argument('--pictures', default='blank,mirror:14',
-                    help='pictures for slots 18.. in order: blank | copy:<vanilla slot> | mirror:<vanilla slot>')
+    ap.add_argument('--map', default=','.join(DEFAULT_MAP),
+                    help='slot list: vanilla tree index 0-17 (a..b ranges allowed), diving, necromancer, blank, '
+                         'copy:<0-17>, mirror:<0-17>; 2 to 20 entries (default: 0..17,diving,necromancer)')
+    ap.add_argument('--batch', help='JSON list of {"out": path, "map": [...]}; relative outs are under the repo')
     ap.add_argument('--out', default=os.path.join(REPO, 'testonly', 'CustomSkillsRing', 'meshes', 'interface', 'NjordlingerCGO', 'intperkskydome20.nif'))
     a = ap.parse_args()
-    if a.slots < VANILLA_SLOTS:
-        sys.exit('--slots must be at least %d' % VANILLA_SLOTS)
     if a.src:
         src = open(a.src, 'rb').read()
     else:
@@ -419,13 +528,17 @@ def main():
                 sys.exit('give --bsa or --src, or set NJCGO_MO2_INSTANCE')
             bsa = os.path.join(inst, 'Stock Game', 'Data', 'Skyrim - Meshes1.bsa')
         src = read_from_bsa(bsa, BSA_MEMBER)
-    nif, changed, modes = build(src, a.slots, parse_pictures(a.pictures))
-    out = nif.write()
-    verify(src, out, a.slots, changed, modes)
-    os.makedirs(os.path.dirname(a.out), exist_ok=True)
-    with open(a.out, 'wb') as f:
-        f.write(out)
-    print('wrote %s (%d bytes)' % (os.path.relpath(a.out, REPO) if a.out.startswith(REPO) else a.out, len(out)))
+    if a.batch:
+        import json
+        jobs = json.load(open(a.batch, encoding='utf-8'))
+        if not isinstance(jobs, list) or not all(isinstance(j, dict) and 'out' in j and 'map' in j for j in jobs):
+            sys.exit('--batch file must be a JSON list of {"out": ..., "map": [...]}')
+        for j in jobs:
+            out = j['out'] if os.path.isabs(j['out']) else os.path.join(REPO, j['out'])
+            print('--', j['out'])
+            make_one(src, parse_map(j['map']), out)
+    else:
+        make_one(src, parse_map(a.map), a.out)
 
 
 if __name__ == '__main__':

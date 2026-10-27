@@ -85,6 +85,108 @@ namespace StatsMenuClass
 			catch (const std::exception& ex) { logger::warn("stats menu: skills-ring.json not readable ({}) - the 18 vanilla trees", ex.what()); g_ring.clear(); }
 		}
 
+		// PLAN.md D32 (the owner 04:42): a tree the class does not hold is ABSENT from the ring. ring-variants.json (from
+		// tools/make-ring-variants.py) holds one ring per held-tree set, each with its own sky (slot i = that tree's
+		// constellation); for the current class the plugin writes SKILLS.json from the matching variant and sets the file's
+		// debugReload global so the framework reads it again.
+		struct RingVariant { std::string id, sky; std::vector<std::string> ring; };
+		std::vector<RingVariant> g_variants;
+		nlohmann::json g_customDefs;
+		std::string g_reloadRef;
+		RE::TESGlobal* g_reload = nullptr;
+		std::string g_writtenVariant;
+
+		void LoadVariants()
+		{
+			try
+			{
+				std::ifstream in(std::filesystem::path("Data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul/ring-variants.json"));
+				if (!in) { return; }
+				const auto j = nlohmann::json::parse(in);
+				g_customDefs = j.value("skills", nlohmann::json::object());
+				for (const auto& v : j.value("variants", nlohmann::json::array()))
+				{
+					RingVariant rv{ v.value("id", std::string()), v.value("sky", std::string()), {} };
+					for (const auto& e : v.value("ring", nlohmann::json::array())) { rv.ring.push_back(e.get<std::string>()); }
+					g_variants.push_back(std::move(rv));
+				}
+				std::ifstream rin(std::filesystem::path("Data/SKSE/Plugins/NjordlingerCombatGameplayOverhaul/ring.json"));
+				if (rin)
+				{
+					g_reloadRef = nlohmann::json::parse(rin).value("reloadGlobal", std::string());
+					const auto bar = g_reloadRef.find('|');
+					if (auto* dh = RE::TESDataHandler::GetSingleton(); dh && bar != std::string::npos)
+					{
+						g_reload = dh->LookupForm<RE::TESGlobal>(static_cast<RE::FormID>(std::stoul(g_reloadRef.substr(bar + 1), nullptr, 16)), g_reloadRef.substr(0, bar));
+					}
+				}
+				logger::info("stats menu: {} class ring variants; reload global {}", g_variants.size(), g_reload ? "found" : "MISSING");
+			}
+			catch (const std::exception& ex) { logger::warn("stats menu: ring-variants.json not readable ({}) - the ring stays as installed", ex.what()); g_variants.clear(); }
+		}
+
+		// the ring the current class sees, in the game's own order (the names the framework uses)
+		std::vector<std::string> WantedRing()
+		{
+			static const std::pair<const char*, const char*> kOrder[] = { { "Enchanting", "Enchanting" }, { "Smithing", "Smithing" }, { "HeavyArmor", "HeavyArmor" },
+				{ "Block", "Block" }, { "TwoHanded", "TwoHanded" }, { "OneHanded", "OneHanded" }, { "Marksman", "Archery" }, { "LightArmor", "LightArmor" },
+				{ "Sneak", "Sneak" }, { "Lockpicking", "Lockpicking" }, { "Pickpocket", "Pickpocket" }, { "Speechcraft", "Speech" }, { "Alchemy", "Alchemy" },
+				{ "Illusion", "Illusion" }, { "Conjuration", "Conjuration" }, { "Destruction", "Destruction" }, { "Restoration", "Restoration" }, { "Alteration", "Alteration" } };
+			std::vector<std::string> out;
+			for (const auto& [csf, ours] : kOrder)
+			{
+				int idx = -1;
+				for (int i = 0; i < skilllist::kCount; ++i) { if (_stricmp(skilllist::kIniName[i], ours) == 0) { idx = i; } }
+				if (idx < 0 || Classes::Holds(idx)) { out.emplace_back(csf); }
+			}
+			out.emplace_back("diving");
+			if (Classes::HoldsGroup(ClassData::kMagic)) { out.emplace_back("Necromancer"); }
+			return out;
+		}
+	}
+
+	void ApplyRing()
+	{
+		if (g_variants.empty()) { return; }
+		const auto want = WantedRing();
+		const RingVariant* v = nullptr;
+		for (const auto& rv : g_variants) { if (rv.ring == want) { v = &rv; } }
+		if (!v)
+		{
+			logger::warn("stats menu: no ring variant for this class's {} trees - the ring stays as it is (regenerate tools/make-ring-variants.py)", want.size());
+			return;
+		}
+		if (v->id == g_writtenVariant) { return; }
+		nlohmann::json skills = nlohmann::json::array();
+		for (const auto& e : v->ring)
+		{
+			if (g_customDefs.contains(e)) { skills.push_back(g_customDefs[e]); }
+			else { skills.push_back(e); }
+		}
+		nlohmann::json file{ { "$schema", "https://raw.githubusercontent.com/Exit-9B/CustomSkills/main/docs/schema/CustomSkill.json" }, { "version", 1 },
+			{ "skydome", { { "model", v->sky }, { "cameraRightPoint", 1 } } }, { "skills", skills } };
+		if (!g_reloadRef.empty()) { file["debugReload"] = g_reloadRef; }
+		try
+		{
+			std::ofstream out(std::filesystem::path("Data/SKSE/Plugins/CustomSkills/SKILLS.json"), std::ios::trunc);
+			out << file.dump(2) << "\n";
+		}
+		catch (...) { logger::warn("stats menu: SKILLS.json could not be written - the ring stays as it is"); return; }
+		if (g_reload) { g_reload->value = 1.0F; }
+		g_writtenVariant = v->id;
+		// the hide pass reads the same order
+		g_ring.clear();
+		for (const auto& e : v->ring)
+		{
+			RingSlot slot;
+			slot.id = e;
+			g_ring.push_back(slot);
+		}
+		logger::info("stats menu: the ring for this class is {} ({} trees) - SKILLS.json written, the framework asked to reload", v->id, v->ring.size());
+	}
+
+	namespace
+	{
 		// Werebear (CUSTOM-TREES.md 3, way b): the skills key in werebear form opens Berserkyr's werebear tree (its own
 		// global, as its hotkey script does) instead of the werewolf tree.
 		void ResolveWerebear()
@@ -395,6 +497,7 @@ namespace StatsMenuClass
 	void Install()
 	{
 		LoadRing();
+		LoadVariants();
 		ResolveWerebear();
 		if (auto* ui = RE::UI::GetSingleton()) { ui->AddEventSink<RE::MenuOpenCloseEvent>(&g_sink); }
 		logger::info("stats menu class line: menu sink registered");

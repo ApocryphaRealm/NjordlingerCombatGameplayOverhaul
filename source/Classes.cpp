@@ -4,6 +4,7 @@
 
 #include "ClassData.h"
 #include "GuildRoutes.h"
+#include "StatsMenuClass.h"
 #include "Settings.h"
 #include "Skills.h"
 
@@ -253,6 +254,7 @@ namespace Classes
 			}
 
 			GuildRoutes::Apply();   // D30: the routes' refusals follow the switches
+			StatsMenuClass::ApplyRing();   // D32: the skills ring holds only the trees this class has
 			// Class globals: 1 for every class this character has been (a Crusader is still a Knight for a condition).
 			for (const auto& n : table.classes)
 			{

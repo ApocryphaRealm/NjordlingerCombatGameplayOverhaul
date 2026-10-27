@@ -77,6 +77,10 @@ def main():
     diving = json.load(open(a.underwater, encoding="utf-8"))["skills"][0]
     ring = {"$schema": "https://raw.githubusercontent.com/Exit-9B/CustomSkills/main/docs/schema/CustomSkill.json", "version": 1,
             "skydome": {"model": SKY, "cameraRightPoint": 1}, "skills": VANILLA + [diving, necromancer(a.necromancer)]}
+    # D32: the reload global the SKSE plugin sets after it rewrites this file for the current class
+    rj = os.path.join(REPO, "data", "SKSE", "Plugins", "NjordlingerCombatGameplayOverhaul", "ring.json")
+    if os.path.exists(rj):
+        ring["debugReload"] = json.load(open(rj, encoding="utf-8"))["reloadGlobal"]
     out = os.path.join(REPO, "testonly", "CustomSkillsRing", "SKSE", "Plugins", "CustomSkills", "SKILLS.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8", newline="\n") as f:
