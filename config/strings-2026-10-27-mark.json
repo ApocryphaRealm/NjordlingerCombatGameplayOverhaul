@@ -1,0 +1,28 @@
+{
+  "NJ_MarkLockedTrees": {
+    "english": "Mark locked trees in the skills menu",
+    "french": "Marquer les arbres verrouillés dans le menu des compétences",
+    "german": "Gesperrte Bäume im Fertigkeitenmenü kennzeichnen",
+    "italian": "Segna gli alberi bloccati nel menu delle abilità",
+    "spanish": "Marcar los árboles bloqueados en el menú de habilidades",
+    "polish": "Oznacz zablokowane drzewka w menu umiejętności",
+    "russian": "Отмечать закрытые ветви в меню навыков",
+    "czech": "Označit zamčené stromy v nabídce dovedností",
+    "japanese": "スキルメニューでロック中のツリーに印を付ける",
+    "chinese": "在技能菜单中标记已锁定的技能树",
+    "korean": "기술 메뉴에서 잠긴 트리 표시"
+  },
+  "NJ_HelpMarkLockedTrees": {
+    "english": "In the skills menu's ring, the trees your class locks are dimmed and marked (locked). Their perks cannot be taken either way.",
+    "french": "Dans l'anneau du menu des compétences, les arbres que votre classe verrouille sont atténués et marqués (verrouillé). Leurs atouts ne peuvent de toute façon pas être pris.",
+    "german": "Im Ring des Fertigkeitenmenüs werden die Bäume, die deine Klasse sperrt, abgedunkelt und mit (gesperrt) gekennzeichnet. Ihre Talente können ohnehin nicht genommen werden.",
+    "italian": "Nell'anello del menu delle abilità, gli alberi che la tua classe blocca sono attenuati e segnati (bloccato). I loro talenti non possono comunque essere presi.",
+    "spanish": "En el anillo del menú de habilidades, los árboles que tu clase bloquea aparecen atenuados y marcados (bloqueado). Sus ventajas no se pueden tomar de todos modos.",
+    "polish": "W kręgu menu umiejętności drzewka zablokowane przez twoją klasę są przyciemnione i oznaczone (zablokowane). Ich atutów i tak nie można wybrać.",
+    "russian": "В кольце меню навыков ветви, закрытые вашим классом, приглушены и помечены (закрыто). Их перки взять всё равно нельзя.",
+    "czech": "V kruhu nabídky dovedností jsou stromy, které vaše třída zamyká, ztlumené a označené (zamčeno). Jejich schopnosti stejně nelze vzít.",
+    "japanese": "スキルメニューの輪では、クラスがロックしているツリーが暗く表示され(ロック)と付く。そのパークはどのみち取れない。",
+    "chinese": "在技能菜单的环中，你的职业锁定的技能树会变暗并标记(已锁定)。其天赋无论如何都无法选取。",
+    "korean": "기술 메뉴의 고리에서 직업이 잠근 트리는 어둡게 표시되고 (잠김)이 붙습니다. 그 퍽은 어차피 고를 수 없습니다."
+  }
+}

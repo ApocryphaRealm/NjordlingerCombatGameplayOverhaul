@@ -271,12 +271,29 @@ namespace StatsMenuClass
 				const auto name = fmt::format("SkillText{}", i);
 				if (!ring.GetMember(name.c_str(), &clip) || !clip.IsDisplayObject()) { ++missing; continue; }
 				++found;
+				// the owner (04:32): a blank label read as broken - every tree keeps its name and level; a locked one is dimmed
+				// and marked "(locked)" instead of hidden
 				RE::GFxValue::DisplayInfo info;
 				clip.GetDisplayInfo(&info);
-				if (info.GetVisible() == locked)
+				const double alpha = locked ? 45.0 : 100.0;
+				if (!info.GetVisible() || info.GetAlpha() != alpha)
 				{
-					info.SetVisible(!locked);
+					info.SetVisible(true);
+					info.SetAlpha(alpha);
 					clip.SetDisplayInfo(info);
+				}
+				RE::GFxValue label;
+				if (clip.GetMember("LabelInstance", &label) && label.IsDisplayObject())
+				{
+					RE::GFxValue html;
+					if (label.GetMember("htmlText", &html) && html.IsString())
+					{
+						static const std::string mark = std::string("  ") + strings::TR("NJ_TreeLocked", "(locked)");
+						std::string text = html.GetString();
+						const auto at = text.find(mark);
+						if (locked && at == std::string::npos) { label.SetMember("htmlText", RE::GFxValue((text + mark).c_str())); }
+						else if (!locked && at != std::string::npos) { text.erase(at, mark.size()); label.SetMember("htmlText", RE::GFxValue(text.c_str())); }
+					}
 				}
 				hidden += locked ? 1 : 0;
 			}

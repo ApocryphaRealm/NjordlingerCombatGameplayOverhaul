@@ -1,0 +1,15 @@
+{
+  "NJ_TreeLocked": {
+    "english": "(locked)",
+    "french": "(verrouillé)",
+    "german": "(gesperrt)",
+    "italian": "(bloccato)",
+    "spanish": "(bloqueado)",
+    "polish": "(zablokowane)",
+    "russian": "(закрыто)",
+    "czech": "(zamčeno)",
+    "japanese": "(ロック)",
+    "chinese": "(已锁定)",
+    "korean": "(잠김)"
+  }
+}

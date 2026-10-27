@@ -1,7 +1,7 @@
 r"""Build the perk-menu sky (constellation skydome) with N tree slots for the Custom Skills Framework ring - ONE command.
 
   py -3 tools\make-skydome.py [--bsa "<Stock Game>\Data\Skyrim - Meshes1.bsa" | --src <loose intperkskydome.nif>]
-                              [--slots 20] [--copy-from 16,17] [--out testonly\CustomSkillsRing\meshes\interface\NjordlingerCGO\intperkskydome20.nif]
+                              [--slots 20] [--pictures blank,mirror:14] [--out testonly\CustomSkillsRing\meshes\interface\NjordlingerCGO\intperkskydome20.nif]
 
 Base: the VANILLA meshes\interface\intperkskydome.nif, read straight out of the game's Skyrim - Meshes1.bsa (nothing is
 unpacked anywhere). --bsa defaults to <NJCGO_MO2_INSTANCE>\Stock Game\Data\Skyrim - Meshes1.bsa. --src takes a loose
@@ -20,9 +20,19 @@ size, so blocks this script does not touch are copied byte for byte):
  1. Re-spaces the 18 vanilla slots from 20 degrees to 360/N: slot i is turned about the dome's vertical axis by
     (20 - 360/N) * i degrees (both its Point and its cImage, translation and rotation), so each picture keeps its
     vanilla offset from its own tree.
- 2. Adds slots 18..N-1: a copy of Point00 turned to its angle, and a copy of the cImage named by --copy-from (with its
-    own copies of the shader and alpha property, so each slot fades on its own) turned from its vanilla angle to the
-    new one. The new shapes are appended to OrderedRenderingNode's children and to the object palette.
+ 2. Adds slots 18..N-1: a copy of Point00 turned to its angle, and a cImage per --pictures entry (in slot order):
+      copy:<v>    a copy of vanilla cImage<v>, turned from its vanilla angle to the new slot's angle;
+      mirror:<v>  the same, with the picture mirrored left-right (vertices, normals, tangents reflected across the
+                  vertical plane through the dome axis and the picture's centre; triangle winding reversed);
+      blank       a copy of cImage00 with the hidden (APP_CULLED) flag set: the slot exists, so the framework has a
+                  shader to fade and nothing can reach a missing slot, but no picture shows.
+    Each new cImage has its own copies of the shader and alpha property, so each slot fades on its own. The new
+    blocks are appended to OrderedRenderingNode's children and to the object palette. No texture outside the vanilla
+    constellation atlas (textures\interface\INTConstellationImages.dds) is referenced.
+    Defaults for the 20-tree ring (18 = Diving, 19 = Necromancer): blank,mirror:14. Diving has no constellation
+    picture anywhere (Underwater NG's own DivingSkydome.nif has no cImage shape at all; its art is a whole-sky water
+    panorama licensed only as part of Underwater NG), so its slot is blank like its own sky. Necromancer has no art of
+    its own (its sky is the vanilla mesh), so it gets Conjuration's picture (vanilla slot 14) mirrored.
  3. Checks its own output: re-reads it, refuses if any block other than the ones it meant to change differs from the
     source, and prints the per-slot list.
 No machine path is written into the output.
@@ -198,7 +208,75 @@ def slot_blocks(nif, n):
     return find_named(nif, 'Point%02d' % n, NODE_TYPES), find_named(nif, 'cImage%02d' % n, SHAPE_TYPES)
 
 
-def build(src_bytes, slots, copy_from):
+def mirror_shape(nif, i, theta):
+    """Mirror shape block i (in place) across the vertical plane through the dome axis at angle theta (degrees),
+    using the shape's current transform. Positions, normals, tangents, bitangents and the bound are reflected;
+    triangle winding is reversed so the faces keep pointing the same way."""
+    b = nif.blocks[i]
+    t, r, s = nif.transform(i)
+    R = [r[0:3], r[3:6], r[6:9]]
+    w = (-math.sin(math.radians(theta)), math.cos(math.radians(theta)), 0.0)  # plane normal (dome space)
+    refl = lambda p: [p[k] - 2.0 * (p[0] * w[0] + p[1] * w[1]) * w[k] for k in range(3)]
+    to_world = lambda v: [t[a] + s * sum(R[a][k] * v[k] for k in range(3)) for a in range(3)]
+    to_local = lambda p: [sum(R[k][a] * (p[k] - t[k]) for k in range(3)) / s for a in range(3)]
+    vec_world = lambda v: [sum(R[a][k] * v[k] for k in range(3)) for a in range(3)]
+    vec_local = lambda v: [sum(R[k][a] * v[k] for k in range(3)) for a in range(3)]
+    pt = lambda v: to_local(refl(to_world(v)))
+    vec = lambda v: vec_local(refl(vec_world(v)))
+    dec = lambda x: x / 255.0 * 2.0 - 1.0
+    enc = lambda x: max(0, min(255, int(round((x + 1.0) / 2.0 * 255.0))))
+    p = nif.av_end(i)
+    c = struct.unpack_from('<4f', b, p)
+    struct.pack_into('<3f', b, p, *pt(c[:3]))
+    p += 16 + 12
+    desc, = struct.unpack_from('<Q', b, p)
+    ntri, nv, _ds = struct.unpack_from('<HHI', b, p + 8)
+    size, uvo = (desc & 0xF) * 4, ((desc >> 8) & 0xF) * 4
+    nro, tgo = ((desc >> 16) & 0xF) * 4, ((desc >> 20) & 0xF) * 4
+    flags = desc >> 44
+    if uvo != 16 or not (flags & 0x8 and flags & 0x10):
+        sys.exit('mirror: unexpected vertex layout %x (need full-precision positions, normals and tangents)' % desc)
+    v0 = p + 16
+    for k in range(nv):
+        q = v0 + k * size
+        x, y, z, bx = struct.unpack_from('<4f', b, q)
+        nx, ny, nz, by = (dec(v) for v in b[q + nro:q + nro + 4])
+        tx, ty, tz, bz = (dec(v) for v in b[q + tgo:q + tgo + 4])
+        x, y, z = pt((x, y, z))
+        bx, by, bz = vec((bx, by, bz))
+        n_, t_ = vec((nx, ny, nz)), vec((tx, ty, tz))
+        struct.pack_into('<4f', b, q, x, y, z, bx)
+        b[q + nro:q + nro + 4] = bytes([enc(n_[0]), enc(n_[1]), enc(n_[2]), enc(by)])
+        b[q + tgo:q + tgo + 4] = bytes([enc(t_[0]), enc(t_[1]), enc(t_[2]), enc(bz)])
+    t0 = v0 + nv * size
+    for k in range(ntri):
+        i0, i1, i2 = struct.unpack_from('<3H', b, t0 + 6 * k)
+        struct.pack_into('<3H', b, t0 + 6 * k, i0, i2, i1)
+
+
+def picture_angle(nif, i):
+    """Angle (degrees) of the picture's centre around the dome axis: bound-sphere centre through the transform."""
+    c = struct.unpack_from('<3f', nif.blocks[i], nif.av_end(i))
+    t, r, s = nif.transform(i)
+    w = [t[a] + s * sum(r[3 * a + k] * c[k] for k in range(3)) for a in range(3)]
+    return math.degrees(math.atan2(w[1], w[0]))
+
+
+def parse_pictures(spec):
+    out = []
+    for item in spec.split(','):
+        item = item.strip()
+        if item == 'blank':
+            out.append(('blank', 0))
+            continue
+        mode, _, v = item.partition(':')
+        if mode not in ('copy', 'mirror') or not v.isdigit() or int(v) >= VANILLA_SLOTS:
+            sys.exit('bad --pictures entry %r (use blank, copy:<0-17> or mirror:<0-17>)' % item)
+        out.append((mode, int(v)))
+    return out
+
+
+def build(src_bytes, slots, pictures):
     nif = Nif(src_bytes)
     if nif.write() != src_bytes:
         sys.exit('round trip of the unmodified source is not byte-identical - refusing to edit it')
@@ -223,9 +301,9 @@ def build(src_bytes, slots, copy_from):
         changed.update((pi, ci))
 
     # 2. add the extra slots
-    new_kids, new_palette = [], []
+    new_kids, new_palette, modes = [], [], {}
     for k, n in enumerate(range(VANILLA_SLOTS, slots)):
-        src = copy_from[k % len(copy_from)]
+        mode, src = pictures[k] if k < len(pictures) else ('blank', 0)
         # Point: copy of Point00 (identity rotation at the 12 o'clock position) turned to -step*n
         p0, _, (pt, pr, _), _ = vanilla[0]
         pnew = nif.add_block(nif.type(p0), nif.blocks[p0])
@@ -242,7 +320,13 @@ def build(src_bytes, slots, copy_from):
         cnew = nif.add_block(nif.type(cs), nif.blocks[cs])
         struct.pack_into('<3i', nif.blocks[cnew], q, -1, snew, anew)
         nif.set_name(cnew, 'cImage%02d' % n)
+        if mode == 'mirror':
+            mirror_shape(nif, cnew, picture_angle(nif, cnew))  # mirrored where it stands, then turned into place
         nif.set_transform(cnew, *rotz(-step * n + VANILLA_STEP * src, ct, cr))
+        if mode == 'blank':
+            fo = nif.net_end(cnew)
+            struct.pack_into('<I', nif.blocks[cnew], fo, struct.unpack_from('<I', nif.blocks[cnew], fo)[0] | 1)
+        modes[n] = 'blank (hidden)' if mode == 'blank' else '%s:%02d' % (mode, src)
         new_kids += [pnew, cnew]
         new_palette += [('Point%02d' % n, pnew), ('cImage%02d' % n, cnew)]
 
@@ -254,10 +338,10 @@ def build(src_bytes, slots, copy_from):
         tail = b''.join(struct.pack('<I', len(nm)) + nm.encode() + struct.pack('<i', ref) for nm, ref in new_palette)
         nif.blocks[pal] = b[:4] + struct.pack('<I', cnt + len(new_palette)) + b[8:] + tail
         changed.add(pal)
-    return nif, changed
+    return nif, changed, modes
 
 
-def verify(src_bytes, out_bytes, slots, changed):
+def verify(src_bytes, out_bytes, slots, changed, modes):
     a, b = Nif(src_bytes), Nif(out_bytes)
     if b.write() != out_bytes:
         sys.exit('VERIFY: written file does not round-trip')
