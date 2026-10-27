@@ -375,6 +375,9 @@ def verify(src_bytes, out_bytes, slots, changed, modes):
         c = struct.unpack_from('<3f', b.blocks[ci], b.av_end(ci))
         ct, cr, cs = b.transform(ci)
         w = [ct[r] + cs * sum(cr[3 * r + k] * c[k] for k in range(3)) for r in range(3)]
+        hidden = struct.unpack_from('<I', b.blocks[ci], b.net_end(ci))[0] & 1
+        if bool(hidden) != (modes.get(n) == 'blank (hidden)'):
+            problems.append('cImage%02d hidden flag is %d, not what was asked' % (n, hidden))
         rows.append((n, pi, ci, sh, al, math.degrees(math.atan2(pt[1], pt[0])), math.degrees(math.atan2(w[1], w[0]))))
     shaders = [r[3] for r in rows]
     if len(set(shaders)) != slots:
@@ -384,9 +387,10 @@ def verify(src_bytes, out_bytes, slots, changed, modes):
         want = (90.0 - step * n + 180.0) % 360.0 - 180.0
         if abs(((pang - want + 180.0) % 360.0) - 180.0) > 0.01:
             problems.append('Point%02d at %.2f deg, expected %.2f' % (n, pang, want))
-    print('slot  Point blk  cImage blk  shader  alpha  Point angle  picture angle')
+    print('slot  Point blk  cImage blk  shader  alpha  Point angle  picture angle  picture')
     for n, pi, ci, sh, al, pang, cang in rows:
-        print('%4d  %9d  %10d  %6d  %5d  %11.2f  %13.2f' % (n, pi, ci, sh, al, pang, cang))
+        print('%4d  %9d  %10d  %6d  %5d  %11.2f  %13.2f  %s'
+              % (n, pi, ci, sh, al, pang, cang, modes.get(n, 'vanilla %02d' % n)))
     print('blocks: source %d, output %d; unchanged source blocks %d, changed %d (allowed: %d)'
           % (nsrc, len(b.blocks), same, nsrc - same, len(changed)))
     if problems:
@@ -399,7 +403,8 @@ def main():
     ap.add_argument('--bsa', help='Skyrim - Meshes1.bsa holding the vanilla skydome')
     ap.add_argument('--src', help='a loose skydome NIF to use instead of the BSA')
     ap.add_argument('--slots', type=int, default=20)
-    ap.add_argument('--copy-from', default='16,17', help='vanilla slots whose pictures the new slots copy, in order')
+    ap.add_argument('--pictures', default='blank,mirror:14',
+                    help='pictures for slots 18.. in order: blank | copy:<vanilla slot> | mirror:<vanilla slot>')
     ap.add_argument('--out', default=os.path.join(REPO, 'testonly', 'CustomSkillsRing', 'meshes', 'interface', 'NjordlingerCGO', 'intperkskydome20.nif'))
     a = ap.parse_args()
     if a.slots < VANILLA_SLOTS:
@@ -414,10 +419,9 @@ def main():
                 sys.exit('give --bsa or --src, or set NJCGO_MO2_INSTANCE')
             bsa = os.path.join(inst, 'Stock Game', 'Data', 'Skyrim - Meshes1.bsa')
         src = read_from_bsa(bsa, BSA_MEMBER)
-    copy_from = [int(x) for x in a.copy_from.split(',')]
-    nif, changed = build(src, a.slots, copy_from)
+    nif, changed, modes = build(src, a.slots, parse_pictures(a.pictures))
     out = nif.write()
-    verify(src, out, a.slots, changed)
+    verify(src, out, a.slots, changed, modes)
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
     with open(a.out, 'wb') as f:
         f.write(out)
