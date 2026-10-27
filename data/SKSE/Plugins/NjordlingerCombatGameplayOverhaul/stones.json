@@ -86,7 +86,11 @@
     "Poison": "0xC15",
     "Disarm": "0xC17",
     "Mirror": "0xC19",
-    "Hush": "0xC1B"
+    "Hush": "0xC1B",
+    "Sun": "0xC5D",
+    "Mend": "0xC5F",
+    "Ward": "0xC61",
+    "Rally": "0xC63"
   },
   "dust": [
     "0xC4C",
@@ -589,9 +593,24 @@
           ]
         },
         "armour": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0x9D0",
-          "text": "Undead near you take light damage. (dormant)"
+          "text": "Undead near you take light damage.",
+          "proc": {
+            "on": "tick",
+            "at": "nearbyKw",
+            "nearKeyword": "Skyrim.esm|0x13796",
+            "radius": 512,
+            "mag": [
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "cd": 2,
+            "helper": "Sun"
+          }
         }
       }
     },
@@ -719,9 +738,10 @@
           ]
         },
         "armour": {
-          "kind": "stub",
+          "kind": "filter",
           "effect": "0x9E3",
-          "text": "Frost does not slow you. (dormant)"
+          "text": "Frost does not slow you.",
+          "filter": "frostSlow"
         }
       }
     },
@@ -1241,9 +1261,10 @@
           ]
         },
         "armour": {
-          "kind": "stub",
+          "kind": "filter",
           "effect": "0xA30",
-          "text": "Your weapon damage cannot be reduced. (dormant)"
+          "text": "Your weapon damage cannot be reduced.",
+          "filter": "weaponDamage"
         }
       }
     },
@@ -1419,9 +1440,17 @@
           ]
         },
         "armour": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xA4F",
-          "text": "Animals do not attack you. (dormant)"
+          "text": "Animals do not attack you.",
+          "proc": {
+            "on": "tick",
+            "at": "nearbyKw",
+            "nearKeyword": "Skyrim.esm|0x13798",
+            "radius": 1536,
+            "op": "calm",
+            "cd": 1
+          }
         }
       }
     },
@@ -1563,14 +1592,30 @@
       ],
       "hosts": {
         "melee": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xA69",
-          "text": "Struck targets are revealed through walls. (dormant)"
+          "text": "Struck targets are revealed through walls.",
+          "proc": {
+            "on": "hit",
+            "at": "target",
+            "op": "shader",
+            "shaderDur": 10,
+            "cd": 1,
+            "shader": "Skyrim.esm|0xDC209"
+          }
         },
         "ranged": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xA6A",
-          "text": "Arrows mark the target through walls. (dormant)"
+          "text": "Arrows mark the target through walls.",
+          "proc": {
+            "on": "hit",
+            "at": "target",
+            "op": "shader",
+            "shaderDur": 10,
+            "cd": 1,
+            "shader": "Skyrim.esm|0xDC209"
+          }
         },
         "armour": {
           "kind": "rec",
@@ -1607,14 +1652,32 @@
       ],
       "hosts": {
         "melee": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xA71",
-          "text": "Hits show nearby enemies briefly. (dormant)"
+          "text": "Hits show nearby enemies briefly.",
+          "proc": {
+            "on": "hit",
+            "at": "nearTarget",
+            "radius": 1536,
+            "op": "shader",
+            "shaderDur": 3,
+            "cd": 3,
+            "shader": "Skyrim.esm|0xDC209"
+          }
         },
         "ranged": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xA72",
-          "text": "Arrows reveal enemies near the impact. (dormant)"
+          "text": "Arrows reveal enemies near the impact.",
+          "proc": {
+            "on": "hit",
+            "at": "nearTarget",
+            "radius": 1536,
+            "op": "shader",
+            "shaderDur": 3,
+            "cd": 3,
+            "shader": "Skyrim.esm|0xDC209"
+          }
         },
         "armour": {
           "kind": "rec",
@@ -2829,9 +2892,10 @@
           ]
         },
         "armour": {
-          "kind": "stub",
+          "kind": "filter",
           "effect": "0xB41",
-          "text": "You resist fear. (dormant)"
+          "text": "You resist fear.",
+          "filter": "fear"
         }
       }
     },
@@ -3552,14 +3616,42 @@
       ],
       "hosts": {
         "melee": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xBBE",
-          "text": "Hits heal your followers a little. (dormant)"
+          "text": "Hits heal your followers a little.",
+          "proc": {
+            "on": "hit",
+            "at": "allies",
+            "radius": 2048,
+            "mag": [
+              3,
+              4.75,
+              6.5,
+              8.25,
+              10
+            ],
+            "cd": 1,
+            "helper": "Mend"
+          }
         },
         "ranged": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xBBF",
-          "text": "Arrow kills heal your followers. (dormant)"
+          "text": "Arrow kills heal your followers.",
+          "proc": {
+            "on": "kill",
+            "at": "allies",
+            "radius": 4096,
+            "mag": [
+              10,
+              15,
+              20,
+              25,
+              30
+            ],
+            "cd": 0,
+            "helper": "Mend"
+          }
         },
         "armour": {
           "kind": "rec",
@@ -3596,19 +3688,63 @@
       ],
       "hosts": {
         "melee": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xBC6",
-          "text": "Followers deal more damage while you fight. (dormant)"
+          "text": "Followers deal more damage while you fight.",
+          "proc": {
+            "on": "tick",
+            "combat": true,
+            "at": "allies",
+            "radius": 2048,
+            "mag": [
+              0.05,
+              0.088,
+              0.125,
+              0.163,
+              0.2
+            ],
+            "cd": 4,
+            "helper": "Fury"
+          }
         },
         "ranged": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xBC7",
-          "text": "Followers deal more ranged damage. (dormant)"
+          "text": "Followers deal more ranged damage.",
+          "proc": {
+            "on": "tick",
+            "combat": true,
+            "at": "allies",
+            "radius": 4096,
+            "mag": [
+              0.05,
+              0.088,
+              0.125,
+              0.163,
+              0.2
+            ],
+            "cd": 4,
+            "helper": "Fury"
+          }
         },
         "armour": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xBC8",
-          "text": "Followers take less damage. (dormant)"
+          "text": "Followers take less damage.",
+          "proc": {
+            "on": "tick",
+            "at": "allies",
+            "radius": 2048,
+            "mag": [
+              25,
+              43.75,
+              62.5,
+              81.25,
+              100
+            ],
+            "cd": 4,
+            "helper": "Ward"
+          }
         }
       }
     },
@@ -3626,14 +3762,42 @@
       ],
       "hosts": {
         "melee": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xBCE",
-          "text": "Kills raise nearby allies\u0027 morale. (dormant)"
+          "text": "Kills raise nearby allies\u0027 morale.",
+          "proc": {
+            "on": "kill",
+            "at": "allies",
+            "radius": 2048,
+            "mag": [
+              15,
+              21.25,
+              27.5,
+              33.75,
+              40
+            ],
+            "cd": 0,
+            "helper": "Rally"
+          }
         },
         "ranged": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xBCF",
-          "text": "Kill shots rally allies. (dormant)"
+          "text": "Kill shots rally allies.",
+          "proc": {
+            "on": "kill",
+            "at": "allies",
+            "radius": 4096,
+            "mag": [
+              15,
+              21.25,
+              27.5,
+              33.75,
+              40
+            ],
+            "cd": 0,
+            "helper": "Rally"
+          }
         },
         "armour": {
           "kind": "rec",
@@ -3708,9 +3872,10 @@
           ]
         },
         "armour": {
-          "kind": "stub",
+          "kind": "filter",
           "effect": "0xBDF",
-          "text": "Your armour cannot be reduced. (dormant)"
+          "text": "Your armour cannot be reduced.",
+          "filter": "armour"
         }
       }
     },
@@ -4523,9 +4688,17 @@
           }
         },
         "armour": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xA63",
-          "text": "Kaan Drem Ov: animals ignore you. (dormant)"
+          "text": "Kaan Drem Ov: animals ignore you.",
+          "proc": {
+            "on": "tick",
+            "at": "nearbyKw",
+            "nearKeyword": "Skyrim.esm|0x13798",
+            "radius": 3072,
+            "op": "calm",
+            "cd": 1
+          }
         }
       }
     },
@@ -4727,9 +4900,23 @@
           }
         },
         "armour": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xADC",
-          "text": "Su Grah Dun: you move at full speed while drawing or blocking. (dormant)"
+          "text": "Su Grah Dun: you move at full speed while drawing or blocking.",
+          "proc": {
+            "on": "tick",
+            "guarding": true,
+            "at": "self",
+            "mag": [
+              30,
+              30,
+              30,
+              30,
+              30
+            ],
+            "cd": 0,
+            "helper": "Haste"
+          }
         }
       }
     },
@@ -5195,14 +5382,42 @@
       ],
       "hosts": {
         "melee": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xBD1",
-          "text": "Hun Kaal Zoor: a killing blow rallies nearby allies. (dormant)"
+          "text": "Hun Kaal Zoor: a killing blow rallies nearby allies.",
+          "proc": {
+            "on": "kill",
+            "at": "allies",
+            "radius": 3072,
+            "mag": [
+              60,
+              60,
+              60,
+              60,
+              60
+            ],
+            "cd": 0,
+            "helper": "Rally"
+          }
         },
         "ranged": {
-          "kind": "stub",
+          "kind": "proc",
           "effect": "0xBD2",
-          "text": "Hun Kaal Zoor: a kill shot rallies nearby allies. (dormant)"
+          "text": "Hun Kaal Zoor: a kill shot rallies nearby allies.",
+          "proc": {
+            "on": "kill",
+            "at": "allies",
+            "radius": 4096,
+            "mag": [
+              60,
+              60,
+              60,
+              60,
+              60
+            ],
+            "cd": 0,
+            "helper": "Rally"
+          }
         },
         "armour": {
           "kind": "grant",

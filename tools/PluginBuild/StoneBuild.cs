@@ -361,10 +361,27 @@ static class StoneBuild
         }
         foreach (var (hid, def) in cfg["helpers"]!.AsObject())
         {
-            if (def!["late"]?.GetValue<bool>() != true) { MakeHelper(hid, def); }
+            if (def!["late"]?.GetValue<bool>() != true && def!["latest"]?.GetValue<bool>() != true) { MakeHelper(hid, def); }
         }
 
         // A cell's proc, resolved for the SKSE plugin.
+        // the Detect Life effect's hit shader: the game's own "seen through walls" look
+        string? revealShader = null;
+        string RevealShader()
+        {
+            if (revealShader != null) { return revealShader; }
+            foreach (var m in Enumerable.Reverse(masters))
+            {
+                foreach (var mg in m.MagicEffects.Records)
+                {
+                    if (mg.EditorID == null || !mg.EditorID.Contains("DetectLife", StringComparison.OrdinalIgnoreCase)) { continue; }
+                    if (!mg.HitShader.IsNull) { revealShader = Ref(mg.HitShader); Console.WriteLine($"stones: reveal shader from {mg.EditorID}"); return revealShader; }
+                    if (!mg.EnchantShader.IsNull) { revealShader = Ref(mg.EnchantShader); Console.WriteLine($"stones: reveal shader from {mg.EditorID} (enchant shader)"); return revealShader; }
+                }
+            }
+            throw new InvalidOperationException("stones: no Detect Life effect with a shader in the masters");
+        }
+
         JsonObject? ResolveProc(JsonNode? p, string owner)
         {
             if (p == null) { return null; }
@@ -383,6 +400,9 @@ static class StoneBuild
             if (o["mag"] is JsonNode mag) { o["mag"] = ByTier(mag); }
             if (o["mult"] is JsonNode mu) { o["mult"] = ByTier(mu); }
             if (o["targetKeyword"] is JsonNode tk) { o["targetKeyword"] = Ref(new FormLink<IKeywordGetter>(keywords[tk.GetValue<string>()])); }
+            // stub batch 1: a keyword the nearby targets must carry (ActorTypeUndead, ActorTypeAnimal), and the reveal shader
+            if (o["nearKeyword"] is JsonNode nk) { o["nearKeyword"] = Ref(ByEdid<IKeywordGetter>(nk.GetValue<string>())); }
+            if (o["op"]?.GetValue<string>() == "shader") { o["shader"] = RevealShader(); }
             return o;
         }
 
@@ -409,6 +429,7 @@ static class StoneBuild
                 o["value"] = ByTier(cell["m"]);
             }
             else if (kind == "proc") { o["proc"] = ResolveProc(cell["proc"], edid); dllDone.Add($"{edid}: {cell["d"]!.GetValue<string>()}"); }
+            else if (kind == "filter") { o["filter"] = cell["filter"]!.GetValue<string>(); dllDone.Add($"{edid}: {cell["d"]!.GetValue<string>()}"); }
             else if (kind == "stub") { stubs.Add($"{edid}: {cell["note"]?.GetValue<string>() ?? "not built yet"}"); }
             if (cell["approx"] is JsonNode ap) { approx.Add($"{edid}: {ap.GetValue<string>()}"); }
             return o;
@@ -564,6 +585,12 @@ static class StoneBuild
                 ["match"] = new JsonObject { ["formType"] = "MiscItem", ["keywords"] = new JsonArray("NJCGO_StoneTier_" + tiers[t]) },
                 ["assign"] = new JsonObject { ["iconSource"] = "skyui/icons_item_psychosteve.swf", ["iconLabel"] = "soulgem_full", ["iconColor"] = cfg["tierColour"]![t]!.GetValue<string>() }
             });
+            // soul gem dust of the tier: the same icon in the tier colour (the keyword is built late; I4 matches by name)
+            i4Rules.Add(new JsonObject
+            {
+                ["match"] = new JsonObject { ["formType"] = "MiscItem", ["keywords"] = new JsonArray("NJCGO_DustTier_" + tiers[t]) },
+                ["assign"] = new JsonObject { ["iconSource"] = "skyui/icons_item_psychosteve.swf", ["iconLabel"] = "soulgem_full", ["iconColor"] = cfg["tierColour"]![t]!.GetValue<string>() }
+            });
         }
         // Combined run 68e5: I4 reads a rule file ONLY when a loaded plugin carries the same name (its log listed
         // Skyrim.json, Dawnguard.json, I4WeaponIconsOverhaul.json ... and skipped ours and every CC file whose plugin is
@@ -702,6 +729,11 @@ static class StoneBuild
         craftOut["blank"] = Hex(blank);
         craftOut["blanksPerIngot"] = cfg["craft"]!["blanksPerIngot"]!.GetValue<int>();
         Console.WriteLine($"stones: Rune Blank {Hex(blank)} - {craftOut["blanksPerIngot"]} per orichalcum ingot");
+        // stub batch 1: helpers marked "latest", after every other record
+        foreach (var (hid, def) in cfg["helpers"]!.AsObject())
+        {
+            if (def!["latest"]?.GetValue<bool>() == true) { MakeHelper(hid, def); }
+        }
 
         // ---- D26 (SHOUTING-OFF.md 5): the quests that need the Voice while Shouting is off -------------------------------
         // Rows found by the quest's NAME in the masters (Fable's editor IDs were a guess - verified here, not typed); the

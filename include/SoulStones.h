@@ -177,6 +177,10 @@ namespace SoulStones
 	// once the table is loaded.
 	bool IsComposedEnchantment(RE::EnchantmentItem* a_ench);
 
+	// Stub batch 1: the effect filters the player's worn armour stones hold (1 fear, 2 frost slow, 4 weapon damage,
+	// 8 armour); EffectFilter refuses those effects on the player. Safe from any thread.
+	std::uint32_t ActiveFilters();
+
 	// A Shout the stones grant (D21's hidden clones) - Shouting-off lets these through.
 	bool IsStoneShout(RE::TESShout* a_shout);
 

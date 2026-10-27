@@ -36,7 +36,7 @@
     "name": "Words in Stone",
     "stages": {
       "10": "I met Thorvar Stone-Speaker at the Sleeping Giant Inn in Riverwood. He sets soul stones into gear, but only for one who has learned a word of power.",
-      "100": "Thorvar now grinds my soul gems into dust, cuts soul stones of the words I have learned, and sets them for one dust of each stone's size."
+      "100": "Thorvar now grinds my soul gems into dust, cuts orichalcum into Rune Blanks and carves soul stones of the words I have learned, sets them for one dust each, and cuts new stone slots into my gear."
     },
     "objective": "Learn a word of power at a word wall, then return to Thorvar"
   },

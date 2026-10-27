@@ -23,6 +23,7 @@
 #include "Shouting.h"
 #include "CarryWeight.h"
 #include "CardEnchantment.h"
+#include "EffectFilter.h"
 #include "SoulStones.h"
 #include "UI.h"
 
@@ -55,6 +56,7 @@ namespace
 			Gear::Install();
 			SoulStones::Install();
 			CardEnchantment::Install();
+			EffectFilter::Install();
 			Shouting::Install();
 			CarryWeight::Install();
 			QuestRewards::Install();

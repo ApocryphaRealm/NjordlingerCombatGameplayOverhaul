@@ -42,7 +42,7 @@ namespace SoulStones
 		// ---- the table read from stones.json (main thread after Install; read-only afterwards) --------------------------
 		struct Proc
 		{
-			enum class On { kHit, kHitBy, kKill, kCooldown } on = On::kHit;
+			enum class On { kHit, kHitBy, kKill, kCooldown, kTick } on = On::kHit;   // kTick: once a second while equipped
 			bool power = false, sneak = false, blocked = false, lowHealth = false, storm = false;
 			RE::BGSKeyword* targetKeyword = nullptr;
 			int chance = 0;
@@ -56,6 +56,14 @@ namespace SoulStones
 			std::array<float, kTiers> mag{};
 			bool hasMag = false;
 			std::array<float, kTiers> mult{};
+			// stub batch 1
+			std::string op;                     // "shader" (reveal), "calm" (stop an animal's fight)
+			float shaderDur = 3.0F;
+			float radius = 1024.0F;
+			RE::BGSKeyword* nearKeyword = nullptr;   // nearbyKw: the targets must carry it
+			RE::TESEffectShader* shader = nullptr;
+			bool combat = false;                // a tick fires only while the player is in combat
+			bool guarding = false;              // a tick fires only while blocking or holding a drawn bow
 		};
 
 		struct Cell
@@ -67,6 +75,7 @@ namespace SoulStones
 			RE::SpellItem* ability = nullptr;
 			bool hasProc = false;
 			Proc proc;
+			std::string filter;                   // kind "filter": the effects refused on the player while worn
 			std::string text;
 		};
 
@@ -291,6 +300,7 @@ namespace SoulStones
 		{
 			Cell c;
 			c.kind = a_c.value("kind", std::string("stub"));
+			c.filter = a_c.value("filter", std::string());
 			c.effect = Form<RE::EffectSetting>(a_c.value("effect", nlohmann::json()), "effect");
 			c.text = a_c.value("text", std::string());
 			if (a_c.contains("m")) { c.m = Floats(a_c["m"]); }
@@ -303,7 +313,14 @@ namespace SoulStones
 				const auto& p = a_c["proc"];
 				c.hasProc = true;
 				const auto on = p.value("on", std::string("hit"));
-				c.proc.on = on == "hitBy" ? Proc::On::kHitBy : on == "kill" ? Proc::On::kKill : on == "cooldown" ? Proc::On::kCooldown : Proc::On::kHit;
+				c.proc.on = on == "hitBy" ? Proc::On::kHitBy : on == "kill" ? Proc::On::kKill : on == "cooldown" ? Proc::On::kCooldown : on == "tick" ? Proc::On::kTick : Proc::On::kHit;
+				c.proc.op = p.value("op", std::string());
+				c.proc.shaderDur = p.value("shaderDur", 3.0F);
+				c.proc.radius = p.value("radius", 1024.0F);
+				c.proc.combat = p.value("combat", false);
+				c.proc.guarding = p.value("guarding", false);
+				if (p.contains("nearKeyword")) { c.proc.nearKeyword = Form<RE::BGSKeyword>(p["nearKeyword"], "proc near keyword"); }
+				if (p.contains("shader")) { c.proc.shader = Form<RE::TESEffectShader>(p["shader"], "proc shader"); }
 				c.proc.power = p.value("power", false);
 				c.proc.sneak = p.value("sneak", false);
 				c.proc.blocked = p.value("blocked", false);
@@ -961,10 +978,32 @@ namespace SoulStones
 			}
 		}
 
+		std::atomic<std::uint32_t> g_filters{ 0 };   // stub batch 1: the effect filters worn armour holds (bit per name)
+
+		std::uint32_t FilterBit(const std::string& a_name)
+		{
+			if (a_name == "fear") { return 1u; }
+			if (a_name == "frostSlow") { return 2u; }
+			if (a_name == "weaponDamage") { return 4u; }
+			if (a_name == "armour") { return 8u; }
+			return 0u;
+		}
+
 		void ApplyEquipped(std::vector<std::string>& a_active)
 		{
 			auto* p = Player();
 			if (!p) { return; }
+			std::uint32_t filters = 0;
+			if (settings::stones::enabled)
+			{
+				for (const auto& eq : g_equipped)
+				{
+					if (eq.host != Host::kArmour) { continue; }
+					for (const auto& st : eq.stones) { if (st.word >= 0) { filters |= FilterBit(g_t.words[st.word].hosts[2].filter); } }
+					if (eq.phrase >= 0) { filters |= FilterBit(g_t.phrases[eq.phrase].hosts[2].filter); }
+				}
+			}
+			if (g_filters.exchange(filters) != filters) { logger::info("soul stones: effect filters worn now {:#x} (1 fear, 2 frost slow, 4 weapon damage, 8 armour)", filters); }
 			std::unordered_map<RE::BGSPerk*, int> perks;
 			std::unordered_map<RE::SpellItem*, int> abilities;
 			for (const auto& w : g_t.words)
@@ -1870,6 +1909,31 @@ namespace SoulStones
 			return out;
 		}
 
+		bool HasKw(RE::Actor* a_a, RE::BGSKeyword* a_kw)
+		{
+			auto* race = a_a ? a_a->GetRace() : nullptr;
+			auto* base = a_a ? a_a->GetActorBase() : nullptr;
+			return a_kw && ((race && race->HasKeyword(a_kw)) || (base && base->HasKeyword(a_kw)));
+		}
+
+		// the player's followers (teammates) within a radius, alive
+		std::vector<RE::Actor*> Allies(float a_radius)
+		{
+			std::vector<RE::Actor*> out;
+			auto* p = Player();
+			auto* pl = RE::ProcessLists::GetSingleton();
+			if (!p || !pl) { return out; }
+			const auto centre = p->GetPosition();
+			for (auto& h : pl->highActorHandles)
+			{
+				auto ptr = h.get();
+				auto* a = ptr.get();
+				if (!a || a == p || a->IsDead() || !a->IsPlayerTeammate()) { continue; }
+				if (a->GetPosition().GetDistance(centre) <= a_radius) { out.push_back(a); }
+			}
+			return out;
+		}
+
 		float CooldownMult()
 		{
 			float m = 1.0F;
@@ -1904,6 +1968,13 @@ namespace SoulStones
 			if (pr.blocked && !a_ev.blocked) { return; }
 			if (pr.lowHealth && HealthFraction(p) >= g_t.lowHealth) { return; }
 			if (pr.storm && !Stormy()) { return; }
+			if (pr.combat && !p->IsInCombat()) { return; }
+			if (pr.guarding)
+			{
+				using AS = RE::ATTACK_STATE_ENUM;
+				const auto st = p->AsActorState()->GetAttackState();
+				if (!p->IsBlocking() && st != AS::kBowDraw && st != AS::kBowAttached && st != AS::kBowDrawn && st != AS::kBowReleasing) { return; }
+			}
 			if (pr.targetKeyword && (!a_other || !a_other->HasKeyword(pr.targetKeyword))) { return; }
 			const auto now = Clock::now();
 			if (pr.every > 0)
@@ -1934,6 +2005,15 @@ namespace SoulStones
 			std::vector<RE::Actor*> targets;
 			if (pr.at == "self") { targets.push_back(p); }
 			else if (pr.at == "nearby") { targets = Hostiles(p, 1024.0F, nullptr); }
+			else if (pr.at == "nearbyKw" || pr.at == "nearTarget")
+			{
+				auto* centre = pr.at == "nearTarget" ? (a_other ? a_other : nullptr) : p;
+				if (centre)
+				{
+					for (auto* a : Hostiles(centre, pr.radius, nullptr)) { if (!pr.nearKeyword || HasKw(a, pr.nearKeyword)) { targets.push_back(a); } }
+				}
+			}
+			else if (pr.at == "allies") { targets = Allies(pr.radius); }
 			else if (pr.at == "second")
 			{
 				auto close = Hostiles(a_other ? a_other : p, 512.0F, a_other);
@@ -1945,6 +2025,8 @@ namespace SoulStones
 			auto* caster = p->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
 			for (auto* t : targets)
 			{
+				if (pr.op == "shader" && pr.shader) { t->ApplyEffectShader(pr.shader, pr.shaderDur); }
+				if (pr.op == "calm" && t->IsInCombat()) { t->StopCombat(); }
 				if (pr.damage > 0.0F) { Damage(t, pr.damage); }
 				if (pr.spell && caster)
 				{
@@ -1965,6 +2047,7 @@ namespace SoulStones
 				const bool weapon = eq.host != Host::kArmour;
 				if (a_ev.on == Proc::On::kHit && (!weapon || eq.base != a_ev.source)) { continue; }
 				if (a_ev.on == Proc::On::kHitBy && weapon) { continue; }
+				// a tick reaches every equipped piece (auras, follower buffs)
 				for (int i = 0; i < 3; ++i)
 				{
 					const auto& s = eq.stones[i];
@@ -2152,6 +2235,14 @@ namespace SoulStones
 				std::this_thread::sleep_for(std::chrono::milliseconds(250));
 				static int ticks = 0;
 				++ticks;
+				if (ticks % 4 == 0)
+				{
+					Queue([]() {
+						Event ev;
+						ev.on = Proc::On::kTick;
+						HandleEvent(ev);
+					});
+				}
 				if (g_rs.loaded && g_rs.homeCell && ticks % 4 == 0)
 				{
 					Queue([]() {
@@ -2617,6 +2708,8 @@ namespace SoulStones
 	void RequestGrind(RE::FormID a_gem, bool a_all) { Queue([a_gem, a_all]() { DoGrind(a_gem, a_all); }); }
 
 	void RequestCraft(int a_word, int a_tier) { Queue([a_word, a_tier]() { DoCraft(a_word, a_tier); }); }
+
+	std::uint32_t ActiveFilters() { return g_filters.load(); }
 
 	bool IsComposedEnchantment(RE::EnchantmentItem* a_ench)
 	{

@@ -128,7 +128,33 @@
       "match": {
         "formType": "MiscItem",
         "keywords": [
+          "NJCGO_DustTier_Petty"
+        ]
+      },
+      "assign": {
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "soulgem_full",
+        "iconColor": "#CFE3F5"
+      }
+    },
+    {
+      "match": {
+        "formType": "MiscItem",
+        "keywords": [
           "NJCGO_StoneTier_Lesser"
+        ]
+      },
+      "assign": {
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "soulgem_full",
+        "iconColor": "#4E8CFF"
+      }
+    },
+    {
+      "match": {
+        "formType": "MiscItem",
+        "keywords": [
+          "NJCGO_DustTier_Lesser"
         ]
       },
       "assign": {
@@ -154,6 +180,19 @@
       "match": {
         "formType": "MiscItem",
         "keywords": [
+          "NJCGO_DustTier_Common"
+        ]
+      },
+      "assign": {
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "soulgem_full",
+        "iconColor": "#6A5CFF"
+      }
+    },
+    {
+      "match": {
+        "formType": "MiscItem",
+        "keywords": [
           "NJCGO_StoneTier_Greater"
         ]
       },
@@ -167,7 +206,33 @@
       "match": {
         "formType": "MiscItem",
         "keywords": [
+          "NJCGO_DustTier_Greater"
+        ]
+      },
+      "assign": {
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "soulgem_full",
+        "iconColor": "#9B4DFF"
+      }
+    },
+    {
+      "match": {
+        "formType": "MiscItem",
+        "keywords": [
           "NJCGO_StoneTier_Grand"
+        ]
+      },
+      "assign": {
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "soulgem_full",
+        "iconColor": "#6B1FB8"
+      }
+    },
+    {
+      "match": {
+        "formType": "MiscItem",
+        "keywords": [
+          "NJCGO_DustTier_Grand"
         ]
       },
       "assign": {
