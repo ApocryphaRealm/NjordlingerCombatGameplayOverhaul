@@ -1362,11 +1362,151 @@ namespace SoulStones
 				ForEachInstance([&](RE::InventoryEntryData* en, RE::ExtraDataList* xl) {
 					if (en->object == a_obj && reinterpret_cast<std::uintptr_t>(xl) == ptr) { x = xl; }
 				});
+				if (x && x->GetCount() > 1) { return x; }   // a shared list: the caller refuses it before anything is written
 				if (x && changes && !x->HasType(RE::ExtraDataType::kUniqueID)) { changes->SetUniqueID(x, nullptr, a_obj); }
 			}
 			else { FindInstance(a_key, e, x); }
+			if (x && x->GetCount() > 1) { return x; }
 			if (x && !KeyOf(a_obj, x, a_finalKey)) { return nullptr; }
+			// 74d2: two lists can carry the same unique id (a shared list that got an id was split when one copy was equipped).
+			// The target then gets an id of its own; its table entry is copied so both copies keep what they hold.
+			if (x)
+			{
+				int same = 0;
+				ForEachInstance([&](RE::InventoryEntryData*, RE::ExtraDataList* xl) {
+					std::string k;
+					if (xl && KeyOf(a_obj, xl, k) && k == a_finalKey) { ++same; }
+				});
+				if (same > 1)
+				{
+					const auto old = a_finalKey;
+					if (auto* changes = Player()->GetInventoryChanges())
+					{
+						x->RemoveByType(RE::ExtraDataType::kUniqueID);
+						changes->SetUniqueID(x, nullptr, a_obj);
+						if (KeyOf(a_obj, x, a_finalKey))
+						{
+							if (auto it = g_entries.find(old); it != g_entries.end())
+							{
+								Entry copy = it->second;
+								auto* u = x->GetByType<RE::ExtraUniqueID>();
+								copy.owner = u ? u->baseID : 0;
+								copy.uid = u ? u->uniqueID : 0;
+								g_entries[a_finalKey] = copy;
+							}
+							logger::info("soul stones: two copies shared the id {} - this one now has its own ({})", old, a_finalKey);
+						}
+					}
+				}
+			}
 			return x;
+		}
+
+		// 74d2: the item card of a BASE-enchanted item (Iron Sword of Fire) reads the base form's enchantment wherever the
+		// instance's own one is, so the stones never showed there (the vanilla card too, not only Inventory Reforged's). The
+		// first time a stone or a slot goes on such an item, that one copy becomes its unenchanted template (Iron Sword)
+		// carrying the base's effects as its own instance enchantment - the shape a player-enchanted item has, which every
+		// card reads. Its name, tempering and worn state are kept; taking every stone out gives the base effects back as its
+		// own enchantment and the old name, so it stays the same sword. The new copy's extra list comes from equipping it
+		// (this CommonLib cannot construct one), and what was worn in that place is put back.
+		RE::TESBoundObject* TemplateOf(RE::TESBoundObject* a_obj)
+		{
+			auto* ef = a_obj ? a_obj->As<RE::TESEnchantableForm>() : nullptr;
+			if (!ef || !ef->formEnchanting) { return nullptr; }
+			if (auto* w = a_obj->As<RE::TESObjectWEAP>(); w && w->templateWeapon && !w->templateWeapon->formEnchanting) { return w->templateWeapon; }
+			if (auto* a = a_obj->As<RE::TESObjectARMO>(); a && a->templateArmor && !a->templateArmor->formEnchanting) { return a->templateArmor; }
+			return nullptr;
+		}
+
+		std::uint32_t MaskOf(RE::TESBoundObject* a_obj)
+		{
+			auto* a = a_obj ? a_obj->As<RE::TESObjectARMO>() : nullptr;
+			if (!a) { return 0; }
+#if RUNTIME_LINE == 17
+			return a->GetSlotMask().underlying();
+#else
+			return static_cast<std::uint32_t>(a->GetSlotMask());
+#endif
+		}
+
+		bool SwapToTemplate(RE::TESBoundObject*& a_obj, RE::ExtraDataList*& a_x, std::string& a_key)
+		{
+			auto* p = Player();
+			auto* em = RE::ActorEquipManager::GetSingleton();
+			auto* changes = p ? p->GetInventoryChanges() : nullptr;
+			auto* tmpl = TemplateOf(a_obj);
+			if (!p || !em || !changes || !tmpl || !a_x || a_x->GetCount() > 1) { return false; }
+			auto* ef = a_obj->As<RE::TESEnchantableForm>();
+			const bool weapon = a_obj->Is(RE::FormType::Weapon);
+			bool left = false;
+			const bool wasWorn = Worn(a_x, &left);
+			const float health = a_x->GetByType<RE::ExtraHealth>() ? a_x->GetByType<RE::ExtraHealth>()->health : 1.0F;
+			const char* dn = a_x->GetDisplayName(a_obj);
+			const std::string shownName = dn && *dn ? dn : a_obj->GetName();
+			auto* slot = weapon ? RE::TESForm::LookupByID<RE::BGSEquipSlot>(left ? 0x00013F43 : 0x00013F42) : nullptr;
+			// what is worn where the template will go, to put back when the old copy was not worn
+			std::vector<std::pair<RE::TESBoundObject*, RE::ExtraDataList*>> displaced;
+			if (!wasWorn)
+			{
+				const std::uint32_t mask = weapon ? 0u : MaskOf(tmpl);
+				ForEachInstance([&](RE::InventoryEntryData* e, RE::ExtraDataList* xl) {
+					bool l = false;
+					if (!xl || !Worn(xl, &l)) { return; }
+					if (weapon ? (e->object->Is(RE::FormType::Weapon) && l == left) : (e->object->Is(RE::FormType::Armor) && (MaskOf(e->object) & mask))) { displaced.emplace_back(e->object, xl); }
+				});
+			}
+			g_selfEquipUntil = NowMs() + 2500;
+			p->AddObjectToContainer(tmpl, nullptr, 1, nullptr);
+			em->EquipObject(p, tmpl, nullptr, 1, slot, false, true, false, true);
+			RE::ExtraDataList* nx = nullptr;
+			if (changes->entryList)
+			{
+				for (auto* e : *changes->entryList)
+				{
+					if (!e || e->object != tmpl || !e->extraLists) { continue; }
+					for (auto* xl : *e->extraLists)
+					{
+						if (xl && Worn(xl) && !xl->HasType(RE::ExtraDataType::kUniqueID) && !xl->HasType(RE::ExtraDataType::kEnchantment)) { nx = xl; }
+					}
+				}
+			}
+			if (!nx)
+			{
+				logger::warn("soul stones: {} could not take its template's shape (no worn copy of {} appeared) - left as it was", a_obj->GetName(), tmpl->GetName());
+				p->RemoveItem(tmpl, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				for (auto& [o, xl] : displaced) { em->EquipObject(p, o, xl, 1, nullptr, false, true, false, true); }
+				return false;
+			}
+			changes->SetUniqueID(nx, nullptr, tmpl);
+			if (health != 1.0F) { nx->Add(new RE::ExtraHealth(health)); }
+			std::string newKey;
+			if (!KeyOf(tmpl, nx, newKey)) { return false; }
+			// the entry: the base's enchantment is now this copy's own, its shown name kept
+			Entry e = NewEntry(tmpl, nx);
+			e.hadEnchant = true;
+			e.orig.clear();
+			for (auto* fx : ef->formEnchanting->effects)
+			{
+				if (fx && fx->baseEffect) { e.orig.push_back({ fx->baseEffect->GetFormID(), fx->effectItem.magnitude, fx->effectItem.area, fx->effectItem.duration }); }
+			}
+			e.origCharge = ef->amountofEnchantment;
+			e.origCost = static_cast<std::int32_t>(ef->formEnchanting->CalculateMagickaCost(nullptr));
+			e.hadName = true;
+			e.origName = WithoutTail(shownName);
+			if (auto old = g_entries.find(a_key); old != g_entries.end()) { e.stones = old->second.stones; e.added = old->second.added; g_entries.erase(old); }
+			g_entries[newKey] = e;
+			// the old copy goes; the new one is worn only if the old one was
+			p->RemoveItem(a_obj, 1, RE::ITEM_REMOVE_REASON::kRemove, a_x, nullptr);
+			if (!wasWorn)
+			{
+				em->UnequipObject(p, tmpl, nx, 1, slot, false, true, false, true);
+				for (auto& [o, xl] : displaced) { em->EquipObject(p, o, xl, 1, weapon ? slot : nullptr, false, true, false, true); }
+			}
+			logger::info("soul stones: {} now carries its enchantment as its own on {} (the card shows every line) - key {} -> {}", e.origName, tmpl->GetName(), a_key, newKey);
+			a_obj = tmpl;
+			a_x = nx;
+			a_key = newKey;
+			return true;
 		}
 
 		void DoSocket(std::string a_key, int a_slot, int a_word, int a_tier, bool a_unsocket)
@@ -1400,6 +1540,7 @@ namespace SoulStones
 				BuildSnapshot();
 				return;
 			}
+			if (!a_unsocket && TemplateOf(obj)) { SwapToTemplate(obj, x, key); }
 			auto it = g_entries.find(key);
 			const int slots = it != g_entries.end() ? SlotsOf(obj, it->second) : SlotsOf(obj);
 			if (a_slot < 0 || a_slot >= slots) { SetResult(Say("NJ_SS_RNoSlot", "That item has no such slot.")); BuildSnapshot(); return; }
@@ -1446,6 +1587,7 @@ namespace SoulStones
 				return;
 			}
 			if (!x) { if (a_key.find(":plain") == std::string::npos) { SetResult(Say("NJ_SS_RNoItem", "The item was not found in your pack.")); } BuildSnapshot(); return; }
+			if (TemplateOf(obj)) { SwapToTemplate(obj, x, key); }
 			auto it = g_entries.find(key);
 			const int added = it != g_entries.end() ? it->second.added : 0;
 			const int now = it != g_entries.end() ? SlotsOf(obj, it->second) : SlotsOf(obj);
@@ -1916,7 +2058,7 @@ namespace SoulStones
 			if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->currentState && cam->currentState->id == RE::CameraState::kThirdPerson)
 			{
 				auto* tps = static_cast<RE::ThirdPersonState*>(cam->currentState.get());
-				p->SetHeading(bearing - 0.75F);
+				p->SetHeading(bearing - 0.95F);   // 74d2: 0.75 put him at x~1300
 				tps->freeRotation.x = 0.0F;
 			}
 			// 11b9: he wandered out of frame - while the service is open he faces the player and his AI holds still

@@ -647,7 +647,7 @@ namespace UI
 			// 1c64: the orbit started at once after the window closed - the idle countdown is wound back to the full delay
 			if (auto* cam = RE::PlayerCamera::GetSingleton())
 			{
-				cam->GetRuntimeData2().idleTimer = s_saved;
+				cam->GetRuntimeData2().idleTimer = 0.0F;   // 74d2: it counts UP - the orbit began at once with s_saved
 				cam->GetRuntimeData2().allowAutoVanityMode = s_allowWas;
 			}
 			s_held = false;
@@ -821,7 +821,10 @@ namespace UI
 		{
 			const float w = io->DisplaySize.x, h = io->DisplaySize.y;
 			ImGuiMCP::SetNextWindowPos(ImGuiMCP::ImVec2(w * 0.03F, h * 0.06F), ImGuiMCP::ImGuiCond_Always);
-			ImGuiMCP::SetNextWindowSize(ImGuiMCP::ImVec2(std::clamp(w * 0.46F, 420.0F, w * 0.6F), h * 0.86F), ImGuiMCP::ImGuiCond_Always);
+			// 74d2: in third person the player stands left of centre behind the window - the window is narrower there
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			const bool third = cam && cam->currentState && cam->currentState->id == RE::CameraState::kThirdPerson;
+			ImGuiMCP::SetNextWindowSize(ImGuiMCP::ImVec2(std::clamp(w * (third ? 0.36F : 0.46F), 420.0F, w * 0.6F), h * 0.86F), ImGuiMCP::ImGuiCond_Always);
 		}
 		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), &open, ImGuiMCP::ImGuiWindowFlags_NoCollapse))
 		{
