@@ -1,0 +1,22 @@
+{
+  "_comment": [
+    "Njordlinger Combat Gameplay Overhaul - guild and faction routes by class (PLAN.md D30, GUILD-LOCKS.md; Q19 closed by the owner",
+    "2026-10-27 01:34; every row TUNE / Q83). Each route names the vanilla joining topics (read from the masters by the build); our ESP",
+    "adds ONE new response to each topic, placed first, with the topic's own speaker conditions plus 'the class lacks the group' and",
+    "'routes on' - it speaks the refusal instead of the offer. No vanilla response or quest is overridden (the topic header is, as",
+    "every added response needs). The Dark Brotherhood route is the SKSE plugin's: DB02 is stopped as it starts for a class without",
+    "covert. Built after every other record so no form ID moves."
+  ],
+  "routes": [
+    { "id": "college", "name": "College of Winterhold", "group": "magic",
+      "topics": [ "MG01FaraldaEntryBranchIntro", "MG01Faralda1WhyAreYouHereBranchTopic" ],
+      "refusal": "The College is for those who hear magic's call. Yours lies elsewhere." },
+    { "id": "companions", "name": "The Companions", "group": "warrior",
+      "topics": [ "C00KodlakJoinUpStartTopic" ],
+      "refusal": "Jorrvaskr takes warriors. Come back when steel is your trade." },
+    { "id": "thieves", "name": "Thieves Guild", "group": "covert",
+      "topics": [ "TG00BrynjolfIntroBranch04", "TG00BrynjolfIntroBranch06", "TG00BrynjolfReadyToStartBranchTopic" ],
+      "refusal": "You haven't the hands for this work, friend." },
+    { "id": "brotherhood", "name": "Dark Brotherhood", "group": "covert", "stopQuest": "DB02" }
+  ]
+}

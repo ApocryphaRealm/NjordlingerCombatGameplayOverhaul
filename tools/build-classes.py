@@ -43,6 +43,7 @@ DEFAULTS = [
     ("Classes", "bCraftingGate", "1", "classes::craftingGate", ""),
     ("Classes", "bRaceMenuClass", "1", "classes::raceMenuClass", "the Class category in the race menu"),
     ("Classes", "bHideLockedTrees", "1", "classes::hideLockedTrees", "the skills menu's ring hides the names of the trees your class locks"),
+    ("Classes", "bRoutesByClass", "1", "classes::routes", "guild routes need your class's group: the College magic, the Companions warrior, the Thieves Guild and the Dark Brotherhood covert"),
     ("QuestRewards", "bEnableQuestRewards", "1", "questrewards::enabled", "rows: quest-rewards.json; a row you change is kept under [QuestRewardRows] as <EditorID>=<points>"),
     ("Gear", "bSetBonuses", "1", "gear::sets", "unique armour sets: a bonus at two worn pieces and another at four"),
     ("Gear", "bUniqueEffects", "1", "gear::uniques", "named unique items carry an effect of their own"),

@@ -17,6 +17,7 @@
 #include "SkillList.h"
 #include "Shouting.h"
 #include "CarryWeight.h"
+#include "GuildRoutes.h"
 #include "Skills.h"
 #include "SoulStones.h"
 
@@ -133,6 +134,7 @@ namespace UI
 				"igSetNextWindowPos",
 				"igSetNextWindowSize",
 				"igNewLine",
+				"igSetNextWindowBgAlpha",
 				"igIndent",
 				"igUnindent",
 				"igSeparator",
@@ -514,6 +516,20 @@ namespace UI
 		ImGuiMCP::Toggle(strings::TR("NJ_RaceMenuClass", "Class category in the race menu"), &classes::raceMenuClass);
 		ImGuiMCP::Toggle(strings::TR("NJ_HideLockedTrees", "Hide locked trees in the skills menu"), &classes::hideLockedTrees);
 		HelpMarker(strings::TR("NJ_HelpHideLockedTrees", "The skills menu's ring of skill names leaves out the trees your class locks. Their perks cannot be taken either way."));
+		// D30: guild routes by class
+		if (ImGuiMCP::Toggle(strings::TR("NJ_RoutesByClass", "Routes by class"), &classes::routes)) { Classes::RequestApply(); }
+		HelpMarker(strings::TR("NJ_HelpRoutesByClass", "Guilds take only classes that hold their group: the College magic, the Companions warrior, the Thieves Guild and the Dark Brotherhood covert. A route opens when an evolution gives your class that group. The Bards, the Dawnguard, the Civil War, the Greybeards, the main and Daedric quests stay open to all."));
+		{
+			const auto snapRoutes = Classes::GetSnapshot();
+			const char* groupKeys[3] = { "NJ_Group_Warrior", "NJ_Group_Magic", "NJ_Group_Covert" };
+			const char* groupEn[3] = { "Warrior", "Magic", "Covert" };
+			for (const auto& r : GuildRoutes::Routes())
+			{
+				const bool ok = r.group < 0 || !snapRoutes.chosen || snapRoutes.groupsHeld[static_cast<std::size_t>(r.group)] || !GuildRoutes::Active();
+				ImGuiMCP::TextDisabled(strings::TR("NJ_RouteLine", "%s - needs %s: %s"), r.name.c_str(), r.group >= 0 ? strings::TR(groupKeys[r.group], groupEn[r.group]) : "-",
+					ok ? strings::TR("NJ_RouteOpen", "open") : strings::TR("NJ_RouteClosed", "closed to your class"));
+			}
+		}
 		const auto lk = Lockouts::GetState();
 		ImGuiMCP::TextDisabled(strings::TR("NJ_LockReadout", "Perks conditioned: %u (entry points %u) - crafting refusals this session: %u"), lk.perksConditioned, lk.entriesConditioned, lk.craftingRefusals);
 		ImGuiMCP::PopItemWidth();
@@ -820,14 +836,23 @@ namespace UI
 		if (auto* io = ImGuiMCP::GetIO(); io && io->DisplaySize.x > 0.0F && io->DisplaySize.y > 0.0F)
 		{
 			const float w = io->DisplaySize.x, h = io->DisplaySize.y;
-			ImGuiMCP::SetNextWindowPos(ImGuiMCP::ImVec2(w * 0.03F, h * 0.06F), ImGuiMCP::ImGuiCond_Always);
+			// the owner 01:59: like the inventory - the whole left side, edge to edge, opaque, no title bar
+			ImGuiMCP::SetNextWindowPos(ImGuiMCP::ImVec2(0.0F, 0.0F), ImGuiMCP::ImGuiCond_Always);
+			ImGuiMCP::SetNextWindowBgAlpha(1.0F);
 			// 74d2: in third person the player stands left of centre behind the window - the window is narrower there
 			auto* cam = RE::PlayerCamera::GetSingleton();
 			const bool third = cam && cam->currentState && cam->currentState->id == RE::CameraState::kThirdPerson;
-			ImGuiMCP::SetNextWindowSize(ImGuiMCP::ImVec2(std::clamp(w * (third ? 0.36F : 0.46F), 420.0F, w * 0.6F), h * 0.86F), ImGuiMCP::ImGuiCond_Always);
+			ImGuiMCP::SetNextWindowSize(ImGuiMCP::ImVec2(std::clamp(w * (third ? 0.36F : 0.42F), 420.0F, w * 0.6F), h), ImGuiMCP::ImGuiCond_Always);
 		}
-		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), &open, ImGuiMCP::ImGuiWindowFlags_NoCollapse))
+		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), nullptr, ImGuiMCP::ImGuiWindowFlags_NoTitleBar | ImGuiMCP::ImGuiWindowFlags_NoResize | ImGuiMCP::ImGuiWindowFlags_NoMove | ImGuiMCP::ImGuiWindowFlags_NoCollapse))
 		{
+			// the owner 01:59: a game menu's back keys close it - Esc and Tab on the keyboard, B on a gamepad - and a Close button
+			// (there is no title bar any more)
+			if (ImGuiMCP::IsKeyPressed(ImGuiMCP::ImGuiKey_Escape, false) || ImGuiMCP::IsKeyPressed(ImGuiMCP::ImGuiKey_Tab, false) || ImGuiMCP::IsKeyPressed(ImGuiMCP::ImGuiKey_GamepadFaceRight, false)) { open = false; }
+			ImGuiMCP::TextColored(ImGuiMCP::ImVec4(0.9F, 0.8F, 0.55F, 1.0F), "%s", strings::TR("NJ_SS_WindowTitle", "The runesmith"));
+			ImGuiMCP::SameLine();
+			const std::string closeLabel = std::string(strings::TR("NJ_SS_Close", "Close")) + "##rsclose";
+			if (ImGuiMCP::SmallButton(closeLabel.c_str())) { open = false; }
 			const char* tabs[] = { strings::TR("NJ_SS_TabSocket", "Socket"), strings::TR("NJ_SS_TabGrind", "Grind"), strings::TR("NJ_SS_TabCraft", "Craft"), strings::TR("NJ_SS_TabAddSlot", "Add slot"), strings::TR("NJ_SS_TabWords", "Words") };
 			const unsigned tabIcons[] = { fa::kGem, fa::kGrind, fa::kHammer, fa::kAdd, fa::kBook };
 			for (int t = 0; t < 5; ++t)

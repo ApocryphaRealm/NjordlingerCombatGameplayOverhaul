@@ -3,6 +3,7 @@
 #include "Classes.h"
 
 #include "ClassData.h"
+#include "GuildRoutes.h"
 #include "Settings.h"
 #include "Skills.h"
 
@@ -251,6 +252,7 @@ namespace Classes
 				}
 			}
 
+			GuildRoutes::Apply();   // D30: the routes' refusals follow the switches
 			// Class globals: 1 for every class this character has been (a Crusader is still a Knight for a condition).
 			for (const auto& n : table.classes)
 			{

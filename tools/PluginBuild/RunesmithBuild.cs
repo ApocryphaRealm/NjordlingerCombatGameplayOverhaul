@@ -257,6 +257,7 @@ static class RunesmithBuild
         info.Conditions.Add(SpeakerIsHim());
         info.Conditions.Add(StageIs(t["stage"]!.GetValue<string>()));
         if (t["learned"] is JsonNode ln) { info.Conditions.Add(Learned(ln.GetValue<int>())); }
+        if (t["retired"]?.GetValue<bool>() == true) { info.Conditions.Add(Learned(-1)); }   // the owner 02:01: retired - a condition that never holds
         if (t["whileOn"]?.GetValue<bool>() == true && s_crafting != null) { info.Conditions.Add(WhileOn()); }
         if (t["script"] is JsonNode sc)
         {

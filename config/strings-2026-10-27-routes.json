@@ -1,0 +1,67 @@
+{
+  "NJ_RoutesByClass": {
+    "english": "Routes by class",
+    "french": "Voies selon la classe",
+    "german": "Wege nach Klasse",
+    "italian": "Percorsi per classe",
+    "spanish": "Rutas por clase",
+    "polish": "Ścieżki według klasy",
+    "russian": "Пути по классу",
+    "czech": "Cesty podle třídy",
+    "japanese": "クラス別の道",
+    "chinese": "按职业开放的路线",
+    "korean": "직업별 경로"
+  },
+  "NJ_HelpRoutesByClass": {
+    "english": "Guilds take only classes that hold their group: the College magic, the Companions warrior, the Thieves Guild and the Dark Brotherhood covert. A route opens when an evolution gives your class that group. The Bards, the Dawnguard, the Civil War, the Greybeards, the main and Daedric quests stay open to all.",
+    "french": "Les guildes n'acceptent que les classes qui possèdent leur groupe : l'Académie de Fortdhiver la Magie, les Compagnons le Guerrier, la Guilde des voleurs et la Confrérie noire la Furtivité. Une voie s'ouvre quand une évolution donne ce groupe à votre classe. Le Collège des bardes, la Garde de l'aube, la guerre civile, les Grises-Barbes, la quête principale et les quêtes daedriques restent ouverts à tous.",
+    "german": "Gilden nehmen nur Klassen auf, die ihre Gruppe besitzen: die Akademie von Winterfeste Magie, die Gefährten Krieger, die Diebesgilde und die Dunkle Bruderschaft Heimlichkeit. Ein Weg öffnet sich, wenn eine Entwicklung deiner Klasse diese Gruppe gibt. Das Bardenkolleg, die Dämmerwacht, der Bürgerkrieg, die Graubärte, die Hauptquest und die daedrischen Quests bleiben allen offen.",
+    "italian": "Le gilde accettano solo le classi che hanno il loro gruppo: il Collegio di Winterhold Magia, i Compagni Guerriero, la Gilda dei Ladri e la Confraternita Oscura Furtività. Un percorso si apre quando un'evoluzione dà quel gruppo alla tua classe. Il Collegio dei Bardi, la Guardia dell'Alba, la guerra civile, i Barbagrigia, la missione principale e le missioni daedriche restano aperti a tutti.",
+    "spanish": "Los gremios solo aceptan clases que tengan su grupo: el Colegio de Hibernalia Magia, los Compañeros Guerrero, el Gremio de Ladrones y la Hermandad Oscura Sigilo. Una ruta se abre cuando una evolución da ese grupo a tu clase. El Colegio de Bardos, la Guardia del Alba, la guerra civil, los Barbagrís, la misión principal y las misiones daédricas siguen abiertos a todos.",
+    "polish": "Gildie przyjmują tylko klasy, które mają ich grupę: Kolegium Zimowej Twierdzy Magię, Towarzysze Wojownika, Gildia Złodziei i Mroczne Bractwo Skrytość. Ścieżka otwiera się, gdy ewolucja da twojej klasie tę grupę. Kolegium Bardów, Straż Świtu, wojna domowa, Siwobrodzi, wątek główny i zadania daedryczne pozostają otwarte dla wszystkich.",
+    "russian": "Гильдии принимают только классы, у которых есть их группа: Коллегия Винтерхолда - Магия, Соратники - Воин, Гильдия воров и Тёмное Братство - Скрытность. Путь открывается, когда эволюция даёт вашему классу эту группу. Коллегия бардов, Стража Рассвета, гражданская война, Седобородые, основной сюжет и даэдрические задания открыты для всех.",
+    "czech": "Cechy přijímají jen třídy, které mají jejich skupinu: Akademie ve Winterholdu Magii, Společníci Válečníka, Zlodějský cech a Temné bratrstvo Skrytost. Cesta se otevře, když evoluce dá tvé třídě tuto skupinu. Bardská kolej, Strážci úsvitu, občanská válka, Šedovousí, hlavní linie a daedrické úkoly zůstávají otevřené všem.",
+    "japanese": "ギルドは自分たちのグループを持つクラスしか受け入れません。ウィンターホールド大学は魔法、同胞団は戦士、盗賊ギルドと闇の一党は隠密です。進化によってクラスがそのグループを得ると、その道が開きます。吟遊詩人大学、ドーンガード、内戦、グレイビアード、メインクエストとデイドラクエストは誰にでも開かれています。",
+    "chinese": "公会只接纳拥有其所属组别的职业：冬堡学院为魔法，战友团为战士，盗贼公会和黑暗兄弟会为潜行。当某次进化让你的职业获得该组别时，相应路线即会开放。吟游诗人学院、黎明守卫、内战、灰胡子、主线任务和魔神任务对所有人开放。",
+    "korean": "길드는 해당 그룹을 가진 직업만 받아들입니다. 윈터홀드 마법대학은 마법, 동료단은 전사, 도둑 길드와 암흑 형제단은 은밀입니다. 진화로 직업이 그 그룹을 얻으면 경로가 열립니다. 음유시인 대학, 새벽경비대, 내전, 그레이비어드, 메인 퀘스트와 데이드라 퀘스트는 모두에게 열려 있습니다."
+  },
+  "NJ_RouteLine": {
+    "english": "%s - needs %s: %s",
+    "french": "%s - exige %s : %s",
+    "german": "%s - braucht %s: %s",
+    "italian": "%s - richiede %s: %s",
+    "spanish": "%s - requiere %s: %s",
+    "polish": "%s - wymaga: %s: %s",
+    "russian": "%s - нужно: %s: %s",
+    "czech": "%s - vyžaduje %s: %s",
+    "japanese": "%s - 必要: %s: %s",
+    "chinese": "%s - 需要%s：%s",
+    "korean": "%s - 필요: %s: %s"
+  },
+  "NJ_RouteOpen": {
+    "english": "open",
+    "french": "ouverte",
+    "german": "offen",
+    "italian": "aperto",
+    "spanish": "abierta",
+    "polish": "otwarta",
+    "russian": "открыт",
+    "czech": "otevřená",
+    "japanese": "開いている",
+    "chinese": "开放",
+    "korean": "열림"
+  },
+  "NJ_RouteClosed": {
+    "english": "closed to your class",
+    "french": "fermée à votre classe",
+    "german": "deiner Klasse verschlossen",
+    "italian": "chiuso alla tua classe",
+    "spanish": "cerrada a tu clase",
+    "polish": "zamknięta dla twojej klasy",
+    "russian": "закрыт для вашего класса",
+    "czech": "uzavřená vaší třídě",
+    "japanese": "あなたのクラスには閉ざされている",
+    "chinese": "对你的职业关闭",
+    "korean": "당신의 직업에는 닫힘"
+  }
+}

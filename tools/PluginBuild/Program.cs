@@ -583,6 +583,10 @@ if (File.Exists(stonesPath))
         () => RunesmithBuild.RunLate(forms));
 }
 
+// PLAN.md D30 (GUILD-LOCKS.md): guild routes by class - after every other record so no form ID moves
+var guildPath = Path.Combine(repo, "config", "guild-routes.json");
+if (File.Exists(guildPath)) { GuildBuild.Run(mod, modKey, repo, JsonNode.Parse(File.ReadAllText(guildPath))!, forms); }
+
 forms["dll"] =new JsonArray(dllDone.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
 forms["stubs"] = new JsonArray(stubs.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
 forms["approximations"] = new JsonArray(approx.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());

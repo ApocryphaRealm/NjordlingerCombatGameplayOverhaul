@@ -24,6 +24,7 @@
 #include "CarryWeight.h"
 #include "CardEnchantment.h"
 #include "EffectFilter.h"
+#include "GuildRoutes.h"
 #include "SoulStones.h"
 #include "UI.h"
 
@@ -57,6 +58,7 @@ namespace
 			SoulStones::Install();
 			CardEnchantment::Install();
 			EffectFilter::Install();
+			GuildRoutes::Install();
 			Shouting::Install();
 			CarryWeight::Install();
 			QuestRewards::Install();

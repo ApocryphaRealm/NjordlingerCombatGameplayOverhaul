@@ -66,7 +66,8 @@ namespace settings
 		inline bool lockSkills = true;                     // bLockSkills:Classes - D3, a locked skill stays at its starting value
 		inline bool craftingGate = true;                   // bCraftingGate:Classes - D4
 		inline bool raceMenuClass = true;
-		inline bool hideLockedTrees = true;                // bHideLockedTrees:Classes - the skills menu's ring hides the trees the class locks (phase 5 step 2)                  // bRaceMenuClass:Classes - D1, the Class category in the race menu
+		inline bool hideLockedTrees = true;
+		inline bool routes = true;                         // bRoutesByClass:Classes - guild routes need the class's group (D30)                // bHideLockedTrees:Classes - the skills menu's ring hides the trees the class locks (phase 5 step 2)                  // bRaceMenuClass:Classes - D1, the Class category in the race menu
 	}
 
 	// Quest rewards (PLAN.md D7). The rows' shipped values are quest-rewards.json; a row the player changes is kept

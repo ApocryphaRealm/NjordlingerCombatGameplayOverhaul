@@ -8,7 +8,8 @@
     "this mod so far). tools/PluginBuild builds it.",
     "D22 revised (STONE-CRAFTING.md, 2026-10-26): he sells nothing; he grinds soul gems into dust and cuts stones of learned words; the fee is one dust of the stone's tier; taking a stone out is free. The Barter topic became Grind (same record); Craft is built late.",
     "ENCHANTING-OFF.md 7 (the owner 20:14): 'whileOn' lines are spoken only while Enchanting is On (global NJCGO_RunesmithEnchantingOn, kept by the SKSE plugin); with Enchanting Off he only adds slots and the player sets stones anywhere. AddSlot is built late.",
-    "DESIGN-RETHINK.md 14 (the owner 20:56): D28 withdrawn - all five services in every game; the 'whileOn' conditions are gone (the global record stays so no form ID moves)."
+    "DESIGN-RETHINK.md 14 (the owner 20:56): D28 withdrawn - all five services in every game; the 'whileOn' conditions are gone (the global record stays so no form ID moves).",
+    "The owner 02:01: ONE service line opens the window (all tabs inside), worded like Honed Metal's 'I am in need of your services.'; the old Grind / Craft / Add slot topics are retired by a condition that never holds (records kept so no form ID moves)."
   ],
   "npc": {
     "name": "Thorvar Stone-Speaker",
@@ -73,7 +74,7 @@
     },
     {
       "id": "Socket",
-      "prompt": "Set my soul stones.",
+      "prompt": "I am in need of your services.",
       "stage": ">=100",
       "socket": true,
       "say": [
@@ -86,7 +87,8 @@
       "stage": ">=100",
       "say": [
         "Hand them over. Filled ones give more."
-      ]
+      ],
+      "retired": true
     },
     {
       "id": "Craft",
@@ -95,7 +97,8 @@
       "late": true,
       "say": [
         "Which word? Only one you have read on a wall."
-      ]
+      ],
+      "retired": true
     },
     {
       "id": "AddSlot",
@@ -104,7 +107,8 @@
       "late": true,
       "say": [
         "Orichalcum and a soul gem for each slot. Three is all any piece will hold."
-      ]
+      ],
+      "retired": true
     }
   ],
   "chest": {

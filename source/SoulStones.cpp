@@ -687,6 +687,20 @@ namespace SoulStones
 			bool left = false;
 			if (!p || !em || !a_obj || !a_x || !Worn(a_x, &left)) { return; }
 			g_selfEquipUntil = NowMs() + 1500;
+			// 1342: the re-equip dropped a full charge to 14.76/500 - the current charge is put back after it
+			struct ChargeKeeper
+			{
+				RE::ExtraDataList* x;
+				float charge = -1.0F;
+				explicit ChargeKeeper(RE::ExtraDataList* a_x) : x(a_x) { if (auto* c = x->GetByType<RE::ExtraCharge>()) { charge = c->charge; } }
+				~ChargeKeeper()
+				{
+					if (charge < 0.0F) { return; }
+					auto* c = x->GetByType<RE::ExtraCharge>();
+					if (!c) { c = new RE::ExtraCharge(); x->Add(c); }
+					c->charge = charge;
+				}
+			} keep(a_x);
 			if (a_obj->Is(RE::FormType::Weapon))
 			{
 				// the hand slots of Skyrim.esm (EQUP RightHand 013F42, LeftHand 013F43)
@@ -849,7 +863,12 @@ namespace SoulStones
 						xe->enchantment = ench;
 						AdjustRef(ench, +1);
 					}
-					if (!a_e.hadEnchant) { xe->charge = charge; }
+					if (!a_e.hadEnchant)
+					{
+						// 1342: the current charge keeps its fraction when the maximum changes
+						if (auto* xc = a_x->GetByType<RE::ExtraCharge>(); xc && xe->charge > 0 && charge > 0) { xc->charge = xc->charge / static_cast<float>(xe->charge) * static_cast<float>(charge); }
+						xe->charge = charge;
+					}
 				}
 				else
 				{
@@ -2199,9 +2218,10 @@ namespace SoulStones
 			{
 				if (!a_e || !g_rs.loaded || a_e->type.get() != RE::TESTopicInfoEvent::TopicInfoEventType::kTopicEnd) { return RE::BSEventNotifyControl::kContinue; }
 				const auto id = a_e->topicInfoFormID;
-				const int tab = id == g_rs.socketInfo ? 0 : (g_rs.grindInfo && id == g_rs.grindInfo) ? 1 : (g_rs.craftInfo && id == g_rs.craftInfo) ? 2 : (g_rs.addSlotInfo && id == g_rs.addSlotInfo) ? 3 : -1;
+				// the owner 02:01: one service line ("I am in need of your services.") opens the window on the last tab used
+				const int tab = id == g_rs.socketInfo ? 99 : (g_rs.grindInfo && id == g_rs.grindInfo) ? 1 : (g_rs.craftInfo && id == g_rs.craftInfo) ? 2 : (g_rs.addSlotInfo && id == g_rs.addSlotInfo) ? 3 : -1;
 				if (tab < 0 || !id) { return RE::BSEventNotifyControl::kContinue; }
-				g_requestedTab = tab;
+				if (tab != 99) { g_requestedTab = tab; }
 				Queue([]() {
 					g_service = true;
 					logger::info("soul stones: the runesmith opens his service");

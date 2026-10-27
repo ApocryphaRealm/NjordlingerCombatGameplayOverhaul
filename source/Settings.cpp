@@ -121,6 +121,7 @@ namespace settings
 			classes::craftingGate = true;
 			classes::raceMenuClass = true;
 			classes::hideLockedTrees = true;
+			classes::routes = true;
 			questrewards::enabled = true;
 			questrewards::overrides.clear();
 			gear::sets = true;
@@ -203,6 +204,7 @@ namespace settings
 			get("bcraftinggate:classes", classes::craftingGate, ParseBool);
 			get("bracemenuclass:classes", classes::raceMenuClass, ParseBool);
 			get("bhidelockedtrees:classes", classes::hideLockedTrees, ParseBool);
+			get("broutesbyclass:classes", classes::routes, ParseBool);
 
 			get("benablequestrewards:questrewards", questrewards::enabled, ParseBool);
 			get("bsetbonuses:gear", gear::sets, ParseBool);
@@ -323,6 +325,7 @@ namespace settings
 		ok &= WriteKey(lines, "Classes", "bCraftingGate", classes::craftingGate ? "1" : "0");
 		ok &= WriteKey(lines, "Classes", "bRaceMenuClass", classes::raceMenuClass ? "1" : "0");
 		ok &= WriteKey(lines, "Classes", "bHideLockedTrees", classes::hideLockedTrees ? "1" : "0");
+		ok &= WriteKey(lines, "Classes", "bRoutesByClass", classes::routes ? "1" : "0");
 		ok &= WriteKey(lines, "QuestRewards", "bEnableQuestRewards", questrewards::enabled ? "1" : "0");
 		ok &= WriteKey(lines, "Gear", "bSetBonuses", gear::sets ? "1" : "0");
 		ok &= WriteKey(lines, "Gear", "bUniqueEffects", gear::uniques ? "1" : "0");
