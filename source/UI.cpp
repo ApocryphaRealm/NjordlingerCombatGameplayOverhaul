@@ -811,7 +811,7 @@ namespace UI
 		if (ImGuiMCP::BeginChild("njss_detail", ImGuiMCP::ImVec2(0.0F, 260.0F), true) && sel)
 		{
 			ImGuiMCP::Text("%s", sel->name.c_str());
-			ImGuiMCP::TextDisabled(strings::TR("NJ_SS_ItemLine", "A %s with %d slot(s)."), hostName(sel->host), sel->slots);
+			ImGuiMCP::TextDisabled(strings::TR("NJ_SS_ItemLineKind", "Kind: %s - slots: %d"), hostName(sel->host), sel->slots);
 			if (sel->key.find(":plain") != std::string::npos) { ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_PlainHint", "This is a plain stack: wear or wield one of them once, then come back to set a stone.")); }
 			if (targetSlot >= sel->slots) { targetSlot = 0; }
 			for (int k = 0; k < sel->slots; ++k)

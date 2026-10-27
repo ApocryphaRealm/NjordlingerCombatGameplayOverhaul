@@ -1,0 +1,15 @@
+{
+  "NJ_SS_ItemLineKind": {
+    "english": "Kind: %s - slots: %d",
+    "french": "Type : %s - emplacements : %d",
+    "german": "Art: %s - Fassungen: %d",
+    "italian": "Tipo: %s - castoni: %d",
+    "spanish": "Tipo: %s - engastes: %d",
+    "polish": "Rodzaj: %s - gniazda: %d",
+    "russian": "Тип: %s - гнёзд: %d",
+    "czech": "Druh: %s - lůžka: %d",
+    "japanese": "種類: %s - スロット: %d",
+    "chinese": "类型：%s - 镶孔：%d",
+    "korean": "종류: %s - 슬롯: %d"
+  }
+}

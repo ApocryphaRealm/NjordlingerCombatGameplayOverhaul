@@ -22,6 +22,7 @@
 #include "Skills.h"
 #include "Shouting.h"
 #include "CarryWeight.h"
+#include "CardEnchantment.h"
 #include "SoulStones.h"
 #include "UI.h"
 
@@ -53,6 +54,7 @@ namespace
 			ClassEffects::Install();
 			Gear::Install();
 			SoulStones::Install();
+			CardEnchantment::Install();
 			Shouting::Install();
 			CarryWeight::Install();
 			QuestRewards::Install();
@@ -128,7 +130,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 
 	// Trampoline space for the engine patches installed at kDataLoaded: each far branch or call takes 14 bytes; the
 	// skill-improve and attribute-gain entry hooks also park their prologue thunks here.
-	SKSE::AllocTrampoline(256);
+	SKSE::AllocTrampoline(512);
 
 	settings::Init("NjordlingerCombatGameplayOverhaul.ini");
 	settings::ApplyLogLevel();

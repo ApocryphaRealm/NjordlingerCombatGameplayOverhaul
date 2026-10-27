@@ -2386,6 +2386,18 @@ namespace SoulStones
 
 	void RequestCraft(int a_word, int a_tier) { Queue([a_word, a_tier]() { DoCraft(a_word, a_tier); }); }
 
+	bool IsComposedEnchantment(RE::EnchantmentItem* a_ench)
+	{
+		if (!a_ench || !g_t.loaded) { return false; }
+		for (auto* fx : a_ench->effects)
+		{
+			auto* mg = fx ? fx->baseEffect : nullptr;
+			if (!mg) { continue; }
+			if (g_t.effectCell.contains(mg) || g_t.phraseCell.contains(mg) || g_t.glowTier.contains(mg) || mg == g_t.unknownWeapon || mg == g_t.unknownArmour) { return true; }
+		}
+		return false;
+	}
+
 	bool IsStoneShout(RE::TESShout* a_shout)
 	{
 		if (!a_shout) { return false; }

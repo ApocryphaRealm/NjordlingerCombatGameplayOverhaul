@@ -83,7 +83,8 @@ namespace Shouting
 				auto* power = p ? p->GetActorRuntimeData().selectedPower : nullptr;
 				auto* shout = power ? power->As<RE::TESShout>() : nullptr;
 				if (Exempt(shout)) { return true; }
-				++g_refusals;
+				// 765a: CanProcess runs on every frame the key is held - count a press once, on its first frame
+				if (auto* be = a_event ? a_event->AsButtonEvent() : nullptr; be && be->IsDown()) { ++g_refusals; }
 				if (!g_toldThisSession.exchange(true))
 				{
 					notify::Show(strings::TR("NJ_ShoutingSilent", "Your Voice is silent; the words live in your stones."));

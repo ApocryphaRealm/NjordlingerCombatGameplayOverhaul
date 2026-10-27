@@ -169,6 +169,10 @@ namespace SoulStones
 	void SetServiceOpen(bool a_open);
 	bool IsServiceOpen();
 
+	// An enchantment this module composed (it carries a soul-stone effect). Read-only table lookups: safe from any thread
+	// once the table is loaded.
+	bool IsComposedEnchantment(RE::EnchantmentItem* a_ench);
+
 	// A Shout the stones grant (D21's hidden clones) - Shouting-off lets these through.
 	bool IsStoneShout(RE::TESShout* a_shout);
 
