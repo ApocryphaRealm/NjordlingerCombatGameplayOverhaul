@@ -65,7 +65,16 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--underwater", required=True)
     ap.add_argument("--necromancer", required=True)
+    ap.add_argument("--order", help="the game's own vanilla tree order, as the 'stats menu: tree order' log line prints it with the ring unticked (e.g. '0=Enchanting 1=Smithing ...'); the vanilla sky's pictures follow it")
     a = ap.parse_args()
+    global VANILLA
+    if a.order:
+        ini2csf = {"OneHanded": "OneHanded", "TwoHanded": "TwoHanded", "Archery": "Marksman", "Block": "Block", "Smithing": "Smithing", "HeavyArmor": "HeavyArmor",
+                   "LightArmor": "LightArmor", "Pickpocket": "Pickpocket", "Lockpicking": "Lockpicking", "Sneak": "Sneak", "Alchemy": "Alchemy", "Speech": "Speechcraft",
+                   "Alteration": "Alteration", "Conjuration": "Conjuration", "Destruction": "Destruction", "Illusion": "Illusion", "Restoration": "Restoration", "Enchanting": "Enchanting"}
+        pairs = sorted((int(k), v) for k, v in (t.split("=", 1) for t in a.order.split()))
+        VANILLA = [ini2csf[v] for _, v in pairs][:18]
+        assert len(VANILLA) == 18 and len(set(VANILLA)) == 18, VANILLA
     diving = json.load(open(a.underwater, encoding="utf-8"))["skills"][0]
     ring = {"$schema": "https://raw.githubusercontent.com/Exit-9B/CustomSkills/main/docs/schema/CustomSkill.json", "version": 1,
             "skydome": {"model": SKY, "cameraRightPoint": 1}, "skills": VANILLA + [diving, necromancer(a.necromancer)]}
