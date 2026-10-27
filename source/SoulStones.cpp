@@ -119,6 +119,8 @@ namespace SoulStones
 			// D22 revised (STONE-CRAFTING.md): dust by tier, the grind table, the recipe
 			std::array<RE::TESBoundObject*, kTiers> dust{};
 			RE::TESBoundObject* ingot = nullptr;
+			RE::TESBoundObject* blank = nullptr;   // the owner 23:11: an ingot is cut into blanksPerIngot Rune Blanks
+			int blanksPerIngot = 3;
 			std::array<int, kTiers> craftDust{ 1, 2, 3, 4, 5 };
 			struct Grind { RE::TESBoundObject* gem = nullptr; int tier = 0; int empty = 1; int filled = 2; };
 			std::vector<Grind> grind;
@@ -1289,6 +1291,8 @@ namespace SoulStones
 				}
 				for (int w = 0; w < static_cast<int>(g_t.words.size()); ++w) { if (WordLearned(w)) { s.learnedWords.push_back(w); } }
 				s.ingots = g_t.ingot ? CountOf(g_t.ingot) : 0;
+				s.blanks = g_t.blank ? CountOf(g_t.blank) : 0;
+				s.blanksPerIngot = g_t.blanksPerIngot;
 				for (int t = 0; t < kTiers; ++t) { s.craftDust[t] = g_t.craftDust[t]; }
 			}
 			s.dustMade = g_dustMade.load();
@@ -1548,13 +1552,22 @@ namespace SoulStones
 			const auto& name = g_t.words[a_word].name;
 			if (!WordLearned(a_word)) { SetResult(Say("NJ_SS_RNotLearned", "You have not learned %s at a word wall - he cannot cut a word you have never read.", name.c_str())); BuildSnapshot(); return; }
 			const int need = g_t.craftDust[a_tier];
-			if (!g_t.ingot || CountOf(g_t.ingot) < 1 || !g_t.dust[a_tier] || CountOf(g_t.dust[a_tier]) < need)
+			const int blanks = g_t.blank ? CountOf(g_t.blank) : 0;
+			const int ingots = g_t.ingot ? CountOf(g_t.ingot) : 0;
+			if (!g_t.blank || (blanks < 1 && ingots < 1) || !g_t.dust[a_tier] || CountOf(g_t.dust[a_tier]) < need)
 			{
-				SetResult(Say("NJ_SS_RRecipe", "A %s stone takes one orichalcum ingot and %d %s soul gem dust.", TierName(a_tier).c_str(), need, TierName(a_tier).c_str()));
+				SetResult(Say("NJ_SS_RRecipeBlank", "A %s stone takes one Rune Blank (an orichalcum ingot makes %d) and %d %s soul gem dust.", TierName(a_tier).c_str(), g_t.blanksPerIngot, need, TierName(a_tier).c_str()));
 				BuildSnapshot();
 				return;
 			}
-			p->RemoveItem(g_t.ingot, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			// the owner 23:11: with no blank in the pack, Thorvar cuts an ingot into blanks first (automatic - the simpler)
+			if (blanks < 1)
+			{
+				p->RemoveItem(g_t.ingot, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				p->AddObjectToContainer(g_t.blank, nullptr, g_t.blanksPerIngot, nullptr);
+				logger::info("soul stones: Thorvar cuts an orichalcum ingot into {} Rune Blanks", g_t.blanksPerIngot);
+			}
+			p->RemoveItem(g_t.blank, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 			if (need > 0) { p->RemoveItem(g_t.dust[a_tier], need, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr); }
 			p->AddObjectToContainer(g_t.words[a_word].stones[a_tier], nullptr, 1, nullptr);
 			++g_stonesMade;
@@ -2021,6 +2034,8 @@ namespace SoulStones
 			if (j.contains("craft"))
 			{
 				g_t.ingot = Form<RE::TESBoundObject>(j["craft"].value("ingot", nlohmann::json()), "orichalcum ingot");
+				g_t.blank = Form<RE::TESBoundObject>(j["craft"].value("blank", nlohmann::json()), "rune blank");
+				g_t.blanksPerIngot = std::max(1, j["craft"].value("blanksPerIngot", 3));
 				const auto& need = j["craft"]["dust"];
 				for (int t = 0; t < kTiers && t < static_cast<int>(need.size()); ++t) { g_t.craftDust[t] = std::max(0, need[t].get<int>()); }
 			}
@@ -2503,7 +2518,7 @@ namespace SoulStones
 		for (const auto& g : s.gems) { gems.push_back({ { "form", fmt::format("0x{:08X}", g.form) }, { "name", g.name }, { "filled", g.filled }, { "empty", g.empty }, { "tier", g.tier }, { "dust", g.dust } }); }
 		return nlohmann::json{ { "loaded", s.loaded }, { "error", s.error }, { "serviceOpen", s.serviceOpen }, { "canSocket", s.canSocket },
 			{ "slotOffers", offers }, { "gemList", gems }, { "addIngots", s.addIngots }, { "addGems", s.addGems }, { "learnedWordList", s.learnedWords }, { "tableEntries", s.tableEntries },
-			{ "composes", s.composes }, { "procsFired", s.procsFired }, { "dustMade", s.dustMade }, { "stonesMade", s.stonesMade }, { "stonesDropped", g_stonesDropped.load() }, { "ingots", s.ingots }, { "gems", s.gems.size() }, { "learnedWords", s.learnedWords.size() }, { "feeGems", s.feeGems }, { "active", s.activePerks }, { "lastResult", s.lastResult },
+			{ "composes", s.composes }, { "procsFired", s.procsFired }, { "dustMade", s.dustMade }, { "stonesMade", s.stonesMade }, { "stonesDropped", g_stonesDropped.load() }, { "ingots", s.ingots }, { "blanks", s.blanks }, { "gems", s.gems.size() }, { "learnedWords", s.learnedWords.size() }, { "feeGems", s.feeGems }, { "active", s.activePerks }, { "lastResult", s.lastResult },
 			{ "items", items }, { "stones", stones }, { "phrases", phrases }, { "revision", s.revision } }.dump();
 	}
 }

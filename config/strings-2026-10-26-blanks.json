@@ -1,0 +1,54 @@
+{
+  "NJ_SS_RRecipeBlank": {
+    "english": "A %s stone takes one Rune Blank (an orichalcum ingot makes %d) and %d %s soul gem dust.",
+    "french": "Une pierre %s demande une ébauche runique (un lingot d'orichalque en donne %d) et %d poussière(s) de gemme spirituelle %s.",
+    "german": "Eine %s-Seelenrune braucht einen Runenrohling (ein Orichalkumbarren ergibt %d) und %d Seelensteinstaub (%s).",
+    "italian": "Una pietra %s richiede uno sbozzo runico (un lingotto di oricalco ne dà %d) e %d polvere di gemma dell'anima %s.",
+    "spanish": "Una piedra de %s requiere una placa rúnica en bruto (un lingote de oricalco da %d) y %d polvo de gema de alma %s.",
+    "polish": "Kamień %s wymaga jednego półfabrykatu runicznego (sztabka orichalku daje %d) i %d pyłu klejnotu duszy (%s).",
+    "russian": "Камень %s требует одну рунную заготовку (из орихалкового слитка выходит %d) и %d пыли камня душ (%s).",
+    "czech": "Kámen %s vyžaduje jeden runový polotovar (slitek orichalku dá %d) a %d prachu z kamene duší (%s).",
+    "japanese": "%sのストーンにはルーンブランク1個(オリハルコンのインゴット1個から%d個)と%d個の%sのソウルジェムの粉が必要だ。",
+    "chinese": "一块%s石需要一块符文坯料（一块山铜锭可制成%d块）和%d份%s灵魂石粉。",
+    "korean": "%s 룬석에는 룬 원판 1개(오리할콘 주괴 1개로 %d개)와 %d개의 %s 영혼석 가루가 필요합니다."
+  },
+  "NJ_SS_CraftIntroBlank": {
+    "english": "Thorvar cuts an orichalcum ingot into %d Rune Blanks, then carves a blank and engraves it with soul gem dust of the stone's size - a stone of any word you have learned at a word wall. With no blank in your pack he cuts an ingot first.",
+    "french": "Thorvar découpe un lingot d'orichalque en %d ébauches runiques, puis taille une ébauche runique et la grave avec de la poussière de gemme spirituelle de la taille de la pierre - une pierre de n'importe quel mot appris sur un mur de mots. Si vous n'avez aucune ébauche runique dans votre sac, il découpe d'abord un lingot.",
+    "german": "Thorvar schneidet einen Orichalkumbarren in %d Runenrohlinge, dann bearbeitet er einen Runenrohling und graviert ihn mit Seelensteinstaub in der Größe des Steins - eine Seelenrune für jedes Wort, das du an einer Wortwand gelernt hast. Hast du keinen Runenrohling im Gepäck, schneidet er zuerst einen Barren.",
+    "italian": "Thorvar taglia un lingotto di oricalco in %d sbozzi runici, poi lavora uno sbozzo runico e lo incide con polvere di gemma dell'anima della misura della pietra - una pietra di qualsiasi parola che hai imparato presso un muro della parola. Se non hai sbozzi runici nella sacca, prima taglia un lingotto.",
+    "spanish": "Thorvar corta un lingote de oricalco en %d placas rúnicas en bruto, luego talla una placa rúnica en bruto y la graba con polvo de gema de alma del tamaño de la piedra: una piedra de cualquier palabra que hayas aprendido en un muro de palabras. Si no llevas ninguna placa rúnica en bruto, primero corta un lingote.",
+    "polish": "Thorvar tnie sztabkę orichalku na %d półfabrykatów runicznych, potem obrabia półfabrykat runiczny i graweruje go pyłem klejnotu duszy w rozmiarze kamienia - kamień dowolnego słowa poznanego na ścianie słów. Jeśli nie masz w plecaku żadnego półfabrykatu runicznego, najpierw tnie sztabkę.",
+    "russian": "Thorvar разрезает орихалковый слиток на рунные заготовки (%d шт.), затем обрабатывает рунную заготовку и гравирует её пылью камня душ того же размера, что и камень, - рунный камень с любым словом, изученным у Стены Слов. Если в вашей сумке нет рунной заготовки, он сначала разрезает слиток.",
+    "czech": "Thorvar rozřeže slitek orichalku na %d runových polotovarů, pak opracuje runový polotovar a gravíruje ho prachem z kamene duší velikosti kamene - runový kámen s jakýmkoli slovem, které jste se naučili u zdi slov. Pokud v zavazadle nemáte žádný runový polotovar, nejprve rozřeže slitek.",
+    "japanese": "Thorvarはオリハルコンのインゴット1個を%d個のルーンブランクに切り分け、ルーンブランクを1個彫り、ストーンと同じサイズのソウルジェムの粉で刻印する - 言葉の壁で習得した任意の言葉のストーンだ。荷物にルーンブランクがなければ、まずインゴットを切り分ける。",
+    "chinese": "Thorvar 将一块山铜锭切成%d块符文坯料，再雕琢一块符文坯料，并用与石头同等大小的灵魂石粉刻印 - 可刻制你在龙语墙学会的任何龙语的石头。若你的背包中没有符文坯料，他会先切割一块锭。",
+    "korean": "Thorvar는 오리할콘 주괴 1개를 룬 원판 %d개로 자른 다음, 룬 원판 하나를 다듬어 룬석 크기의 영혼석 가루로 새깁니다 - 말의 벽에서 배운 어떤 단어든 새긴 룬석입니다. 가방에 룬 원판이 없으면 먼저 주괴를 자릅니다."
+  },
+  "NJ_SS_RecipeLineBlank": {
+    "english": "Recipe: one Rune Blank and %d %s dust. You carry %d blank(s), %d ingot(s) and %d %s dust.",
+    "french": "Recette : une ébauche runique et %d poussière(s) %s. Vous avez %d ébauche(s) runique(s), %d lingot(s) et %d poussière(s) %s.",
+    "german": "Rezept: ein Runenrohling und %d Staub (%s). Du hast %d Runenrohlinge, %d Barren und %d Staub (%s).",
+    "italian": "Ricetta: uno sbozzo runico e %d polvere %s. Hai %d sbozzi runici, %d lingotti e %d polvere %s.",
+    "spanish": "Receta: una placa rúnica en bruto y %d polvo %s. Llevas %d placa(s) rúnica(s) en bruto, %d lingote(s) y %d polvo %s.",
+    "polish": "Przepis: jeden półfabrykat runiczny i %d pyłu (%s). Masz %d półfabrykatów runicznych, %d sztabek i %d pyłu (%s).",
+    "russian": "Рецепт: одна рунная заготовка и %d пыли (%s). У вас рунных заготовок: %d, слитков: %d, пыли: %d (%s).",
+    "czech": "Recept: jeden runový polotovar a %d prachu (%s). Máte %d runových polotovarů, %d slitků a %d prachu (%s).",
+    "japanese": "レシピ: ルーンブランク1個と粉 %d (%s)。所持: ルーンブランク %d、インゴット %d、粉 %d (%s)。",
+    "chinese": "配方：一块符文坯料和 %d 份%s粉。你有 %d 块符文坯料、%d 块锭和 %d 份%s粉。",
+    "korean": "제작법: 룬 원판 1개와 %d개의 %s 가루. 보유: 룬 원판 %d개, 주괴 %d개, %d개의 %s 가루."
+  },
+  "NJ_SS_BlanksLine": {
+    "english": "Rune Blanks: %d - orichalcum ingots: %d",
+    "french": "Ébauches runiques : %d - lingots d'orichalque : %d",
+    "german": "Runenrohlinge: %d - Orichalkumbarren: %d",
+    "italian": "Sbozzi runici: %d - lingotti di oricalco: %d",
+    "spanish": "Placas rúnicas en bruto: %d - lingotes de oricalco: %d",
+    "polish": "Półfabrykaty runiczne: %d - sztabki orichalku: %d",
+    "russian": "Рунные заготовки: %d - орихалковые слитки: %d",
+    "czech": "Runové polotovary: %d - slitky orichalku: %d",
+    "japanese": "ルーンブランク: %d - オリハルコンのインゴット: %d",
+    "chinese": "符文坯料：%d - 山铜锭：%d",
+    "korean": "룬 원판: %d - 오리할콘 주괴: %d"
+  }
+}

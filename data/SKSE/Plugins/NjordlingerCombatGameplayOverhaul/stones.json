@@ -189,7 +189,9 @@
       3,
       4,
       5
-    ]
+    ],
+    "blank": "0xC5C",
+    "blanksPerIngot": 3
   },
   "drops": {
     "dragon": 100,

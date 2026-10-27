@@ -690,6 +690,19 @@ static class StoneBuild
         Console.WriteLine($"stones: {dustForms.Count} dust items, {grindOut.Count} grindable gems; drops from dragons and named bosses (D29)");
         afterLate?.Invoke();
 
+        // ---- the owner 23:11: the Rune Blank, built after every other record (the runesmith's late topics included) ------
+        var ingotRec = ByEdid<IMiscItemGetter>(cfg["craft"]!["ingot"]!.GetValue<string>());
+        var blank = mod.MiscItems.AddNew("NJCGO_RuneBlank");
+        blank.Name = cfg["craft"]!["blankName"]!.GetValue<string>();
+        blank.Model = ingotRec.Model?.DeepCopy();
+        blank.PickUpSound.SetTo(ingotRec.PickUpSound.FormKeyNullable);
+        blank.PutDownSound.SetTo(ingotRec.PutDownSound.FormKeyNullable);
+        blank.Value = (uint)Math.Max(1, ingotRec.Value / 3);
+        blank.Weight = cfg["craft"]!["blankWeight"]!.GetValue<float>();
+        craftOut["blank"] = Hex(blank);
+        craftOut["blanksPerIngot"] = cfg["craft"]!["blanksPerIngot"]!.GetValue<int>();
+        Console.WriteLine($"stones: Rune Blank {Hex(blank)} - {craftOut["blanksPerIngot"]} per orichalcum ingot");
+
         // ---- D26 (SHOUTING-OFF.md 5): the quests that need the Voice while Shouting is off -------------------------------
         // Rows found by the quest's NAME in the masters (Fable's editor IDs were a guess - verified here, not typed); the
         // exemption runs from the quest's start to its completion stage (the stage whose log entry completes the quest).

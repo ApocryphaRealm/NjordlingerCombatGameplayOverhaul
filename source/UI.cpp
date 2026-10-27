@@ -629,6 +629,7 @@ namespace UI
 	void KnownWords(const ::SoulStones::Snapshot& a_s)
 	{
 		const ImGuiMCP::ImVec4 known{ 0.45F, 0.85F, 0.45F, 1.0F };
+		ImGuiMCP::TextDisabled(strings::TR("NJ_SS_BlanksLine", "Rune Blanks: %d - orichalcum ingots: %d"), a_s.blanks, a_s.ingots);
 		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_WordsIntro", "The Shouts whose words you have learned at word walls. Set their three stones in slot order on one item to add the phrase."));
 		const ::SoulStones::Host hosts[3] = { ::SoulStones::Host::kMelee, ::SoulStones::Host::kRanged, ::SoulStones::Host::kArmour };
 		const char* hostKeys[3] = { "NJ_SS_HostMelee", "NJ_SS_HostRanged", "NJ_SS_HostArmour" };
@@ -697,16 +698,16 @@ namespace UI
 	void CraftTab(const ::SoulStones::Snapshot& a_s, const char* (*a_tier)(int))
 	{
 		static int tier = 0;
-		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_CraftIntro", "Thorvar cuts a soul stone of any word you have learned at a word wall from one orichalcum ingot and soul gem dust of the stone's size."));
+		ImGuiMCP::TextWrapped(strings::TR("NJ_SS_CraftIntroBlank", "Thorvar cuts an orichalcum ingot into %d Rune Blanks, then carves a blank and engraves it with soul gem dust of the stone's size - a stone of any word you have learned at a word wall. With no blank in your pack he cuts an ingot first."), a_s.blanksPerIngot);
 		for (int t = 0; t < 5; ++t)
 		{
 			if (t > 0) { ImGuiMCP::SameLine(); }
 			ImGuiMCP::RadioButton(a_tier(t), &tier, t);
 		}
-		ImGuiMCP::TextDisabled(strings::TR("NJ_SS_RecipeLine", "Recipe: one orichalcum ingot and %d %s dust. You carry %d ingot(s) and %d %s dust."),
-							   a_s.craftDust[tier], a_tier(tier), a_s.ingots, a_s.feeGems[tier], a_tier(tier));
+		ImGuiMCP::TextDisabled(strings::TR("NJ_SS_RecipeLineBlank", "Recipe: one Rune Blank and %d %s dust. You carry %d blank(s), %d ingot(s) and %d %s dust."),
+							   a_s.craftDust[tier], a_tier(tier), a_s.blanks, a_s.ingots, a_s.feeGems[tier], a_tier(tier));
 		if (a_s.learnedWords.empty()) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoLearned", "You have learned no word of power yet: learn one at a word wall.")); }
-		const bool can = a_s.ingots >= 1 && a_s.feeGems[tier] >= a_s.craftDust[tier];
+		const bool can = (a_s.blanks >= 1 || a_s.ingots >= 1) && a_s.feeGems[tier] >= a_s.craftDust[tier];
 		for (const int w : a_s.learnedWords)
 		{
 			if (IconButton(fa::kHammer, strings::TR("NJ_SS_Make", "Make"), "mk" + std::to_string(w))) { ::SoulStones::RequestCraft(w, tier); }

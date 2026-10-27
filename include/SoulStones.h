@@ -123,6 +123,8 @@ namespace SoulStones
 		std::vector<GemView> gems;            // gems he can grind
 		std::vector<int> learnedWords;        // words learned at a wall: the stones he can cut
 		int ingots = 0;                       // orichalcum ingots carried
+		int blanks = 0;                       // Rune Blanks carried (the owner 23:11)
+		int blanksPerIngot = 3;
 		std::array<int, 5> craftDust{};       // dust a stone of each tier takes
 		std::uint32_t dustMade = 0, stonesMade = 0;   // this save's tallies
 		bool serviceOpen = false;             // socketing is open (the runesmith, or DevBench's test switch)

@@ -120,7 +120,7 @@
     "ingot": "IngotOrichalcum",
     "gems": [["SoulGemLesser", "SoulGemLesserFilled"], ["SoulGemGreater", "SoulGemGreaterFilled"], ["SoulGemGrand", "SoulGemGrandFilled"]]
   },
-  "craft": { "_comment": "STONE-CRAFTING.md 3 (TUNE): one orichalcum ingot plus dust of the stone's tier; only words learned at a wall", "ingot": "IngotOrichalcum", "dust": [1, 2, 3, 4, 5] },
+  "craft": { "_comment": "STONE-CRAFTING.md 3 (TUNE; the owner 23:11): one orichalcum ingot is cut into three Rune Blanks; a stone takes one blank plus dust of its tier; only words learned at a wall. The blank is built at the very end of the plugin so no form ID moves.", "ingot": "IngotOrichalcum", "dust": [1, 2, 3, 4, 5], "blanksPerIngot": 3, "blankName": "Rune Blank", "blankWeight": 0.3 },
   "shoutEdids": {
     "Unrelenting Force": "UnrelentingForceShout",
     "Fire Breath": "FireBreathShout",
