@@ -17,7 +17,6 @@
 #include "SkillList.h"
 #include "Shouting.h"
 #include "CarryWeight.h"
-#include "Enchanting.h"
 #include "Skills.h"
 #include "SoulStones.h"
 
@@ -330,31 +329,19 @@ namespace UI
 		const auto lug = LevelUpGains::GetState();
 		ImGuiMCP::TextDisabled(strings::TR("NJ_LevelUpReadout", "Level ups this session: %u - attribute picks skipped: %u"), lug.levelUps, lug.picksSkipped);
 
-		// D26, D27: Shouting, per save - Auto / On / Off, and what Auto resolves to
+		// D26 (DESIGN-RETHINK.md 14): Shouting On / Off, Off by default; auto-convert dragon souls, off by default - per save
 		{
 			ImGuiMCP::SeparatorText(strings::TR("NJ_ShoutingTitle", "The Voice"));
 			const auto sh = Shouting::GetState();
-			const char* modes[] = { strings::TR("NJ_ShoutingAuto", "Auto"), strings::TR("NJ_ShoutingOn", "On"), strings::TR("NJ_ShoutingOff", "Off") };
-			int mode = sh.mode;
-			if (ImGuiMCP::Combo(strings::TR("NJ_Shouting", "Shouting"), &mode, modes, 3)) { Shouting::RequestSetMode(mode); }
-			HelpMarker(strings::TR("NJ_HelpShouting", "Auto (the default): you can shout while your class holds the magic group - checked again at every evolution, so a class that gains magic gains the Voice. On or Off sets it yourself. While shouting is refused your shout key does nothing - the Shouts your soul stones grant and the ones a quest needs still work - and every dragon soul becomes perk points; it also parks Stormcrown's Dragonborn tree and meditations, which are paid in souls. This choice is kept per save."));
-			if (sh.mode == Shouting::kAuto)
-			{
-				ImGuiMCP::TextDisabled("%s", sh.enabled ? strings::TR("NJ_ShoutingAutoOn", "Auto - on: your class holds magic") : strings::TR("NJ_ShoutingAutoOff", "Auto - off: your class does not hold magic"));
-			}
-			else
-			{
-				ImGuiMCP::TextDisabled("%s", sh.enabled ? strings::TR("NJ_ShoutingNowOn", "You can shout") : strings::TR("NJ_ShoutingNowOff", "Your shout key is refused"));
-			}
+			bool on = sh.enabled;
+			if (ImGuiMCP::Toggle(strings::TR("NJ_Shouting", "Shouting"), &on)) { Shouting::RequestSetEnabled(on); }
+			HelpMarker(strings::TR("NJ_HelpShoutingOnOff", "Off (the default): your shout key does nothing - the Shouts your soul stones grant and the ones a quest needs still work. Stormcrown's Dragonborn tree and meditations stay out of reach while it is off. This choice is kept per save."));
+			bool conv = sh.autoConvert;
+			if (ImGuiMCP::Toggle(strings::TR("NJ_AutoConvertSouls", "Auto-convert dragon souls"), &conv)) { Shouting::RequestSetAutoConvert(conv); }
+			HelpMarker(strings::TR("NJ_HelpAutoConvertSouls", "On: every dragon soul you absorb becomes perk points at once, at Souls to Perks' rate (the soul of Dragon Rising still unlocks your first word). Off (the default): souls stay souls - spend them with Souls to Perks. Kept per save."));
+			if (sh.stpConverts) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_StpConverts", "Souls to Perks converts souls by itself (bAutoConvert in its INI), so this switch waits.")); }
 			ImGuiMCP::TextDisabled(strings::TR("NJ_ShoutingLine", "Dragon souls turned into perk points: %u (%d soul(s) per point)%s"), sh.soulsConverted, sh.soulsPerPoint,
 				sh.reserved ? strings::TR("NJ_ShoutingReserved", " - waiting until The Way of the Voice is done") : "");
-		}
-		// D28: Enchanting, per save
-		{
-			ImGuiMCP::SeparatorText(strings::TR("NJ_EnchantingTitle", "Enchanting"));
-			bool on = Enchanting::IsOn();
-			if (ImGuiMCP::Toggle(strings::TR("NJ_Enchanting", "Enchanting"), &on)) { Enchanting::RequestSet(on); }
-			HelpMarker(strings::TR("NJ_HelpEnchanting", "On (the default): enchanting belongs to the classes that hold magic, and the runesmith makes soul stones. Off: no one enchants - the arcane enchanter refuses everyone, the Enchanting tree is locked and the skill stays where it is - and soul stones drop from the fallen instead. Enchanted gear you find keeps its enchantments. This choice is kept per save."));
 		}
 		// The owner 19:53/19:54: carry weight - one owned modifier (CarryWeight.h)
 		{
@@ -631,7 +618,7 @@ namespace UI
 	}
 
 	// The runesmith's window (D22): his services - Socket, Grind, Craft, Add slot - drawn with the Soul Stones page;
-	// closing it ends the service. His line picks the tab it opens on. Enchanting Off: Add slot only.
+	// closing it ends the service. His line picks the tab it opens on.
 	void __stdcall RunesmithWindow()
 	{
 		strings::Tick();
@@ -640,14 +627,9 @@ namespace UI
 		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), &open, 0))
 		{
 			const char* tabs[] = { strings::TR("NJ_SS_TabSocket", "Socket"), strings::TR("NJ_SS_TabGrind", "Grind"), strings::TR("NJ_SS_TabCraft", "Craft"), strings::TR("NJ_SS_TabAddSlot", "Add slot") };
-			const bool runeMode = !::SoulStones::GetSnapshot().enchantingOn;
-			if (runeMode) { g_runesmithTab = 3; }   // Enchanting Off: he only adds slots
-			bool firstTab = true;
 			for (int t = 0; t < 4; ++t)
 			{
-				if (runeMode && t != 3) { continue; }
-				if (!firstTab) { ImGuiMCP::SameLine(); }
-				firstTab = false;
+				if (t > 0) { ImGuiMCP::SameLine(); }
 				const std::string label = (g_runesmithTab == t ? std::string("[ ") + tabs[t] + " ]" : std::string(tabs[t])) + "##tab" + std::to_string(t);
 				if (ImGuiMCP::Button(label.c_str())) { g_runesmithTab = t; }
 			}
@@ -725,10 +707,8 @@ namespace UI
 			return;
 		}
 		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_Intro", "A soul stone is a word of the dragon tongue. Magic gear has one slot, epic two, legendary and unique three; staves take none. Each stone acts for the item it sits in, and three stones of one Shout in word order add its phrase once you have unlocked all three words."));
-		if (!s.enchantingOn) { ImGuiMCP::TextColored(known, "%s", strings::TR("NJ_SS_RuneMode", "Enchanting is off: set and take out your stones here, anywhere, free. Stones drop from the fallen.")); }
-		else if (s.serviceOpen) { ImGuiMCP::TextColored(known, "%s", strings::TR("NJ_SS_ServiceOpen", "The runesmith is at work: set and take out stones below.")); }
+		if (s.serviceOpen) { ImGuiMCP::TextColored(known, "%s", strings::TR("NJ_SS_ServiceOpen", "The runesmith is at work: set and take out stones below.")); }
 		else { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_ServiceClosedCraft", "Stones are made, set and taken out only by the runesmith. Here you can see what your gear carries.")); }
-		if (s.enchantingOn)
 		{
 			ImGuiMCP::TextDisabled(strings::TR("NJ_SS_FeeLineDust", "Fee: one soul gem dust of the stone's tier for each stone set; taking one out is free. You carry %d / %d / %d / %d / %d dust (petty to grand)."),
 								   s.feeGems[0], s.feeGems[1], s.feeGems[2], s.feeGems[3], s.feeGems[4]);
@@ -804,8 +784,7 @@ namespace UI
 			ImGuiMCP::SeparatorText(title);
 			if (s.stones.empty())
 			{
-				ImGuiMCP::TextDisabled("%s", s.enchantingOn ? strings::TR("NJ_SS_NoStonesCraft", "You carry no soul stones. The runesmith cuts them from orichalcum and soul gem dust, for words you have learned.")
-															: strings::TR("NJ_SS_NoStonesDrop", "You carry no soul stones. With Enchanting off they are found on the fallen."));
+				ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoStonesCraft", "You carry no soul stones. The runesmith cuts them from orichalcum and soul gem dust, for words you have learned."));
 			}
 			for (const auto& v : s.stones)
 			{

@@ -42,6 +42,9 @@ namespace TierBuild
         public string[] ExcludedPlugins { get; set; } = Array.Empty<string>();
         public int ItemsPerLine { get; set; } = 60;
         public bool SetPiecesAreUnique { get; set; } = false;   // sets.json pieces -> unique tier (Q58)
+        // DESIGN-RETHINK.md 14: clothing with no recipe and no material - by EditorID, first match wins; default Common
+        public string ClothingKeyword { get; set; } = "ArmorClothing";
+        public List<ClothingRule> ClothingTiers { get; set; } = new();
     }
     public class Band { public int MaxLevel { get; set; } public string Tier { get; set; } = ""; }
     public class SetDef { public string Name { get; set; } = ""; public string Keyword { get; set; } = ""; public string[] EditorIdPrefixes { get; set; } = Array.Empty<string>(); public string? NameRegex { get; set; } public string Status { get; set; } = ""; }
@@ -283,10 +286,20 @@ namespace TierBuild
             }
             var matTier = matVotes.ToDictionary(x => x.Key, x => x.Value.OrderByDescending(v => v.Value).First().Key);
             R("material fallback table: " + string.Join(", ", matTier.OrderBy(x => matName[x.Key]).Select(x => $"{matName[x.Key]}={x.Value}")));
-            int fbMat = 0, fbNone = 0;
+            int fbMat = 0, fbNone = 0, fbCloth = 0;
+            var clothKw = items.Values.SelectMany(i => i.Keywords).Distinct().FirstOrDefault(k => lc.TryResolve<IKeywordGetter>(k, out var kw) && kw.EditorID == cfg.ClothingKeyword);
+            var clothRules = cfg.ClothingTiers.Select(r => (rx: new Regex(r.Regex, RegexOptions.IgnoreCase), r.Tier)).ToList();
             foreach (var it in items.Values)
             {
                 if (excluded.Contains(it.Key.ModKey) || it.Template != null || TierOf.ContainsKey(it.Key)) continue;
+                if (!clothKw.IsNull && it.Keywords.Contains(clothKw))
+                {
+                    var rule = clothRules.FirstOrDefault(r => r.rx.IsMatch(it.Edid));
+                    var ct = rule.rx != null ? rule.Tier : "Common";
+                    TierOf[it.Key] = ct; reason[it.Key] = $"clothing: {ct}"; fbCloth++;
+                    if (ct == "Unique") uniques.Add(it);
+                    continue;
+                }
                 var m = it.Keywords.Where(matTier.ContainsKey).Select(k => matTier[k]).ToList();
                 if (m.Count > 0) { var t = m.OrderBy(x => Array.IndexOf(cfg.Tiers, x)).Last(); TierOf[it.Key] = t; reason[it.Key] = "material"; fbMat++; }
                 else { TierOf[it.Key] = "Common"; reason[it.Key] = "no recipe, no material"; fbNone++; }
@@ -305,6 +318,7 @@ namespace TierBuild
                 if (t == "Unique") t = "Unique";
                 TierOf[it.Key] = t; reason[it.Key] = $"variant of {root.Edid}"; variants++;
             }
+            R($"clothing fallback {fbCloth}");
             R($"material fallback {fbMat}, no recipe and no material {fbNone}, template variants {variants}, excluded {reason.Count(r => r.Value.StartsWith("excluded"))}");
             foreach (var t in cfg.Tiers) R($"  {t,-10} {TierOf.Count(x => x.Value == t),6}");
 
@@ -435,3 +449,5 @@ namespace TierBuild
         }
     }
 }
+
+public class ClothingRule { public string Regex { get; set; } = ""; public string Tier { get; set; } = "Common"; }

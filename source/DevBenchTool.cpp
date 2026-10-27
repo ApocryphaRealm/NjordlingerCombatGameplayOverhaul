@@ -15,7 +15,6 @@
 #include "Settings.h"
 #include "Shouting.h"
 #include "CarryWeight.h"
-#include "Enchanting.h"
 #include "SoulStones.h"
 #include "UI.h"
 
@@ -125,8 +124,8 @@ namespace DevBenchTool
 			}
 			if (op == "shouting")
 			{
-				if (args.contains("mode")) { Shouting::RequestSetMode(args.value("mode", 0)); }
-				else if (args.contains("enabled")) { Shouting::RequestSetMode(args.value("enabled", false) ? Shouting::kOn : Shouting::kOff); }
+				if (args.contains("enabled")) { Shouting::RequestSetEnabled(args.value("enabled", false)); }
+				if (args.contains("autoConvert")) { Shouting::RequestSetAutoConvert(args.value("autoConvert", false)); }
 				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "shouting", nlohmann::json::parse(Shouting::StatusJson(), nullptr, false) } });
 				return;
 			}
@@ -136,12 +135,6 @@ namespace DevBenchTool
 				if (args.contains("perStamina")) { settings::carry::perStamina = std::clamp(args.value("perStamina", 2.5F), 0.0F, 10.0F); }
 				if (args.contains("enabled")) { settings::carry::enabled = args.value("enabled", true); }
 				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "carry", nlohmann::json::parse(CarryWeight::StatusJson(), nullptr, false) } });
-				return;
-			}
-			if (op == "enchanting")
-			{
-				if (args.contains("on")) { Enchanting::RequestSet(args.value("on", true)); }
-				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "enchanting", nlohmann::json::parse(Enchanting::StatusJson(), nullptr, false) } });
 				return;
 			}
 			if (op == "stonesgrind")

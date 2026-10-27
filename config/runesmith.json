@@ -7,7 +7,8 @@
     "stones. Dialogue is text only (Fuz Ro D-oh shows it as subtitles); the plugin's text is English (as every ESP string of",
     "this mod so far). tools/PluginBuild builds it.",
     "D22 revised (STONE-CRAFTING.md, 2026-10-26): he sells nothing; he grinds soul gems into dust and cuts stones of learned words; the fee is one dust of the stone's tier; taking a stone out is free. The Barter topic became Grind (same record); Craft is built late.",
-    "ENCHANTING-OFF.md 7 (the owner 20:14): 'whileOn' lines are spoken only while Enchanting is On (global NJCGO_RunesmithEnchantingOn, kept by the SKSE plugin); with Enchanting Off he only adds slots and the player sets stones anywhere. AddSlot is built late."
+    "ENCHANTING-OFF.md 7 (the owner 20:14): 'whileOn' lines are spoken only while Enchanting is On (global NJCGO_RunesmithEnchantingOn, kept by the SKSE plugin); with Enchanting Off he only adds slots and the player sets stones anywhere. AddSlot is built late.",
+    "DESIGN-RETHINK.md 14 (the owner 20:56): D28 withdrawn - all five services in every game; the 'whileOn' conditions are gone (the global record stays so no form ID moves)."
   ],
   "npc": {
     "name": "Thorvar Stone-Speaker",
@@ -77,8 +78,7 @@
       "socket": true,
       "say": [
         "Show me what you carry."
-      ],
-      "whileOn": true
+      ]
     },
     {
       "id": "Grind",
@@ -86,8 +86,7 @@
       "stage": ">=100",
       "say": [
         "Hand them over. Filled ones give more."
-      ],
-      "whileOn": true
+      ]
     },
     {
       "id": "Craft",
@@ -96,8 +95,7 @@
       "late": true,
       "say": [
         "Which word? Only one you have read on a wall."
-      ],
-      "whileOn": true
+      ]
     },
     {
       "id": "AddSlot",

@@ -1,0 +1,54 @@
+{
+  "NJ_HelpShoutingOnOff": {
+    "english": "Off (the default): your shout key does nothing - the Shouts your soul stones grant and the ones a quest needs still work. Stormcrown's Dragonborn tree and meditations stay out of reach while it is off. This choice is kept per save.",
+    "french": "Désactivé (par défaut) : votre touche de cri ne fait rien - les cris accordés par vos pierres d'âme et ceux requis par une quête fonctionnent toujours. L'arbre Enfant de dragon et les méditations de Stormcrown restent hors de portée tant que c'est désactivé. Ce choix est conservé par sauvegarde.",
+    "german": "Aus (Standard): Deine Schrei-Taste tut nichts - die Schreie, die deine Seelenrunen gewähren, und die, die eine Quest braucht, funktionieren weiterhin. Stormcrowns Drachenblut-Baum und Meditationen bleiben unerreichbar, solange es aus ist. Diese Wahl wird pro Spielstand gespeichert.",
+    "italian": "Disattivo (predefinito): il tasto urlo non fa nulla - gli urli concessi dalle tue pietre dell'anima e quelli richiesti da una missione funzionano comunque. L'albero Sangue di Drago e le meditazioni di Stormcrown restano fuori portata finché è disattivo. Questa scelta è salvata per partita.",
+    "spanish": "Desactivado (por defecto): tu tecla de grito no hace nada (los gritos que otorgan tus piedras de alma y los que necesita una misión siguen funcionando). El árbol Sangre de Dragón y las meditaciones de Stormcrown quedan fuera de tu alcance mientras esté desactivado. Esta elección se guarda por partida.",
+    "polish": "Wył. (domyślnie): klawisz okrzyku nic nie robi - okrzyki z twoich kamieni duszy i te wymagane przez zadanie nadal działają. Drzewko Smoczego Dziecięcia i medytacje Stormcrown pozostają niedostępne, dopóki jest wyłączone. Ten wybór jest zapisywany osobno dla każdego zapisu gry.",
+    "russian": "Выкл. (по умолчанию): клавиша Крика ничего не делает - Крики от ваших рунных камней и нужные для заданий по-прежнему работают. Древо Довакина и медитации Stormcrown недоступны, пока это выключено. Этот выбор хранится отдельно для каждого сохранения.",
+    "czech": "Vyp. (výchozí): klávesa pokřiku nic nedělá - pokřiky z vašich runových kamenů a ty, které vyžaduje úkol, stále fungují. Strom Dovahkiin a meditace Stormcrown zůstávají mimo dosah, dokud je to vypnuto. Tato volba se ukládá zvlášť pro každou uloženou hru.",
+    "japanese": "オフ(既定): シャウトキーは何もしない - ソウルストーンが与えるシャウトとクエストに必要なシャウトは引き続き使える。オフの間、Stormcrownのドラゴンボーンツリーと瞑想は利用できない。この選択はセーブごとに保存される。",
+    "chinese": "关（默认）：龙吼键无效 - 魂语石赋予的龙吼和任务所需的龙吼仍然可用。关闭期间，Stormcrown 的龙裔技能树和冥想无法使用。此选择按存档保存。",
+    "korean": "끔(기본값): 외침 키가 아무 동작도 하지 않습니다 - 영혼 룬석이 부여하는 외침과 퀘스트에 필요한 외침은 계속 작동합니다. 꺼져 있는 동안 Stormcrown의 드래곤본 트리와 명상은 사용할 수 없습니다. 이 선택은 저장 파일마다 유지됩니다."
+  },
+  "NJ_AutoConvertSouls": {
+    "english": "Auto-convert dragon souls",
+    "french": "Convertir auto. les âmes de dragon",
+    "german": "Drachenseelen autom. umwandeln",
+    "italian": "Converti auto. anime di drago",
+    "spanish": "Convertir auto. almas de dragón",
+    "polish": "Auto-zamiana dusz smoka",
+    "russian": "Автообмен душ драконов",
+    "czech": "Auto. převod dračích duší",
+    "japanese": "ドラゴンソウル自動変換",
+    "chinese": "自动转换龙魂",
+    "korean": "드래곤 영혼 자동 변환"
+  },
+  "NJ_HelpAutoConvertSouls": {
+    "english": "On: every dragon soul you absorb becomes perk points at once, at Souls to Perks' rate (the soul of Dragon Rising still unlocks your first word). Off (the default): souls stay souls - spend them with Souls to Perks. Kept per save.",
+    "french": "Activé : chaque âme de dragon que vous absorbez devient aussitôt des points d'atout, au taux de Souls to Perks (l'âme de Dragon Rising débloque toujours votre premier mot). Désactivé (par défaut) : les âmes restent des âmes - dépensez-les avec Souls to Perks. Conservé par sauvegarde.",
+    "german": "An: Jede Drachenseele, die du absorbierst, wird sofort zu Talentpunkten, zum Kurs von Souls to Perks (die Seele aus Dragon Rising schaltet weiterhin dein erstes Wort frei). Aus (Standard): Seelen bleiben Seelen - gib sie mit Souls to Perks aus. Pro Spielstand gespeichert.",
+    "italian": "Attivo: ogni anima di drago che assorbi diventa subito punti talento, al tasso di Souls to Perks (l'anima di Dragon Rising sblocca comunque la tua prima parola). Disattivo (predefinito): le anime restano anime - spendile con Souls to Perks. Salvato per partita.",
+    "spanish": "Activado: cada alma de dragón que absorbes se convierte al instante en puntos de habilidad, a la tasa de Souls to Perks (el alma de Dragon Rising sigue desbloqueando tu primera palabra). Desactivado (por defecto): las almas siguen siendo almas; gástalas con Souls to Perks. Se guarda por partida.",
+    "polish": "Wł.: każda pochłonięta dusza smoka od razu zamienia się w punkty atutów, według kursu Souls to Perks (dusza z Dragon Rising nadal odblokowuje twoje pierwsze słowo). Wył. (domyślnie): dusze pozostają duszami - wydawaj je przez Souls to Perks. Zapisywane osobno dla każdego zapisu gry.",
+    "russian": "Вкл.: каждая поглощённая душа дракона сразу превращается в очки перков по курсу Souls to Perks (душа из Dragon Rising по-прежнему открывает ваше первое слово). Выкл. (по умолчанию): души остаются душами - тратьте их через Souls to Perks. Хранится отдельно для каждого сохранения.",
+    "czech": "Zap.: každá dračí duše, kterou pohltíte, se hned změní v body schopností, v kurzu Souls to Perks (duše z Dragon Rising stále odemyká vaše první slovo). Vyp. (výchozí): duše zůstávají dušemi - utrácejte je přes Souls to Perks. Ukládá se zvlášť pro každou uloženou hru.",
+    "japanese": "オン: 吸収したドラゴンソウルはすべて、Souls to Perksのレートで即座にパークポイントになる(Dragon Risingの魂は引き続き最初の言葉を解放する)。オフ(既定): 魂は魂のまま - Souls to Perksで使う。セーブごとに保存される。",
+    "chinese": "开：你吸收的每个龙魂都会立即按 Souls to Perks 的比率转化为技能点（Dragon Rising 的龙魂仍会解锁你的第一个龙语）。关（默认）：龙魂保持为龙魂 - 通过 Souls to Perks 使用。按存档保存。",
+    "korean": "켬: 흡수하는 모든 드래곤 영혼이 Souls to Perks의 비율로 즉시 퍽 포인트가 됩니다(Dragon Rising의 영혼은 여전히 첫 번째 단어를 해제합니다). 끔(기본값): 영혼은 영혼으로 남습니다 - Souls to Perks로 사용하십시오. 저장 파일마다 유지됩니다."
+  },
+  "NJ_StpConverts": {
+    "english": "Souls to Perks converts souls by itself (bAutoConvert in its INI), so this switch waits.",
+    "french": "Souls to Perks convertit lui-même les âmes (bAutoConvert dans son INI), donc cet interrupteur attend.",
+    "german": "Souls to Perks wandelt Seelen selbst um (bAutoConvert in seiner INI), daher wartet dieser Schalter.",
+    "italian": "Souls to Perks converte da sé le anime (bAutoConvert nel suo INI), quindi questo interruttore resta in attesa.",
+    "spanish": "Souls to Perks convierte las almas por sí mismo (bAutoConvert en su INI), así que este interruptor espera.",
+    "polish": "Souls to Perks sam zamienia dusze (bAutoConvert w jego INI), więc ten przełącznik czeka.",
+    "russian": "Souls to Perks сам обменивает души (bAutoConvert в его INI), поэтому этот переключатель ждёт.",
+    "czech": "Souls to Perks převádí duše sám (bAutoConvert v jeho INI), proto tento přepínač čeká.",
+    "japanese": "Souls to Perksが自分で魂を変換している(INIのbAutoConvert)ため、このスイッチは待機中。",
+    "chinese": "Souls to Perks 自身会转换龙魂（其 INI 中的 bAutoConvert），因此此开关暂不生效。",
+    "korean": "Souls to Perks가 영혼을 직접 변환하고 있으므로(INI의 bAutoConvert) 이 스위치는 대기 중입니다."
+  }
+}

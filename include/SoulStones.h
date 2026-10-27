@@ -119,8 +119,7 @@ namespace SoulStones
 		std::array<int, 5> craftDust{};       // dust a stone of each tier takes
 		std::uint32_t dustMade = 0, stonesMade = 0;   // this save's tallies
 		bool serviceOpen = false;             // socketing is open (the runesmith, or DevBench's test switch)
-		bool enchantingOn = true;             // D28: On - Thorvar's services; Off - stones set anywhere, free
-		bool canSocket = false;               // the socket buttons show (service open, or Enchanting Off)
+		bool canSocket = false;               // the socket buttons show (the runesmith's service is open)
 		std::vector<SlotOffer> slotOffers;    // items below three slots
 		int addIngots = 0;
 		std::array<int, 3> addGems{};         // lesser / greater / grand gems carried (the add-slot cost)
@@ -153,8 +152,8 @@ namespace SoulStones
 	// The tab the runesmith's line asked the window to open on (0 socket, 1 grind, 2 craft), once; -1 = none.
 	int TakeRequestedTab();
 
-	// D28: while Enchanting is off a kill by the player or a follower rolls for a stone on the corpse; DevBench forces the
-	// next roll (op=stonesdrop).
+	// D29: a dragon (a full set of one of its Shouts) or a named boss at level 30+ (one stone, 25%) killed by the player or a
+	// follower leaves stones on the corpse; DevBench forces the next roll (op=stonesdrop).
 	void ForceNextDrop(bool a_force);
 	// ENCHANTING-OFF.md 7: the runesmith adds one stone slot to an item (both modes; up to three). Safe from any thread.
 	void RequestAddSlot(const std::string& a_itemKey);

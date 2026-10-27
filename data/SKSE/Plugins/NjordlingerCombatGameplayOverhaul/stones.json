@@ -192,25 +192,13 @@
     ]
   },
   "drops": {
-    "bandFrom": [
-      1,
-      10,
-      20,
-      30,
-      40
-    ],
-    "human": 8,
-    "animal": 0,
-    "creature": 12,
-    "boss": 40,
     "dragon": 100,
-    "bossRolls": 2,
     "dragonGrandLevel": 40,
+    "boss": 25,
+    "bossMinLevel": 30,
+    "bossGrandLevel": 40,
     "bossLocRefType": "Skyrim.esm|0x130F7",
-    "atLeastGreater": [
-      "Skyrim.esm|0x131EF",
-      "Skyrim.esm|0x131F1"
-    ]
+    "bossKeywords": []
   },
   "addSlot": {
     "ingot": "Skyrim.esm|0x5AD99",

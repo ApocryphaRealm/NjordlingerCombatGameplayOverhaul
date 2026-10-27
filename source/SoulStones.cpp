@@ -2,7 +2,6 @@
 
 #include "SoulStones.h"
 
-#include "Enchanting.h"
 #include "Settings.h"
 
 #include "utils/Logger.h"
@@ -125,15 +124,16 @@ namespace SoulStones
 			// ENCHANTING-OFF.md 7: the slot-adding service - one ingot and one gem of the list for the item's Nth added slot
 			RE::TESBoundObject* addIngot = nullptr;
 			std::array<std::vector<RE::TESBoundObject*>, 3> addGems;
-			// D28 (ENCHANTING-OFF.md 3): drops from the fallen while Enchanting is off
+			// D29 (DESIGN-RETHINK.md 14): drops from dragons and named bosses only, in every game
 			struct Drops
 			{
-				std::array<int, kTiers> bandFrom{ 1, 10, 20, 30, 40 };   // the victim level each tier starts at
-				int human = 8, animal = 0, creature = 12, boss = 40, dragon = 100;   // percent
-				int bossRolls = 2;
-				int dragonGrandLevel = 40;
-				RE::BGSLocationRefType* bossRef = nullptr;
-				std::vector<RE::TESRace*> atLeastGreater;   // dragon priests, Dwemer centurions
+				int dragon = 100;                // percent: a full set of one Shout on the dragon's list
+				int dragonGrandLevel = 40;       // grand from this level, else greater
+				int boss = 25;                   // percent: one stone (TUNE, Q80)
+				int bossMinLevel = 30;           // the greater-and-above bands
+				int bossGrandLevel = 40;         // grand from this level, else greater
+				RE::BGSLocationRefType* bossRef = nullptr;   // the Boss location ref type (named bosses)
+				std::vector<RE::BGSKeyword*> bossKeywords;   // any of these on the actor or its base also marks a boss
 			} drops;
 		};
 		Table g_t;
@@ -1128,8 +1128,7 @@ namespace SoulStones
 			s.words = g_t.wordNames;
 			s.tiers = g_t.tierNames;
 			s.serviceOpen = g_service.load();
-			s.enchantingOn = Enchanting::IsOn();
-			s.canSocket = s.serviceOpen || !s.enchantingOn;   // ENCHANTING-OFF.md 7: Off - set and take out anywhere, free
+			s.canSocket = s.serviceOpen;   // DESIGN-RETHINK.md 14: stones are set and taken out only at the runesmith
 			s.tableEntries = static_cast<std::uint32_t>(g_entries.size());
 			s.composes = g_composes;
 			s.procsFired = g_procsFired.load();
@@ -1317,15 +1316,14 @@ namespace SoulStones
 		{
 			auto* p = Player();
 			if (!g_t.loaded || !p) { SetResult(Say("NJ_SS_RNotLoaded", "The soul stone table is not loaded - see the log.")); return; }
-			const bool runeMode = !Enchanting::IsOn();   // ENCHANTING-OFF.md 7: Off - anywhere, no fee
-			if (!g_service.load() && !runeMode) { SetResult(Say("NJ_SS_RService", "Stones are set and taken out only at the runesmith.")); BuildSnapshot(); return; }
+			if (!g_service.load()) { SetResult(Say("NJ_SS_RService", "Stones are set and taken out only at the runesmith.")); BuildSnapshot(); return; }
 			RE::TESBoundObject* obj = nullptr;
 			if (!a_unsocket)
 			{
 				if (a_word < 0 || a_word >= static_cast<int>(g_t.words.size()) || a_tier < 0 || a_tier >= kTiers) { SetResult(Say("NJ_SS_RNoSuchStone", "There is no such stone.")); return; }
 				auto* stone = g_t.words[a_word].stones[a_tier];
 				if (!stone || CountOf(stone) <= 0) { SetResult(Say("NJ_SS_RNoStone", "You carry no such stone.")); BuildSnapshot(); return; }
-				if (!runeMode && !HasFee(a_tier)) { SetResult(Say("NJ_SS_RFeeDust", "The fee is one %s soul gem dust, and you carry none.", TierName(a_tier).c_str())); BuildSnapshot(); return; }
+				if (!HasFee(a_tier)) { SetResult(Say("NJ_SS_RFeeDust", "The fee is one %s soul gem dust, and you carry none.", TierName(a_tier).c_str())); BuildSnapshot(); return; }
 				obj = BaseOfKey(a_key);
 				if (!obj || a_slot < 0 || a_slot >= 3) { SetResult(Say("NJ_SS_RNoSlot", "That item has no such slot.")); BuildSnapshot(); return; }
 			}
@@ -1353,7 +1351,7 @@ namespace SoulStones
 			{
 				if (it == g_entries.end()) { it = g_entries.emplace(key, NewEntry(obj, x)).first; }
 				if (it->second.stones[a_slot].word >= 0) { SetResult(Say("NJ_SS_RFull", "That slot holds a stone already - take it out first.")); BuildSnapshot(); return; }
-				if (!runeMode && !PayFee(a_tier, why)) { SetResult(why); BuildSnapshot(); return; }
+				if (!PayFee(a_tier, why)) { SetResult(why); BuildSnapshot(); return; }
 				p->RemoveItem(g_t.words[a_word].stones[a_tier], 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				it->second.stones[a_slot] = { a_word, a_tier };
 				SetResult(Say("NJ_SS_RSet", "%s (%s) set into slot %d of %s.", g_t.words[a_word].name.c_str(), TierName(a_tier).c_str(), a_slot + 1, obj->GetName()));
@@ -1462,7 +1460,7 @@ namespace SoulStones
 		{
 			auto* p = Player();
 			if (!g_t.loaded || !p) { SetResult(Say("NJ_SS_RNotLoaded", "The soul stone table is not loaded - see the log.")); return; }
-			if (!g_service.load() || !Enchanting::IsOn()) { SetResult(Say("NJ_SS_RServiceCraft", "Only the runesmith grinds soul gems and makes stones.")); BuildSnapshot(); return; }
+			if (!g_service.load()) { SetResult(Say("NJ_SS_RServiceCraft", "Only the runesmith grinds soul gems and makes stones.")); BuildSnapshot(); return; }
 			const Table::Grind* row = nullptr;
 			for (const auto& g : g_t.grind) { if (g.gem && g.gem->GetFormID() == a_gem) { row = &g; } }
 			if (!row || !g_t.dust[row->tier]) { SetResult(Say("NJ_SS_RNoGrind", "He will not grind that.")); BuildSnapshot(); return; }
@@ -1494,7 +1492,7 @@ namespace SoulStones
 		{
 			auto* p = Player();
 			if (!g_t.loaded || !p) { SetResult(Say("NJ_SS_RNotLoaded", "The soul stone table is not loaded - see the log.")); return; }
-			if (!g_service.load() || !Enchanting::IsOn()) { SetResult(Say("NJ_SS_RServiceCraft", "Only the runesmith grinds soul gems and makes stones.")); BuildSnapshot(); return; }
+			if (!g_service.load()) { SetResult(Say("NJ_SS_RServiceCraft", "Only the runesmith grinds soul gems and makes stones.")); BuildSnapshot(); return; }
 			if (a_word < 0 || a_word >= static_cast<int>(g_t.words.size()) || a_tier < 0 || a_tier >= kTiers || !g_t.words[a_word].stones[a_tier])
 			{
 				SetResult(Say("NJ_SS_RNoSuchStone", "There is no such stone.")); BuildSnapshot(); return;
@@ -1526,14 +1524,16 @@ namespace SoulStones
 
 		bool IsBoss(RE::Actor* a_a)
 		{
-			if (!g_t.drops.bossRef) { return false; }
 			auto* x = a_a->extraList.GetByType<RE::ExtraLocationRefType>();
-			return x && x->locRefType == g_t.drops.bossRef;
+			if (g_t.drops.bossRef && x && x->locRefType == g_t.drops.bossRef) { return true; }
+			auto* base = a_a->GetActorBase();
+			for (auto* kw : g_t.drops.bossKeywords) { if (kw && (a_a->HasKeyword(kw) || (base && base->HasKeyword(kw)))) { return true; } }
+			return false;
 		}
 
 		void DropFrom(RE::Actor* a_victim)
 		{
-			if (!a_victim || !g_t.loaded || Enchanting::IsOn()) { return; }
+			if (!a_victim || !g_t.loaded) { return; }
 			static thread_local std::mt19937 rng{ std::random_device{}() };
 			const auto& dr = g_t.drops;
 			const int level = a_victim->GetLevel();
@@ -1557,7 +1557,11 @@ namespace SoulStones
 				{
 					for (int p = 0; p < static_cast<int>(g_t.phrases.size()); ++p)
 					{
-						if (fx->shouts[i] && g_t.phrases[p].own == fx->shouts[i] && g_t.phrases[p].available) { mine.push_back(p); }
+						// the player's own Shout, or a dragon's voice Shout spoken with the same first word (DragonVoiceFireBreath: Yol)
+						auto* sh = fx->shouts[i];
+						const auto& ph = g_t.phrases[p];
+						if (!sh || !ph.available) { continue; }
+						if (ph.own == sh || (ph.real[0] && sh->variations[0].word == ph.real[0])) { mine.push_back(p); }
 					}
 				}
 				if (mine.empty()) { logger::info("soul stones: the dragon {} uses no Shout of ours - no set", a_victim->GetName()); return; }
@@ -1565,24 +1569,13 @@ namespace SoulStones
 				for (const int w : g_t.phrases[p].words) { if (w >= 0) { give(w, tier); } }
 				return;
 			}
-			int chance = 0;
-			const bool boss = IsBoss(a_victim);
-			if (boss) { chance = dr.boss; }
-			else if (HasKw(a_victim, "ActorTypeAnimal")) { chance = dr.animal; }
-			else if (HasKw(a_victim, "ActorTypeNPC")) { chance = dr.human; }
-			else if (HasKw(a_victim, "ActorTypeCreature") || HasKw(a_victim, "ActorTypeUndead") || HasKw(a_victim, "ActorTypeDwarven") || HasKw(a_victim, "ActorTypeDaedra")) { chance = dr.creature; }
-			int tier = 0;
-			for (int t = 0; t < kTiers; ++t) { if (level >= dr.bandFrom[t]) { tier = t; } }
-			auto* race = a_victim->GetRace();
-			if (race && std::find(dr.atLeastGreater.begin(), dr.atLeastGreater.end(), race) != dr.atLeastGreater.end()) { tier = std::max(tier, 3); }
-			const int rolls = boss ? dr.bossRolls : 1;
-			for (int r = 0; r < rolls; ++r)
-			{
-				if (!(force && r == 0) && (chance <= 0 || static_cast<int>(rng() % 100) >= chance)) { continue; }
-				std::vector<int> words;
-				for (int w = 0; w < static_cast<int>(g_t.words.size()); ++w) { if (g_t.words[w].stones[tier]) { words.push_back(w); } }
-				if (!words.empty()) { give(words[rng() % words.size()], tier); }
-			}
+			// a named boss in the greater-and-above bands: one stone at the boss chance; everyone else nothing
+			if (!IsBoss(a_victim) || level < dr.bossMinLevel) { return; }
+			if (!force && static_cast<int>(rng() % 100) >= dr.boss) { return; }
+			const int tier = level >= dr.bossGrandLevel ? 4 : 3;
+			std::vector<int> words;
+			for (int w = 0; w < static_cast<int>(g_t.words.size()); ++w) { if (g_t.words[w].stones[tier]) { words.push_back(w); } }
+			if (!words.empty()) { give(words[rng() % words.size()], tier); }
 		}
 
 		// ---- procs --------------------------------------------------------------------------------------------------
@@ -1778,8 +1771,8 @@ namespace SoulStones
 				if (!a_e || !a_e->dead || !p) { return RE::BSEventNotifyControl::kContinue; }
 				auto* killerRef = a_e->actorKiller.get();
 				auto* killer = killerRef ? killerRef->As<RE::Actor>() : nullptr;
-				// D28: while Enchanting is off, a kill by the player or a follower may leave a stone on the corpse
-				if (killer && (killer == p || killer->IsPlayerTeammate()) && !Enchanting::IsOn() && a_e->actorDying)
+				// D29: a dragon or a named boss killed by the player or a follower may leave stones on the corpse
+				if (killer && (killer == p || killer->IsPlayerTeammate()) && a_e->actorDying)
 				{
 					const auto victim = a_e->actorDying->GetHandle();
 					Queue([victim]() {
@@ -1875,11 +1868,10 @@ namespace SoulStones
 						logger::info("soul stones: the runesmith is brought to his place in the inn ({:.0f}, {:.0f}, {:.0f})", g_rs.homePos.x, g_rs.homePos.y, g_rs.homePos.z);
 					});
 				}
-				// ENCHANTING-OFF.md 7: his set / grind / craft lines are spoken only while Enchanting is On
-				if (g_rs.enchantingOn && ticks % 4 == 0)
+				// D28 withdrawn: his set / grind / craft lines read this global; it stays 1 (a save from the D28 build may hold 0)
+				if (g_rs.enchantingOn && ticks % 4 == 0 && g_rs.enchantingOn->value != 1.0F)
 				{
-					const float want = Enchanting::IsOn() ? 1.0F : 0.0F;
-					if (g_rs.enchantingOn->value != want) { Queue([want]() { g_rs.enchantingOn->value = want; logger::info("soul stones: the runesmith's crafting lines {}", want > 0.5F ? "return (Enchanting On)" : "are hidden (Enchanting Off)"); }); }
+					Queue([]() { g_rs.enchantingOn->value = 1.0F; logger::info("soul stones: the runesmith's crafting lines restored (the withdrawn Enchanting Off had hidden them)"); });
 				}
 				if (g_service && g_rs.loaded && ticks % 4 == 0)
 				{
@@ -1966,16 +1958,13 @@ namespace SoulStones
 			{
 				const auto& d = j["drops"];
 				auto& dr = g_t.drops;
-				for (int t = 0; t < kTiers && t < static_cast<int>(d.value("bandFrom", nlohmann::json::array()).size()); ++t) { dr.bandFrom[t] = d["bandFrom"][t].get<int>(); }
-				dr.human = d.value("human", 8);
-				dr.animal = d.value("animal", 0);
-				dr.creature = d.value("creature", 12);
-				dr.boss = d.value("boss", 40);
 				dr.dragon = d.value("dragon", 100);
-				dr.bossRolls = d.value("bossRolls", 2);
 				dr.dragonGrandLevel = d.value("dragonGrandLevel", 40);
+				dr.boss = d.value("boss", 25);
+				dr.bossMinLevel = d.value("bossMinLevel", 30);
+				dr.bossGrandLevel = d.value("bossGrandLevel", 40);
 				dr.bossRef = Form<RE::BGSLocationRefType>(d.value("bossLocRefType", nlohmann::json()), "boss location ref type");
-				for (const auto& r : d.value("atLeastGreater", nlohmann::json::array())) { if (auto* race = Form<RE::TESRace>(r, "at-least-greater race")) { dr.atLeastGreater.push_back(race); } }
+				for (const auto& k : d.value("bossKeywords", nlohmann::json::array())) { if (auto* kw = Form<RE::BGSKeyword>(k, "boss keyword")) { dr.bossKeywords.push_back(kw); } }
 			}
 			for (const auto& g : j.value("grind", nlohmann::json::array()))
 			{
@@ -2377,7 +2366,7 @@ namespace SoulStones
 		for (const auto& o : s.slotOffers) { offers.push_back({ { "key", o.key }, { "name", o.name }, { "slots", o.slots }, { "added", o.added }, { "gemTier", o.gemTier } }); }
 		nlohmann::json gems = nlohmann::json::array();
 		for (const auto& g : s.gems) { gems.push_back({ { "form", fmt::format("0x{:08X}", g.form) }, { "name", g.name }, { "filled", g.filled }, { "empty", g.empty }, { "tier", g.tier }, { "dust", g.dust } }); }
-		return nlohmann::json{ { "loaded", s.loaded }, { "error", s.error }, { "serviceOpen", s.serviceOpen }, { "enchantingOn", s.enchantingOn }, { "canSocket", s.canSocket },
+		return nlohmann::json{ { "loaded", s.loaded }, { "error", s.error }, { "serviceOpen", s.serviceOpen }, { "canSocket", s.canSocket },
 			{ "slotOffers", offers }, { "gemList", gems }, { "addIngots", s.addIngots }, { "addGems", s.addGems }, { "learnedWordList", s.learnedWords }, { "tableEntries", s.tableEntries },
 			{ "composes", s.composes }, { "procsFired", s.procsFired }, { "dustMade", s.dustMade }, { "stonesMade", s.stonesMade }, { "stonesDropped", g_stonesDropped.load() }, { "ingots", s.ingots }, { "gems", s.gems.size() }, { "learnedWords", s.learnedWords.size() }, { "feeGems", s.feeGems }, { "active", s.activePerks }, { "lastResult", s.lastResult },
 			{ "items", items }, { "stones", stones }, { "phrases", phrases }, { "revision", s.revision } }.dump();

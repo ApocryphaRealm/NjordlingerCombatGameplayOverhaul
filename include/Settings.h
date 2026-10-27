@@ -90,7 +90,8 @@ namespace settings
 	// Shouting (PLAN.md D26, D27): a NEW save's Shouting setting (each save keeps its own choice in the co-save).
 	namespace shouting
 	{
-		inline int mode = 0;                               // sShouting:Shouting - Auto (0): on while the class holds magic; On (1); Off (2)
+		inline bool enabledDefault = false;                // bShouting:Shouting - off: the shout key is refused (stone and quest Shouts still work)
+		inline bool autoConvertDefault = false;            // bAutoConvertSouls:Shouting - dragon souls become perk points as they arrive
 	}
 
 	// Carry weight (the owner 2026-10-26 19:53/19:54): one owned modifier - see CarryWeight.h.
@@ -99,12 +100,6 @@ namespace settings
 		inline bool enabled = true;                        // bControlCarryWeight:CarryWeight
 		inline float base = 300.0F;                        // fStartingCarryWeight:CarryWeight - 50 to 1000
 		inline float perStamina = 2.5F;                    // fCarryWeightPerStamina:CarryWeight - 0 to 10, per Adaptive Attributes Stamina point
-	}
-
-	// Enchanting (PLAN.md D28): a NEW save's setting (each save keeps its own in the co-save).
-	namespace enchanting
-	{
-		inline bool onDefault = true;                      // bEnchanting:Enchanting - On: class-gated; Off: nobody enchants, stones drop
 	}
 
 	// Soul Stones (PLAN.md phase 4, D17-D22): the module switch and the display choices.

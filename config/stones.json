@@ -109,12 +109,11 @@
     { "gem": "SoulGemBlackFilled", "tier": 4, "empty": 2, "filled": 4 }
   ],
   "drops": {
-    "_comment": "D28 (ENCHANTING-OFF.md 3, TUNE): only while Enchanting is OFF - a kill by the player or a follower rolls once by the victim's level band (petty from 1, lesser 10, common 20, greater 30, grand 40); percent chances; bosses (the Boss location ref type) roll twice; dragon priests and Dwemer centurions at least greater; a dragon drops the three stones of one Shout on its spell list (grand from level 40, else greater). Runtime, no levelled lists.",
-    "bandFrom": [1, 10, 20, 30, 40],
-    "human": 8, "animal": 0, "creature": 12, "boss": 40, "dragon": 100,
-    "bossRolls": 2, "dragonGrandLevel": 40,
+    "_comment": "D29 (DESIGN-RETHINK.md 14, the owner 20:56, TUNE Q80): in every game, a kill by the player or a follower - a dragon drops the three stones of one Shout on its spell list (grand from level 40, else greater); a named boss (the Boss location ref type, or a keyword below) at level 30+ drops one stone at 25% (grand from 40, else greater). Nobody else drops stones. Runtime, no levelled lists.",
+    "dragon": 100, "dragonGrandLevel": 40,
+    "boss": 25, "bossMinLevel": 30, "bossGrandLevel": 40,
     "bossLocRefType": "Boss",
-    "atLeastGreater": ["DragonPriestRace", "DwarvenCenturionRace", "DLC2DwarvenCenturionRace", "DLC2DragonPriestRace"]
+    "bossKeywords": []
   },
   "addSlot": {
     "_comment": "ENCHANTING-OFF.md 7 (the owner 20:14, TUNE Q77): Thorvar raises an item's stone slots up to three, in both modes; each added slot costs one orichalcum ingot and one soul gem (filled or empty) sized by which added slot it is - lesser for the item's first added slot, greater for the second, grand for the third.",

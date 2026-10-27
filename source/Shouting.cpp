@@ -22,7 +22,7 @@ namespace Shouting
 {
 	namespace
 	{
-		constexpr std::uint32_t kRecordVersion = 2;   // 1 = D26's {enabled}; 2 = D27's {mode}
+		constexpr std::uint32_t kRecordVersion = 3;   // 1 = D26's {enabled}; 2 = D27's {mode}; 3 = {enabled, autoConvert}
 
 		struct Row
 		{
@@ -35,8 +35,9 @@ namespace Shouting
 		std::vector<Row> g_rows;
 
 		std::atomic<bool> g_loaded{ false };
-		std::atomic<int> g_mode{ kAuto };       // this save
-		std::atomic<bool> g_holdsMagic{ true };  // published by the class module
+		std::atomic<bool> g_enabled{ false };   // this save can shout
+		std::atomic<bool> g_autoConvert{ false };   // this save converts souls as they arrive
+		std::atomic<bool> g_stpConverts{ false };   // Souls to Perks' bAutoConvert=1: it is the converter
 		std::atomic<bool> g_haveRecord{ false };
 		std::atomic<std::uint32_t> g_souls{ 0 }, g_points{ 0 }, g_refusals{ 0 };
 		std::atomic<bool> g_reserved{ false };
@@ -47,13 +48,7 @@ namespace Shouting
 
 		RE::PlayerCharacter* Player() { return RE::PlayerCharacter::GetSingleton(); }
 
-		bool Allowed()
-		{
-			const int m = g_mode.load();
-			return m == kOn || (m == kAuto && g_holdsMagic.load());
-		}
-
-		const char* ModeName(int a_mode) { return a_mode == kOn ? "On" : a_mode == kOff ? "Off" : "Auto"; }
+		bool Allowed() { return g_enabled.load(); }
 
 		RE::TESForm* Resolve(const std::string& a_ref)
 		{
@@ -92,37 +87,41 @@ namespace Shouting
 				if (!g_toldThisSession.exchange(true))
 				{
 					notify::Show(strings::TR("NJ_ShoutingSilent", "Your Voice is silent; the words live in your stones."));
-					logger::info("shouting: the shout key refused for {} (Shouting {} for this save)", shout->GetName(), ModeName(g_mode.load()));
+					logger::info("shouting: the shout key refused for {} (Shouting is off for this save)", shout->GetName());
 				}
 				return false;
 			}
 			static inline REL::Relocation<decltype(CanProcess)> _original;
 		};
 
-		int ReadSoulsPerPoint()
+		// Souls to Perks' INI: its rate, and whether it converts by itself.
+		int ReadSoulsPerPoint(bool& a_stpAuto)
 		{
+			a_stpAuto = false;
+			int rate = 1;
 			std::ifstream in(std::filesystem::path("Data/SKSE/Plugins/SoulsToPerks.ini"));
 			std::string line;
 			while (in && std::getline(in, line))
 			{
 				const auto eq = line.find('=');
-				if (eq == std::string::npos) { continue; }
+				if (eq == std::string::npos || line.find(';') < eq) { continue; }
 				std::string key = line.substr(0, eq);
 				key.erase(0, key.find_first_not_of(" \t"));
 				key.erase(key.find_last_not_of(" \t") + 1);
-				if (_stricmp(key.c_str(), "uSoulsPerPoint") == 0)
-				{
-					try { return std::max(1, std::stoi(line.substr(eq + 1))); } catch (...) { return 1; }
-				}
+				std::string v = line.substr(eq + 1);
+				v.erase(0, v.find_first_not_of(" \t"));
+				if (_stricmp(key.c_str(), "uSoulsPerPoint") == 0) { try { rate = std::max(1, std::stoi(v)); } catch (...) {} }
+				if (_stricmp(key.c_str(), "bAutoConvert") == 0) { a_stpAuto = v.rfind("1", 0) == 0 || v.rfind("true", 0) == 0; }
 			}
-			return 1;
+			return rate;
 		}
 
-		// Main thread: while Shouting is off, the player's dragon souls become perk points.
+		// Main thread: with this save's auto-convert on (and Souls to Perks not converting itself), the player's dragon souls
+		// become perk points as they arrive.
 		void Convert()
 		{
 			auto* p = Player();
-			if (!p || Allowed()) { g_reserved = false; return; }
+			if (!p || !g_autoConvert.load() || g_stpConverts.load()) { g_reserved = false; return; }
 			bool reserved = false;
 			for (const auto& r : g_rows)
 			{
@@ -183,24 +182,26 @@ namespace Shouting
 		}
 		catch (const std::exception& e) { g_error = std::string("shouting.json is not valid: ") + e.what(); }
 		if (!g_error.empty()) { logger::warn("shouting: {}", g_error); }
-		g_soulsPerPoint = ReadSoulsPerPoint();
+		bool stpAuto = false;
+		g_soulsPerPoint = ReadSoulsPerPoint(stpAuto);
+		g_stpConverts = stpAuto;
 		REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_ShoutHandler[0] };
 		ShoutHook::_original = vtbl.write_vfunc(0x1, ShoutHook::CanProcess);
 		g_loaded = true;
 		if (!g_running.exchange(true)) { std::thread(Worker).detach(); }
-		logger::info("shouting: the shout key is guarded; {} quest row(s); {} soul(s) per perk point; new saves start with Shouting {}", g_rows.size(), g_soulsPerPoint, ModeName(settings::shouting::mode));
+		logger::info("shouting: the shout key is guarded; {} quest row(s); {} soul(s) per perk point; new saves start with Shouting {} and auto-convert {}; Souls to Perks converts by itself: {}", g_rows.size(), g_soulsPerPoint, settings::shouting::enabledDefault ? "on" : "off", settings::shouting::autoConvertDefault ? "on" : "off", g_stpConverts.load());
 	}
 
 	void OnGameLoaded()
 	{
 		g_toldThisSession = false;
-		if (!g_haveRecord.load()) { g_mode = settings::shouting::mode; }
-		logger::info("shouting: this save - Shouting {} (the class holds magic: {}; resolved {}); {} soul(s) converted so far", ModeName(g_mode.load()), g_holdsMagic.load(), Allowed() ? "on" : "off", g_souls.load());
+		if (!g_haveRecord.load()) { g_enabled = settings::shouting::enabledDefault; g_autoConvert = settings::shouting::autoConvertDefault; }
+		logger::info("shouting: this save - Shouting {}, auto-convert {}; {} soul(s) converted so far (kept)", g_enabled.load() ? "on" : "off", g_autoConvert.load() ? "on" : "off", g_souls.load());
 	}
 
 	void OnSave(SKSE::SerializationInterface* a_intfc)
 	{
-		const std::string text = nlohmann::json{ { "mode", g_mode.load() }, { "souls", g_souls.load() }, { "points", g_points.load() } }.dump();
+		const std::string text = nlohmann::json{ { "enabled", g_enabled.load() }, { "autoConvert", g_autoConvert.load() }, { "souls", g_souls.load() }, { "points", g_points.load() } }.dump();
 		const auto size = static_cast<std::uint32_t>(text.size());
 		if (!a_intfc || !a_intfc->OpenRecord(kRecord, kRecordVersion)) { logger::error("shouting: could not open the co-save record"); return; }
 		a_intfc->WriteRecordData(&size, sizeof(size));
@@ -209,7 +210,7 @@ namespace Shouting
 
 	void ReadRecord(SKSE::SerializationInterface* a_intfc, std::uint32_t a_version, std::uint32_t a_length)
 	{
-		if (!a_intfc || (a_version != 1 && a_version != kRecordVersion) || a_length < sizeof(std::uint32_t)) { return; }
+		if (!a_intfc || a_version < 1 || a_version > kRecordVersion || a_length < sizeof(std::uint32_t)) { return; }
 		std::uint32_t size = 0;
 		if (!a_intfc->ReadRecordData(&size, sizeof(size)) || size != a_length - sizeof(size)) { return; }
 		std::string text(size, '\0');
@@ -217,8 +218,10 @@ namespace Shouting
 		try
 		{
 			const auto j = nlohmann::json::parse(text);
-			if (j.contains("mode")) { g_mode = std::clamp(j.value("mode", 0), 0, 2); }
-			else { g_mode = j.value("enabled", false) ? kOn : kAuto; }   // a D26 save: on stays On, off becomes Auto
+			// v2 (D27): mode 1 = On; Auto (0) and Off (2) read as Off. v1 (D26) converted while Off, so it keeps converting.
+			if (j.contains("mode")) { g_enabled = j.value("mode", 0) == 1; }
+			else { g_enabled = j.value("enabled", false); }
+			g_autoConvert = j.contains("autoConvert") ? j.value("autoConvert", false) : (a_version <= 2 ? !g_enabled.load() && settings::shouting::autoConvertDefault : false);
 			g_souls = j.value("souls", 0u);
 			g_points = j.value("points", 0u);
 			g_haveRecord = true;
@@ -229,8 +232,8 @@ namespace Shouting
 	void OnRevert()
 	{
 		g_haveRecord = false;
-		g_mode = settings::shouting::mode;
-		g_holdsMagic = true;
+		g_enabled = settings::shouting::enabledDefault;
+		g_autoConvert = settings::shouting::autoConvertDefault;
 		g_souls = 0;
 		g_points = 0;
 	}
@@ -240,9 +243,9 @@ namespace Shouting
 		State s;
 		s.loaded = g_loaded.load();
 		s.error = g_error;
-		s.mode = g_mode.load();
-		s.holdsMagic = g_holdsMagic.load();
-		s.enabled = Allowed();
+		s.enabled = g_enabled.load();
+		s.autoConvert = g_autoConvert.load();
+		s.stpConverts = g_stpConverts.load();
 		s.soulsConverted = g_souls.load();
 		s.pointsGiven = g_points.load();
 		s.soulsPerPoint = g_soulsPerPoint;
@@ -252,23 +255,24 @@ namespace Shouting
 		return s;
 	}
 
-	void RequestSetMode(int a_mode)
+	void RequestSetEnabled(bool a_on)
 	{
-		g_mode = std::clamp(a_mode, 0, 2);
+		g_enabled = a_on;
 		g_haveRecord = true;
-		logger::info("shouting: this save - Shouting set to {} (resolved {})", ModeName(g_mode.load()), Allowed() ? "on" : "off");
+		logger::info("shouting: this save - Shouting switched {}", a_on ? "on" : "off");
 	}
 
-	void SetHoldsMagic(bool a_holds)
+	void RequestSetAutoConvert(bool a_on)
 	{
-		const bool was = g_holdsMagic.exchange(a_holds);
-		if (was != a_holds) { logger::info("shouting: the class {} the magic group - Auto resolves {}", a_holds ? "holds" : "does not hold", a_holds ? "on" : "off"); }
+		g_autoConvert = a_on;
+		g_haveRecord = true;
+		logger::info("shouting: this save - auto-convert dragon souls switched {}{}", a_on ? "on" : "off", g_stpConverts.load() ? " (Souls to Perks converts by itself - this one stands aside)" : "");
 	}
 
 	std::string StatusJson()
 	{
 		const auto s = GetState();
-		return nlohmann::json{ { "loaded", s.loaded }, { "error", s.error }, { "mode", ModeName(s.mode) }, { "holdsMagic", s.holdsMagic }, { "enabled", s.enabled }, { "soulsConverted", s.soulsConverted },
+		return nlohmann::json{ { "loaded", s.loaded }, { "error", s.error }, { "enabled", s.enabled }, { "autoConvert", s.autoConvert }, { "stpConverts", s.stpConverts }, { "soulsConverted", s.soulsConverted },
 			{ "pointsGiven", s.pointsGiven }, { "soulsPerPoint", s.soulsPerPoint }, { "reserved", s.reserved }, { "refusals", s.refusals }, { "rows", s.rows } }.dump();
 	}
 }

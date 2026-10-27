@@ -4,8 +4,6 @@
 
 #include "ClassData.h"
 #include "Settings.h"
-#include "Enchanting.h"
-#include "Shouting.h"
 #include "Skills.h"
 
 #include "utils/Logger.h"
@@ -236,24 +234,12 @@ namespace Classes
 				std::scoped_lock l(g_lock);
 				r = g_rec;
 			}
-			Shouting::SetHoldsMagic(HoldsGroupLocked(r, ClassData::kMagic));   // D27: Auto follows the class
 			const auto& table = ClassData::Get();
 			// Skill locks: a locked skill is capped at the value it had when the class was chosen.
-			static const int kEnchantingSkill = ClassData::SkillIndex("Enchanting");
 			for (int i = 0; i < skilllist::kCount; ++i)
 			{
 				const bool held = HoldsLocked(r, i);
-				float cap = held ? -1.0F : r.startSkill[i];
-				// D28: Enchanting Off holds the skill where it stood when Off took hold (the starting value on a new game)
-				if (i == kEnchantingSkill && !Enchanting::IsOn())
-				{
-					auto* pl = RE::PlayerCharacter::GetSingleton();
-					auto* avo = pl ? pl->AsActorValueOwner() : nullptr;
-					const float off = Enchanting::CapWhileOff(avo ? avo->GetBaseActorValue(RE::ActorValue::kEnchanting) : 15.0F);
-					cap = cap < 0.0F ? off : std::min(cap, off);
-				}
-				else if (i == kEnchantingSkill) { Enchanting::CapWhileOff(0.0F); }
-				Skills::SetLockedCap(i, cap);
+				Skills::SetLockedCap(i, held ? -1.0F : r.startSkill[i]);
 			}
 			// Group globals: 1 = the perks of that group's trees may be taken and apply.
 			for (int g = 0; g < ClassData::kGroupCount; ++g)
@@ -264,12 +250,7 @@ namespace Classes
 					glob->value = open ? 1.0F : 0.0F;
 				}
 			}
-			// D28: the Enchanting tree's own gate - the magic group open AND Enchanting on
-			if (auto* eg = Enchanting::TreeGlobal())
-			{
-				const bool magic = !settings::classes::lockPerks || HoldsGroupLocked(r, ClassData::kMagic);
-				eg->value = (magic && Enchanting::IsOn()) ? 1.0F : 0.0F;
-			}
+
 			// Class globals: 1 for every class this character has been (a Crusader is still a Knight for a condition).
 			for (const auto& n : table.classes)
 			{

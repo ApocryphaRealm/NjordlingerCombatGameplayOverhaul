@@ -4,7 +4,6 @@
 
 #include "ClassData.h"
 #include "Classes.h"
-#include "Enchanting.h"
 #include "Settings.h"
 
 #include "utils/Logger.h"
@@ -91,11 +90,6 @@ namespace Lockouts
 			{
 				const int group = ClassData::GroupOfSkill(i);
 				RE::TESGlobal* global = group >= 0 ? table.groupGlobal[group] : nullptr;
-				// D28: the Enchanting tree reads its own gate (magic group open AND Enchanting on), set by Classes::Apply
-				if (_stricmp(skilllist::kIniName[i], "Enchanting") == 0)
-				{
-					if (auto* eg = Enchanting::TreeGlobal()) { global = eg; }
-				}
 				if (!global) { logger::warn("perk lock: {} has no group global - its perks are not locked", skilllist::kDisplayName[i]); continue; }
 				const auto av = static_cast<RE::ActorValue>(i + 6);
 #if RUNTIME_LINE == 17
@@ -222,11 +216,8 @@ namespace Lockouts
 				auto* furniture = base ? base->As<RE::TESFurniture>() : nullptr;
 				if (!furniture) { logger::debug("crafting gate: the crafting menu opened with no furniture in use - left open"); return RE::BSEventNotifyControl::kContinue; }
 				const int group = StationGroup(furniture);
-				// D28: Enchanting Off refuses the arcane enchanter (and disenchanting with it) for every class, whatever the
-				// class settings; otherwise the class gate as before
-				const bool enchantOff = group == ClassData::kMagic && !Enchanting::IsOn();
 				const bool gateOn = settings::classes::enabled && settings::classes::craftingGate;
-				if (!enchantOff && (!gateOn || group < 0 || Classes::HoldsGroup(group)))
+				if (!gateOn || group < 0 || Classes::HoldsGroup(group))
 				{
 					logger::debug("crafting gate: station {:08X} (group {}) - open", furniture->GetFormID(), group);
 					return RE::BSEventNotifyControl::kContinue;
@@ -243,7 +234,7 @@ namespace Lockouts
 				if (auto* queue = RE::UIMessageQueue::GetSingleton()) { queue->AddMessage(RE::CraftingMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr); }
 				static constexpr const char* kKeys[3] = { "NJ_NoticeNoSmithing", "NJ_NoticeNoEnchanting", "NJ_NoticeNoAlchemy" };
 				static constexpr const char* kText[3] = { "Your class does not know the smith's craft.", "Your class does not know the enchanter's craft.", "Your class does not know the alchemist's craft." };
-				const char* notice = enchantOff ? strings::TR("NJ_NoticeEnchantingOff", "No one enchants in this world: Enchanting is off.") : strings::TR(kKeys[group], kText[group]);
+				const char* notice = strings::TR(kKeys[group], kText[group]);
 				notify::Show(notice);
 				logger::info("notice: {}", notice);
 				// Combined run 78d7: with the menu refused the player stayed seated at the forge, hammering, until a move key.

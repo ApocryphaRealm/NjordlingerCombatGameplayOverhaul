@@ -66,5 +66,14 @@
 
   // Q58 (owner default, Fable review 2026-10-26): the pieces of every set in sets.json are unique-tier (red, three slots,
   // cannot be enchanted) - a named set is named uniques.
-  "setPiecesAreUnique": true
+  "setPiecesAreUnique": true,
+
+  // DESIGN-RETHINK.md 14 (the owner 20:56): clothing that no recipe or material tiers - named robes and hoods unique,
+  // fine robes and hoods epic, robes magic, everything else common. First match on the EditorID wins (TUNE).
+  "clothingKeyword": "ArmorClothing",
+  "clothingTiers": [
+    { "regex": "^(?=.*(Robe|Hood))(?=.*(Archmage|Miraak|Psijic))", "tier": "Unique" },
+    { "regex": "^(?!.*NoHood)(?=.*(Fine.*Robe|Robe.*Fine|Hood))", "tier": "Epic" },
+    { "regex": "Robe", "tier": "Magic" }
+  ]
 }

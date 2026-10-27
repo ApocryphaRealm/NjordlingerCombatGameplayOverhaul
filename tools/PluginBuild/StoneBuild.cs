@@ -679,14 +679,14 @@ static class StoneBuild
         var dropsOut = JsonNode.Parse(dropsCfg.ToJsonString())!.AsObject();
         dropsOut.Remove("_comment");
         dropsOut["bossLocRefType"] = Ref(ByEdid<ILocationReferenceTypeGetter>(dropsCfg["bossLocRefType"]!.GetValue<string>()));
-        var greaterOut = new JsonArray();
-        foreach (var r in dropsCfg["atLeastGreater"]!.AsArray())
+        var bossKwOut = new JsonArray();
+        foreach (var k in dropsCfg["bossKeywords"]!.AsArray())
         {
-            var race = TryEdid<IRaceGetter>(r!.GetValue<string>());
-            if (race != null) { greaterOut.Add(Ref(race)); } else { Console.WriteLine($"stones: drops - race {r} is not in the masters (skipped)"); }
+            var kw = TryEdid<IKeywordGetter>(k!.GetValue<string>());
+            if (kw != null) { bossKwOut.Add(Ref(kw)); } else { Console.WriteLine($"stones: drops - keyword {k} is not in the masters (skipped)"); }
         }
-        dropsOut["atLeastGreater"] = greaterOut;
-        Console.WriteLine($"stones: {dustForms.Count} dust items, {grindOut.Count} grindable gems; drops while Enchanting is off: {greaterOut.Count} at-least-greater races");
+        dropsOut["bossKeywords"] = bossKwOut;
+        Console.WriteLine($"stones: {dustForms.Count} dust items, {grindOut.Count} grindable gems; drops from dragons and named bosses (D29)");
         afterLate?.Invoke();
 
         // ---- D26 (SHOUTING-OFF.md 5): the quests that need the Voice while Shouting is off -------------------------------

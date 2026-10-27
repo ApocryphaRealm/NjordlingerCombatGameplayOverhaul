@@ -22,7 +22,6 @@
 #include "Skills.h"
 #include "Shouting.h"
 #include "CarryWeight.h"
-#include "Enchanting.h"
 #include "SoulStones.h"
 #include "UI.h"
 
@@ -69,7 +68,6 @@ namespace
 			SoulStones::OnGameLoaded();
 			Shouting::OnGameLoaded();
 			CarryWeight::OnGameLoaded();
-			Enchanting::OnGameLoaded();
 			break;
 		default:
 			break;
@@ -84,7 +82,6 @@ namespace
 		SoulStones::OnSave(a_intfc);
 		Shouting::OnSave(a_intfc);
 		CarryWeight::OnSave(a_intfc);
-		Enchanting::OnSave(a_intfc);
 	}
 
 	void LoadCallback(SKSE::SerializationInterface* a_intfc)
@@ -100,7 +97,7 @@ namespace
 			case SoulStones::kRecord: SoulStones::ReadRecord(a_intfc, version, length); break;
 			case Shouting::kRecord: Shouting::ReadRecord(a_intfc, version, length); break;
 			case CarryWeight::kRecord: CarryWeight::ReadRecord(a_intfc, version, length); break;
-			case Enchanting::kRecord: Enchanting::ReadRecord(a_intfc, version, length); break;
+			case 'NJEN': logger::info("enchanting: this save carries the withdrawn D28 Enchanting setting - ignored (DESIGN-RETHINK.md 14)"); break;
 			default: logger::warn("co-save: unknown record {:08X} (version {}, {} bytes) skipped", type, version, length); break;
 			}
 		}
@@ -114,7 +111,6 @@ namespace
 		SoulStones::OnRevert();
 		Shouting::OnRevert();
 		CarryWeight::OnRevert();
-		Enchanting::OnRevert();
 	}
 }
 
