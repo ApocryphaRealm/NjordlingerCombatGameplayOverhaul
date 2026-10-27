@@ -241,8 +241,8 @@ namespace Shouting
 		try
 		{
 			const auto j = nlohmann::json::parse(text);
-			// v2 (D27): mode 1 = On; Auto (0) and Off (2) read as Off. v1 (D26) converted while Off, so it keeps converting.
-			if (j.contains("mode")) { g_enabled = j.value("mode", 0) == 1; }
+			// v2 (D27): Off (2) stays Off; On (1) and Auto (0, the old default) read as On - the owner 22:53: the Voice is on by default.
+			if (j.contains("mode")) { g_enabled = j.value("mode", 0) != 2; }
 			else { g_enabled = j.value("enabled", false); }
 			g_autoConvert = j.contains("autoConvert") ? j.value("autoConvert", false) : (a_version <= 2 ? !g_enabled.load() && settings::shouting::autoConvertDefault : false);
 			g_souls = j.value("souls", 0u);

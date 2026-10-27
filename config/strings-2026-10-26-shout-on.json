@@ -1,0 +1,15 @@
+{
+  "NJ_HelpShoutingDefaultOn": {
+    "english": "On (the default): you shout as in the game. Off: your shout key does nothing - the Shouts your soul stones grant and the ones a quest needs still work - and Stormcrown's Dragonborn tree and meditations stay out of reach. This choice is kept per save.",
+    "french": "Activé (par défaut) : vous criez comme dans le jeu. Désactivé : votre touche de cri ne fait rien - les cris accordés par vos pierres d'âme et ceux requis par une quête fonctionnent toujours - et l'arbre Enfant de dragon et les méditations de Stormcrown restent hors de portée. Ce choix est conservé par sauvegarde.",
+    "german": "An (Standard): Du schreist wie im Spiel. Aus: Deine Schrei-Taste tut nichts - die Schreie, die deine Seelenrunen gewähren, und die, die eine Quest braucht, funktionieren weiterhin - und Stormcrowns Drachenblut-Baum und Meditationen bleiben unerreichbar. Diese Wahl wird pro Spielstand gespeichert.",
+    "italian": "Attivo (predefinito): urli come nel gioco. Disattivo: il tasto urlo non fa nulla - gli urli concessi dalle tue pietre dell'anima e quelli richiesti da una missione funzionano comunque - e l'albero Sangue di Drago e le meditazioni di Stormcrown restano fuori portata. Questa scelta è salvata per partita.",
+    "spanish": "Activado (por defecto): gritas como en el juego. Desactivado: tu tecla de grito no hace nada (los gritos que otorgan tus piedras de alma y los que necesita una misión siguen funcionando) y el árbol Sangre de Dragón y las meditaciones de Stormcrown quedan fuera de tu alcance. Esta elección se guarda por partida.",
+    "polish": "Wł. (domyślnie): używasz okrzyków jak w grze. Wył.: klawisz okrzyku nic nie robi - okrzyki z twoich kamieni duszy i te wymagane przez zadanie nadal działają - a drzewko Smoczego Dziecięcia i medytacje Stormcrown pozostają niedostępne. Ten wybór jest zapisywany osobno dla każdego zapisu gry.",
+    "russian": "Вкл. (по умолчанию): вы используете Крики как в игре. Выкл.: клавиша Крика ничего не делает - Крики от ваших рунных камней и нужные для заданий по-прежнему работают, - а Древо Довакина и медитации Stormcrown недоступны. Этот выбор хранится отдельно для каждого сохранения.",
+    "czech": "Zap. (výchozí): používáte pokřiky jako ve hře. Vyp.: klávesa pokřiku nic nedělá - pokřiky z vašich runových kamenů a ty, které vyžaduje úkol, stále fungují - a strom Dovahkiin a meditace Stormcrown zůstávají mimo dosah. Tato volba se ukládá zvlášť pro každou uloženou hru.",
+    "japanese": "オン(既定): ゲーム本来どおりにシャウトできる。オフ: シャウトキーは何もしない - ソウルストーンが与えるシャウトとクエストに必要なシャウトは引き続き使える - そしてStormcrownのドラゴンボーンツリーと瞑想は利用できない。この選択はセーブごとに保存される。",
+    "chinese": "开（默认）：与原版游戏一样使用龙吼。关：龙吼键无效 - 魂语石赋予的龙吼和任务所需的龙吼仍然可用 - 且 Stormcrown 的龙裔技能树和冥想无法使用。此选择按存档保存。",
+    "korean": "켬(기본값): 게임 본래대로 외침을 사용합니다. 끔: 외침 키가 아무 동작도 하지 않습니다 - 영혼 룬석이 부여하는 외침과 퀘스트에 필요한 외침은 계속 작동합니다 - 그리고 Stormcrown의 드래곤본 트리와 명상은 사용할 수 없습니다. 이 선택은 저장 파일마다 유지됩니다."
+  }
+}

@@ -366,7 +366,7 @@ namespace UI
 			const auto sh = Shouting::GetState();
 			bool on = sh.enabled;
 			if (ImGuiMCP::Toggle(strings::TR("NJ_Shouting", "Shouting"), &on)) { Shouting::RequestSetEnabled(on); }
-			HelpMarker(strings::TR("NJ_HelpShoutingOnOff", "Off (the default): your shout key does nothing - the Shouts your soul stones grant and the ones a quest needs still work. Stormcrown's Dragonborn tree and meditations stay out of reach while it is off. This choice is kept per save."));
+			HelpMarker(strings::TR("NJ_HelpShoutingDefaultOn", "On (the default): you shout as in the game. Off: your shout key does nothing - the Shouts your soul stones grant and the ones a quest needs still work - and Stormcrown's Dragonborn tree and meditations stay out of reach. This choice is kept per save."));
 			bool conv = sh.autoConvert;
 			if (ImGuiMCP::Toggle(strings::TR("NJ_AutoConvertSouls", "Auto-convert dragon souls"), &conv)) { Shouting::RequestSetAutoConvert(conv); }
 			HelpMarker(strings::TR("NJ_HelpAutoConvertSouls", "On: every dragon soul you absorb becomes perk points at once, at Souls to Perks' rate (the soul of Dragon Rising still unlocks your first word). Off (the default): souls stay souls - spend them with Souls to Perks. Kept per save."));

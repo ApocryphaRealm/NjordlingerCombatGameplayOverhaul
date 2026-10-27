@@ -48,7 +48,7 @@ DEFAULTS = [
     ("Gear", "bUniqueEffects", "1", "gear::uniques", "named unique items carry an effect of their own"),
     ("Gear", "fSetStrength", "1.00", "gear::setStrength", "0.25 to 2.00 - scales every set bonus from the value in the plugin (1.00 = as written)"),
     ("Gear", "fUniqueStrength", "1.00", "gear::uniqueStrength", "0.25 to 2.00 - scales every unique effect"),
-    ("Shouting", "bShouting", "0", "shouting::enabledDefault", "a NEW save's Shouting: 0 = the shout key is refused (the Shouts your soul stones grant and the ones a quest needs still work); each save keeps its own choice"),
+    ("Shouting", "bShouting", "1", "shouting::enabledDefault", "a NEW save's Shouting: 1 = shout as in the game (the default); 0 = the shout key is refused (the Shouts your soul stones grant and the ones a quest needs still work); each save keeps its own choice"),
     ("Shouting", "bAutoConvertSouls", "0", "shouting::autoConvertDefault", "a NEW save's auto-convert: 1 = dragon souls become perk points as they arrive (Souls to Perks' rate; the first soul of Dragon Rising still unlocks the first word); 0 = spend them yourself with Souls to Perks. Stands aside while Souls to Perks' own bAutoConvert is 1"),
     ("CarryWeight", "bControlCarryWeight", "1", "carry::enabled", "one owned carry-weight modifier: the starting value below, plus the amount per Adaptive Attributes Stamina point (only while Adaptive Attributes' own bEnableCarryWeightFromStaminaBonus is false - one writer)"),
     ("CarryWeight", "fStartingCarryWeight", "300.00", "carry::base", "50 to 1000 - the carry weight a character starts with (vanilla races: 300); level-up gains and effects stack on top"),

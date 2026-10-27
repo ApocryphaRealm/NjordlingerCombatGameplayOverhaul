@@ -127,7 +127,7 @@ namespace settings
 			gear::uniques = true;
 			gear::setStrength = 1.0F;
 			gear::uniqueStrength = 1.0F;
-			shouting::enabledDefault = false;
+			shouting::enabledDefault = true;
 			shouting::autoConvertDefault = false;
 			carry::enabled = true;
 			carry::base = 300.0F;

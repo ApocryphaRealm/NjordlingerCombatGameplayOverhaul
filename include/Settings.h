@@ -90,7 +90,7 @@ namespace settings
 	// Shouting (PLAN.md D26, D27): a NEW save's Shouting setting (each save keeps its own choice in the co-save).
 	namespace shouting
 	{
-		inline bool enabledDefault = false;                // bShouting:Shouting - off: the shout key is refused (stone and quest Shouts still work)
+		inline bool enabledDefault = true;                 // bShouting:Shouting - the owner 22:53: on by default; off refuses the shout key (stone and quest Shouts still work)
 		inline bool autoConvertDefault = false;            // bAutoConvertSouls:Shouting - dragon souls become perk points as they arrive
 	}
 
