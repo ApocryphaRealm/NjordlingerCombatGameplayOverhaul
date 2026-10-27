@@ -189,7 +189,9 @@ namespace UI
 			// rule 68: precise::SliderFloat holds a nudge to one unit of the shown digit and clamps a typed value
 			bool changed = precise::SliderFloat(a_label, a_value, a_min, a_max, a_format);
 			if (ImGuiMCP::IsItemClicked() || ImGuiMCP::IsItemActive()) { g_selectedSlider = a_label; }
-			if (g_selectedSlider == a_label)
+			// combined run 5c7f (2026-10-27): an arrow press moved Tint strength by 2 - the slider's own nudge (ImGui's, held to
+			// one unit by precise::SliderFloat) and this one both ran. This one now runs only when the slider did not move.
+			if (g_selectedSlider == a_label && !changed)
 			{
 				float nudge = 0.0F;
 				if (ImGuiMCP::IsKeyPressed(ImGuiMCP::ImGuiKey_LeftArrow) || ImGuiMCP::IsKeyPressed(ImGuiMCP::ImGuiKey_DownArrow)) { nudge -= a_step; }
@@ -207,7 +209,7 @@ namespace UI
 		{
 			bool changed = precise::SliderInt(a_label, a_value, a_min, a_max, "%d");
 			if (ImGuiMCP::IsItemClicked() || ImGuiMCP::IsItemActive()) { g_selectedSlider = a_label; }
-			if (g_selectedSlider == a_label)
+			if (g_selectedSlider == a_label && !changed)   // 5c7f: not on top of the slider's own nudge (2 per press)
 			{
 				int nudge = 0;
 				if (ImGuiMCP::IsKeyPressed(ImGuiMCP::ImGuiKey_LeftArrow) || ImGuiMCP::IsKeyPressed(ImGuiMCP::ImGuiKey_DownArrow)) { nudge -= 1; }

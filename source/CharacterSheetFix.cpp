@@ -69,6 +69,61 @@ namespace CharacterSheetFix
 		};
 		SetSkillsHandler* g_handler = nullptr;
 
+		// Combined run 5c7f (2026-10-27): the wrap alone never ran. Character Menu SE's DLL fills the sheet from C++
+		// (_root.CharacterSheet_mc.SetSkills, called by its CharacterSheet::SetSkills) while the menu is being shown -
+		// before the MenuOpenCloseEvent this file wraps on. So the sheet is also corrected after the fact: the skill rows
+		// the class does not hold are removed and the rest closed up (45 px apart, as SetSkills lays them out), and the
+		// class line on the CHARACTER page is rewritten. The wrap stays for any later SetSkills call.
+		void Repair(RE::GFxMovieView* a_movie)
+		{
+			const auto snap = Classes::GetSnapshot();
+			if (!a_movie || !snap.enabled || !snap.chosen) { return; }
+			RE::GFxValue sheet;
+			if (!a_movie->GetVariable(&sheet, "_root.CharacterSheet_mc") || !sheet.IsObject()) { return; }
+			std::vector<std::string> hidden;
+			for (int i = 0; i < skilllist::kCount; ++i) { if (!Classes::Holds(i)) { hidden.push_back(SkillName(i)); } }
+			std::uint32_t removed = 0, kept = 0;
+			RE::GFxValue clips;
+			if (sheet.GetMember("aSkillClipsContainer", &clips) && clips.IsArray() && clips.GetArraySize() > 0)
+			{
+				std::vector<RE::GFxValue> keep;
+				for (std::uint32_t i = 0; i < clips.GetArraySize(); ++i)
+				{
+					RE::GFxValue clip, name;
+					if (!clips.GetElement(i, &clip) || !clip.IsDisplayObject()) { continue; }
+					const bool hide = clip.GetMember("name", &name) && name.IsString() &&
+					                  std::find(hidden.begin(), hidden.end(), std::string(name.GetString())) != hidden.end();
+					if (hide) { clip.Invoke("removeMovieClip"); ++removed; } else { keep.push_back(clip); }
+				}
+				if (removed > 0)
+				{
+					clips.ClearElements();
+					for (std::size_t j = 0; j < keep.size(); ++j)
+					{
+						RE::GFxValue::DisplayInfo info;
+						keep[j].GetDisplayInfo(&info);
+						info.SetY(45.0 * static_cast<double>(j));
+						keep[j].SetDisplayInfo(info);
+						keep[j].SetMember("index", RE::GFxValue(static_cast<double>(j)));
+						clips.PushBack(keep[j]);
+					}
+					sheet.SetMember("skillsListHeight", RE::GFxValue(static_cast<double>((keep.size() + 1) * 45 - 5)));
+				}
+				kept = static_cast<std::uint32_t>(keep.size());
+			}
+			RE::GFxValue attr;
+			bool classSet = false;
+			if (a_movie->GetVariable(&attr, "_root.CharacterSheet_mc.InfoHolder.attrClass") && attr.IsDisplayObject())
+			{
+				RE::GFxValue field;
+				if (attr.GetMember("info", &field) && field.IsDisplayObject()) { classSet = field.SetMember("text", RE::GFxValue(snap.className.c_str())); }
+				attr.SetMember("descTitle", RE::GFxValue(snap.className.c_str()));
+				if (const auto* n = ClassData::Find(snap.classId)) { attr.SetMember("description", RE::GFxValue(n->description.c_str())); }
+			}
+			logger::info("character sheet: after the sheet filled itself - {} skill row(s) the class does not hold removed, {} kept; class line {} {}",
+				removed, kept, classSet ? "set to" : "NOT found for", snap.className);
+		}
+
 		void Wrap(RE::GFxMovieView* a_movie)
 		{
 			RE::GFxValue proto;
@@ -98,7 +153,7 @@ namespace CharacterSheetFix
 					tasks->AddUITask([menu]() {
 						auto* ui = RE::UI::GetSingleton();
 						auto m = ui ? ui->GetMenu(menu) : nullptr;
-						if (m && m->uiMovie) { Wrap(m->uiMovie.get()); }
+						if (m && m->uiMovie) { Wrap(m->uiMovie.get()); Repair(m->uiMovie.get()); }
 					});
 				}
 				return RE::BSEventNotifyControl::kContinue;
