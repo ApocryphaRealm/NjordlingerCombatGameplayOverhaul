@@ -88,6 +88,8 @@ namespace SoulStones
 		bool unlocked = false;    // all three words unlocked with dragon souls (the phrase works)
 		int learned = 0;          // words learned at a wall (the blueprint: the page names only phrases with all three)
 		int granted = 0;          // the clone Shout's level granted by worn stones (armour reading, D21), 0 = none
+		std::array<bool, 3> wordLearned{};   // each word learned at a wall (the known-words tab, the owner 22:55)
+		bool available = true;    // false: a soft-linked Shout whose plugin is not loaded
 	};
 
 	struct GemView                // D22 revised: a soul gem kind in the pack, as the runesmith grinds it
@@ -189,5 +191,6 @@ namespace SoulStones
 	const std::vector<std::string>& TierNames();
 	int PhraseOfWord(int a_word);
 	std::string PhraseName(int a_phrase);
-	std::string CellText(int a_word, Host a_host, int a_tier);   // a word's line in a host at a tier, <mag>/<dur> filled (English, from the plugin)
+	std::string CellText(int a_word, Host a_host, int a_tier);
+	std::string PhraseText(int a_phrase, Host a_host);            // the phrase's line in a host (English, from the plugin)   // a word's line in a host at a tier, <mag>/<dur> filled (English, from the plugin)
 }

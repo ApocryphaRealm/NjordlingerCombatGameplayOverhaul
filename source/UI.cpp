@@ -133,6 +133,8 @@ namespace UI
 				"igSetNextWindowPos",
 				"igSetNextWindowSize",
 				"igNewLine",
+				"igIndent",
+				"igUnindent",
 				"igSeparator",
 				"igSameLine",
 				"igSpacing",
@@ -589,7 +591,7 @@ namespace UI
 	// in the icon font, the label beside it in the page's font, so every language keeps its text.
 	namespace fa
 	{
-		inline constexpr unsigned kGem = 0xf3a5, kGrind = 0xf5a7, kHammer = 0xf6e3, kAdd = 0xf067, kSet = 0xf055, kTakeOut = 0xf056, kEmpty = 0xf111, kScroll = 0xf70e;
+		inline constexpr unsigned kGem = 0xf3a5, kGrind = 0xf5a7, kHammer = 0xf6e3, kAdd = 0xf067, kSet = 0xf055, kTakeOut = 0xf056, kEmpty = 0xf111, kScroll = 0xf70e, kBook = 0xf02d;
 	}
 
 	void Icon(unsigned a_cp, const ImGuiMCP::ImVec4* a_colour = nullptr)
@@ -619,6 +621,61 @@ namespace UI
 	{
 		static const ImGuiMCP::ImVec4 c[5] = { { 0.81F, 0.89F, 0.96F, 1.0F }, { 0.31F, 0.55F, 1.0F, 1.0F }, { 0.42F, 0.36F, 1.0F, 1.0F }, { 0.61F, 0.30F, 1.0F, 1.0F }, { 0.42F, 0.12F, 0.72F, 1.0F } };
 		return c[std::clamp(a_tier, 0, 4)];
+	}
+
+	// The owner 22:55: the words you know - every Shout whose three words are learned at walls, its words in slot order,
+	// the phrase line per host and each word's own line from petty to grand; partly learned Shouts greyed with "?" for the
+	// words still missing. The same data as the phrase check (Stormcrown's soft-linked phrases when its plugin is loaded).
+	void KnownWords(const ::SoulStones::Snapshot& a_s)
+	{
+		const ImGuiMCP::ImVec4 known{ 0.45F, 0.85F, 0.45F, 1.0F };
+		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_WordsIntro", "The Shouts whose words you have learned at word walls. Set their three stones in slot order on one item to add the phrase."));
+		const ::SoulStones::Host hosts[3] = { ::SoulStones::Host::kMelee, ::SoulStones::Host::kRanged, ::SoulStones::Host::kArmour };
+		const char* hostKeys[3] = { "NJ_SS_HostMelee", "NJ_SS_HostRanged", "NJ_SS_HostArmour" };
+		const char* hostEn[3] = { "melee weapon", "bow or crossbow", "armour" };
+		int shown = 0;
+		for (int pass = 0; pass < 2; ++pass)   // complete Shouts first, then the partly learned ones
+		{
+			for (std::size_t i = 0; i < a_s.phrases.size(); ++i)
+			{
+				const auto& p = a_s.phrases[i];
+				if (!p.available || p.learned == 0 || (pass == 0) != (p.learned == 3)) { continue; }
+				++shown;
+				std::string order;
+				for (int k = 0; k < 3; ++k)
+				{
+					if (k) { order += " \xC2\xB7 "; }
+					order += p.wordLearned[k] ? a_s.words[p.words[k]] : std::string("?");
+				}
+				const std::string head = p.shout + ": " + order + "##kw" + std::to_string(i);
+				Icon(p.learned == 3 ? fa::kScroll : fa::kBook, p.learned == 3 ? &known : nullptr);
+				if (p.learned == 3) { ImGuiMCP::TextColored(known, "%s", (p.shout + ": " + order).c_str()); }
+				else { ImGuiMCP::TextDisabled("%s", (p.shout + ": " + order).c_str()); }
+				ImGuiMCP::Indent();
+				if (p.learned == 3)
+				{
+					for (int h = 0; h < 3; ++h)
+					{
+						ImGuiMCP::TextWrapped("%s: %s", strings::TR(hostKeys[h], hostEn[h]), ::SoulStones::PhraseText(static_cast<int>(i), hosts[h]).c_str());
+					}
+				}
+				for (int k = 0; k < 3; ++k)
+				{
+					if (!p.wordLearned[k]) { continue; }
+					const int w = p.words[k];
+					ImGuiMCP::TextDisabled("%s", a_s.words[w].c_str());
+					ImGuiMCP::Indent();
+					for (int h = 0; h < 3; ++h)
+					{
+						ImGuiMCP::TextWrapped("%s: %s  ->  %s", strings::TR(hostKeys[h], hostEn[h]), ::SoulStones::CellText(w, hosts[h], 0).c_str(), ::SoulStones::CellText(w, hosts[h], 4).c_str());
+					}
+					ImGuiMCP::Unindent();
+				}
+				ImGuiMCP::Unindent();
+				(void)head;
+			}
+		}
+		if (shown == 0) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoWords", "You have learned no word of power yet.")); }
 	}
 
 	// D22 revised (STONE-CRAFTING.md): the Grind tab - soul gems in, dust out (a filled gem gives two, black two grand).
@@ -699,9 +756,9 @@ namespace UI
 		}
 		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), &open, ImGuiMCP::ImGuiWindowFlags_NoCollapse))
 		{
-			const char* tabs[] = { strings::TR("NJ_SS_TabSocket", "Socket"), strings::TR("NJ_SS_TabGrind", "Grind"), strings::TR("NJ_SS_TabCraft", "Craft"), strings::TR("NJ_SS_TabAddSlot", "Add slot") };
-			const unsigned tabIcons[] = { fa::kGem, fa::kGrind, fa::kHammer, fa::kAdd };
-			for (int t = 0; t < 4; ++t)
+			const char* tabs[] = { strings::TR("NJ_SS_TabSocket", "Socket"), strings::TR("NJ_SS_TabGrind", "Grind"), strings::TR("NJ_SS_TabCraft", "Craft"), strings::TR("NJ_SS_TabAddSlot", "Add slot"), strings::TR("NJ_SS_TabWords", "Words") };
+			const unsigned tabIcons[] = { fa::kGem, fa::kGrind, fa::kHammer, fa::kAdd, fa::kBook };
+			for (int t = 0; t < 5; ++t)
 			{
 				if (t > 0) { ImGuiMCP::SameLine(); }
 				const std::string label = g_runesmithTab == t ? std::string("[ ") + tabs[t] + " ]" : std::string(tabs[t]);
@@ -727,7 +784,8 @@ namespace UI
 				const auto snap = ::SoulStones::GetSnapshot();
 				if (g_runesmithTab == 1) { GrindTab(snap, tierName); }
 				else if (g_runesmithTab == 2) { CraftTab(snap, tierName); }
-				else { AddSlotTab(snap); }
+				else if (g_runesmithTab == 3) { AddSlotTab(snap); }
+				else { KnownWords(snap); }
 				if (!snap.lastResult.empty()) { ImGuiMCP::TextWrapped("%s", snap.lastResult.c_str()); }
 			}
 		}
@@ -924,19 +982,9 @@ namespace UI
 		}
 		if (!s.lastResult.empty()) { ImGuiMCP::TextWrapped("%s", s.lastResult.c_str()); }
 
-		ImGuiMCP::SeparatorText(strings::TR("NJ_SS_PhrasesTitle", "Phrases you know"));
-		int shown = 0;
-		for (std::size_t i = 0; i < s.phrases.size(); ++i)
-		{
-			const auto& p = s.phrases[i];
-			if (p.learned < 3) { continue; }   // the blueprint: a phrase is named only once all three words are learned
-			++shown;
-			const auto name = ::SoulStones::PhraseName(static_cast<int>(i));
-			Icon(fa::kScroll, &known);
-			ImGuiMCP::TextColored(known, strings::TR("NJ_SS_PhraseWorks", "%s (%s) - its words are learned: it works in any item"), name.c_str(), p.shout.c_str());
-			if (p.granted > 0) { ImGuiMCP::TextDisabled(strings::TR("NJ_SS_Granted", "    your armour's stones let you shout it: %d word(s)"), p.granted); }
-		}
-		if (shown == 0) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoPhrases", "You have not learned all three words of any Shout yet.")); }
+		ImGuiMCP::SeparatorText(strings::TR("NJ_SS_WordsTitle", "Words you know"));
+		KnownWords(s);
+		for (const auto& p : s.phrases) { if (p.granted > 0) { ImGuiMCP::TextDisabled(strings::TR("NJ_SS_Granted", "    your armour's stones let you shout it: %d word(s)"), p.granted); } }
 
 		if (g_inRunesmithWindow) { return; }
 		ImGuiMCP::SeparatorText(strings::TR("NJ_SS_SettingsTitle", "Settings"));

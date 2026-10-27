@@ -1265,7 +1265,8 @@ namespace SoulStones
 					pv.shout = ph.shout;
 					pv.words = ph.words;
 					pv.unlocked = PhraseUnlocked(static_cast<int>(i));
-					for (auto* w : ph.real) { pv.learned += Learned(w) ? 1 : 0; }
+					for (int k = 0; k < 3; ++k) { pv.wordLearned[k] = Learned(ph.real[k]); pv.learned += pv.wordLearned[k] ? 1 : 0; }
+					pv.available = ph.available;
 					if (ph.clone && p->HasShout(ph.clone))
 					{
 						for (auto* w : ph.cloneWords) { pv.granted += (w && (w->formFlags & kWordUnlocked)) ? 1 : 0; }
@@ -2431,6 +2432,16 @@ namespace SoulStones
 		const auto& ph = g_t.phrases[a_phrase];
 		return fmt::format("{} {} {}", g_t.words[ph.words[0]].name, g_t.words[ph.words[1]].name, g_t.words[ph.words[2]].name);
 	}
+	std::string PhraseText(int a_phrase, Host a_host)
+	{
+		if (a_phrase < 0 || a_phrase >= static_cast<int>(g_t.phrases.size()) || a_host == Host::kNone) { return {}; }
+		const auto& c = g_t.phrases[a_phrase].hosts[static_cast<int>(a_host)];
+		std::string text = c.text;
+		for (std::size_t at = text.find("<mag>"); at != std::string::npos; at = text.find("<mag>")) { text.replace(at, 5, fmt::format("{:g}", std::round(c.m[0] * 100.0F) / 100.0F)); }
+		for (std::size_t at = text.find("<dur>"); at != std::string::npos; at = text.find("<dur>")) { text.replace(at, 5, fmt::format("{:g}", c.dur[0])); }
+		return text;
+	}
+
 	std::string CellText(int a_word, Host a_host, int a_tier)
 	{
 		if (a_word < 0 || a_word >= static_cast<int>(g_t.words.size()) || a_host == Host::kNone) { return {}; }

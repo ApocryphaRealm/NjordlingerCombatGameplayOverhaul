@@ -1,0 +1,54 @@
+{
+  "NJ_SS_WordsIntro": {
+    "english": "The Shouts whose words you have learned at word walls. Set their three stones in slot order on one item to add the phrase.",
+    "french": "Les cris dont vous avez appris les mots sur les murs de mots. Sertissez leurs trois pierres dans l'ordre des emplacements sur un même objet pour ajouter la phrase.",
+    "german": "Die Schreie, deren Wörter du an Wortwänden gelernt hast. Fasse ihre drei Seelenrunen in der Reihenfolge der Fassungen in ein Stück, um die Phrase hinzuzufügen.",
+    "italian": "Gli urli di cui hai imparato le parole sui muri delle parole. Incastona le loro tre pietre in ordine sullo stesso oggetto per aggiungere la frase.",
+    "spanish": "Los gritos cuyas palabras has aprendido en los muros de palabras. Engasta sus tres piedras en orden en un mismo objeto para añadir la frase.",
+    "polish": "Okrzyki, których słowa poznałeś na ścianach słów. Osadź ich trzy kamienie po kolei w jednym przedmiocie, by dodać frazę.",
+    "russian": "Крики, слова которых вы выучили у Стен Слов. Вставьте их три рунных камня по порядку гнёзд в один предмет, чтобы добавить фразу.",
+    "czech": "Pokřiky, jejichž slova jste se naučili u zdí slov. Osaďte jejich tři runové kameny v pořadí lůžek do jednoho předmětu a přidáte frázi.",
+    "japanese": "言葉の壁で言葉を覚えたシャウト。3つのストーンをスロット順に1つの装備へ付けるとフレーズが加わる。",
+    "chinese": "你已在语墙上学会其龙语的龙吼。把三块魂语石按镶孔顺序镶在同一件物品上即可加入短语。",
+    "korean": "말의 벽에서 단어를 배운 외침입니다. 세 개의 영혼 룬석을 슬롯 순서대로 한 장비에 박으면 구절이 더해집니다."
+  },
+  "NJ_SS_NoWords": {
+    "english": "You have learned no word of power yet.",
+    "french": "Vous n'avez encore appris aucun mot de pouvoir.",
+    "german": "Du hast noch kein Wort der Macht gelernt.",
+    "italian": "Non hai ancora imparato alcuna parola del potere.",
+    "spanish": "Aún no has aprendido ninguna palabra de poder.",
+    "polish": "Nie poznałeś jeszcze żadnego słowa mocy.",
+    "russian": "Вы ещё не выучили ни одного Слова Силы.",
+    "czech": "Zatím jste se nenaučili žádné slovo moci.",
+    "japanese": "まだ力の言葉を覚えていない。",
+    "chinese": "你还没有学会任何力量之语。",
+    "korean": "아직 배운 힘의 단어가 없습니다."
+  },
+  "NJ_SS_TabWords": {
+    "english": "Words",
+    "french": "Mots",
+    "german": "Wörter",
+    "italian": "Parole",
+    "spanish": "Palabras",
+    "polish": "Słowa",
+    "russian": "Слова",
+    "czech": "Slova",
+    "japanese": "言葉",
+    "chinese": "龙语",
+    "korean": "단어"
+  },
+  "NJ_SS_WordsTitle": {
+    "english": "Words you know",
+    "french": "Mots que vous connaissez",
+    "german": "Wörter, die du kennst",
+    "italian": "Parole che conosci",
+    "spanish": "Palabras que conoces",
+    "polish": "Znane słowa",
+    "russian": "Известные вам слова",
+    "czech": "Slova, která znáte",
+    "japanese": "知っている言葉",
+    "chinese": "你掌握的龙语",
+    "korean": "아는 단어"
+  }
+}
