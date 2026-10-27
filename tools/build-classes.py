@@ -47,6 +47,7 @@ DEFAULTS = [
     ("QuestRewards", "bEnableQuestRewards", "1", "questrewards::enabled", "rows: quest-rewards.json; a row you change is kept under [QuestRewardRows] as <EditorID>=<points>"),
     ("Gear", "bSetBonuses", "1", "gear::sets", "unique armour sets: a bonus at two worn pieces and another at four"),
     ("Gear", "bUniqueEffects", "1", "gear::uniques", "named unique items carry an effect of their own"),
+    ("Gear", "fTierRowAlpha", "28.00", "gear::tierRowAlpha", "5 to 100 - how solid the tier bar behind an inventory row is"),
     ("Gear", "bTierRows", "1", "gear::tierRows", "inventory, container and barter rows carry a bar in the item tier's colour (magic blue, epic purple, legendary orange, unique red)"),
     ("Gear", "fSetStrength", "1.00", "gear::setStrength", "0.25 to 2.00 - scales every set bonus from the value in the plugin (1.00 = as written)"),
     ("Gear", "fUniqueStrength", "1.00", "gear::uniqueStrength", "0.25 to 2.00 - scales every unique effect"),

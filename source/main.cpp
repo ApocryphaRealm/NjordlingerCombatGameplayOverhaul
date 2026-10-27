@@ -26,6 +26,7 @@
 #include "EffectFilter.h"
 #include "GuildRoutes.h"
 #include "RowTint.h"
+#include "CharacterSheetFix.h"
 #include "SoulStones.h"
 #include "UI.h"
 
@@ -61,6 +62,7 @@ namespace
 			EffectFilter::Install();
 			GuildRoutes::Install();
 			RowTint::Install();
+			CharacterSheetFix::Install();
 			Shouting::Install();
 			CarryWeight::Install();
 			QuestRewards::Install();

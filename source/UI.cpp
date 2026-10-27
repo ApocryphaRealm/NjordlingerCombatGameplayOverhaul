@@ -596,6 +596,7 @@ namespace UI
 
 		ImGuiMCP::SeparatorText(strings::TR("NJ_TierRowsTitle", "Item tiers in the inventory"));
 		ImGuiMCP::Toggle(strings::TR("NJ_TierRows", "Tint rows by tier"), &gear::tierRows);
+		NudgeableSlider(strings::TR("NJ_TierRowAlpha", "Tint strength"), &gear::tierRowAlpha, 5.0F, 100.0F, "%.0f", 1.0F);
 		HelpMarker(strings::TR("NJ_HelpTierRows", "Rows in the inventory, containers and shops carry a faint bar in the item tier's colour: magic blue, epic purple, legendary orange, unique red. Common items have none. Applies the next time a list is drawn."));
 		ImGuiMCP::SeparatorText(strings::TR("NJ_GearUniquesTitle", "Unique effects"));
 		if (ImGuiMCP::Toggle(strings::TR("NJ_GearUniques", "Unique effects"), &gear::uniques)) { Gear::RequestApply(); }

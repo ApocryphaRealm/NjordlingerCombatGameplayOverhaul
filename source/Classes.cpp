@@ -15,9 +15,11 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <format>
 #include <mutex>
+#include <thread>
 #include <unordered_map>
 
 namespace Classes
@@ -356,10 +358,22 @@ namespace Classes
 				}
 				if (none)
 				{
-					if (auto* tasks = SKSE::GetTaskInterface())
-					{
-						tasks->AddTask([]() { Notify(strings::TR("NJ_NoticeChooseClass", "Choose your starting class: open the Classes tab of Njordlinger Combat Gameplay Overhaul.")); });
-					}
+					// f2d7: the race menu's own class pick is committed by another sink as the menu closes - the prompt waits a
+					// moment and only shows if no class was committed by then
+					std::thread([]() {
+						std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+						if (auto* tasks = SKSE::GetTaskInterface())
+						{
+							tasks->AddTask([]() {
+								bool still = false;
+								{
+									std::scoped_lock l(g_lock);
+									still = g_rec.classId.empty();
+								}
+								if (still) { Notify(strings::TR("NJ_NoticeChooseClass", "Choose your starting class: open the Classes tab of Njordlinger Combat Gameplay Overhaul.")); }
+							});
+						}
+					}).detach();
 				}
 				return RE::BSEventNotifyControl::kContinue;
 			}

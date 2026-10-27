@@ -360,8 +360,9 @@ namespace StatsMenuClass
 			const bool haveRing = movie->GetVariable(&ring, "_root.StatsMenuBaseInstance.AnimatingSkillTextInstance") && ring.IsDisplayObject();
 			std::uint32_t hidden = 0, found = 0, missing = 0;
 			// the 18-entry limit lifted: with the framework's ring installed every slot is walked, by the ring's own order
-			const bool ringOn = !g_ring.empty() && trees.size() == g_ring.size();
-			const std::uint32_t count = ringOn ? static_cast<std::uint32_t>(trees.size()) : std::min<std::uint32_t>(static_cast<std::uint32_t>(trees.size()), static_cast<std::uint32_t>(skilllist::kCount));
+			// f2d7: the framework pads the menu's tree list to 18 entries for a smaller ring - the ring's own size counts
+			const bool ringOn = !g_ring.empty() && trees.size() >= g_ring.size();
+			const std::uint32_t count = ringOn ? static_cast<std::uint32_t>(g_ring.size()) : std::min<std::uint32_t>(static_cast<std::uint32_t>(trees.size()), static_cast<std::uint32_t>(skilllist::kCount));
 			for (std::uint32_t i = 0; haveRing && i < count; ++i)
 			{
 				int skill = static_cast<int>(trees[i]) - static_cast<int>(RE::ActorValue::kOneHanded);
@@ -405,15 +406,16 @@ namespace StatsMenuClass
 				// 02:28 (constellations out of step with the trees in the 20-tree ring): the menu's tree order, slot by slot -
 				// with the ring mod unticked this is the game's own order, which the vanilla sky's pictures follow
 				std::string order;
-				for (std::uint32_t i = 0; i < trees.size(); ++i)
+				for (std::uint32_t i = 0; i < count; ++i)
 				{
 					const int av = static_cast<int>(trees[i]);
 					const int sk = av - static_cast<int>(RE::ActorValue::kOneHanded);
-					order += fmt::format("{}{}={}", i ? " " : "", i, (sk >= 0 && sk < skilllist::kCount) ? skilllist::kIniName[sk] : fmt::format("av{}", av));
+					const std::string name = ringOn && i < g_ring.size() ? g_ring[i].id : ((sk >= 0 && sk < skilllist::kCount) ? std::string(skilllist::kIniName[sk]) : fmt::format("av{}", av));
+					order += fmt::format("{}{}={}", i ? " " : "", i, name);
 				}
 				logger::info("stats menu: tree order {}", order);
 				if (!haveRing) { logger::warn("stats menu: this statsmenu.swf has no AnimatingSkillTextInstance - locked trees are not hidden (rule 30)"); }
-				else { logger::info("stats menu: the ring holds {} trees; {} text clips found, {} missing; {} hidden by the class", trees.size(), found, missing, hidden); }
+				else { logger::info("stats menu: the ring holds {} trees; {} text clips found, {} missing; {} marked locked", count, found, missing, hidden); }
 			}
 			g_treesHidden = hidden;
 		}

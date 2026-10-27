@@ -67,7 +67,7 @@ namespace RowTint
 				h = Num(bg, "_height", h);
 			}
 			if (w <= 1.0 || h <= 1.0) { return; }
-			std::array<RE::GFxValue, 2> fill{ RE::GFxValue(static_cast<double>(colour)), RE::GFxValue(28.0) };
+			std::array<RE::GFxValue, 2> fill{ RE::GFxValue(static_cast<double>(colour)), RE::GFxValue(static_cast<double>(settings::gear::tierRowAlpha)) };
 			bar.Invoke("beginFill", nullptr, fill.data(), fill.size());
 			auto point = [&](const char* a_fn, double a_x, double a_y) {
 				std::array<RE::GFxValue, 2> p{ RE::GFxValue(a_x), RE::GFxValue(a_y) };
