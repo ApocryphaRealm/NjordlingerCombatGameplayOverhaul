@@ -283,6 +283,16 @@ namespace StatsMenuClass
 			if (s_polls == 12 && s_reported != a_session)
 			{
 				s_reported = a_session;
+				// 02:28 (constellations out of step with the trees in the 20-tree ring): the menu's tree order, slot by slot -
+				// with the ring mod unticked this is the game's own order, which the vanilla sky's pictures follow
+				std::string order;
+				for (std::uint32_t i = 0; i < trees.size(); ++i)
+				{
+					const int av = static_cast<int>(trees[i]);
+					const int sk = av - static_cast<int>(RE::ActorValue::kOneHanded);
+					order += fmt::format("{}{}={}", i ? " " : "", i, (sk >= 0 && sk < skilllist::kCount) ? skilllist::kIniName[sk] : fmt::format("av{}", av));
+				}
+				logger::info("stats menu: tree order {}", order);
 				if (!haveRing) { logger::warn("stats menu: this statsmenu.swf has no AnimatingSkillTextInstance - locked trees are not hidden (rule 30)"); }
 				else { logger::info("stats menu: the ring holds {} trees; {} text clips found, {} missing; {} hidden by the class", trees.size(), found, missing, hidden); }
 			}
