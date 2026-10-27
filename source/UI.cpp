@@ -135,6 +135,10 @@ namespace UI
 				"igSetNextWindowSize",
 				"igNewLine",
 				"igSetNextWindowBgAlpha",
+				"igPushStyleVar_Float",
+				"igPushStyleColor_Vec4",
+				"igPopStyleVar",
+				"igPopStyleColor",
 				"igIndent",
 				"igUnindent",
 				"igSeparator",
@@ -844,15 +848,21 @@ namespace UI
 			const bool third = cam && cam->currentState && cam->currentState->id == RE::CameraState::kThirdPerson;
 			ImGuiMCP::SetNextWindowSize(ImGuiMCP::ImVec2(std::clamp(w * (third ? 0.36F : 0.42F), 420.0F, w * 0.6F), h), ImGuiMCP::ImGuiCond_Always);
 		}
+		// the owner 02:07: no frame - a dark panel in Norden UI Black's look (near-black, thin grey rules, dark buttons)
+		ImGuiMCP::PushStyleVar(ImGuiMCP::ImGuiStyleVar_WindowBorderSize, 0.0F);
+		ImGuiMCP::PushStyleVar(ImGuiMCP::ImGuiStyleVar_WindowRounding, 0.0F);
+		ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_WindowBg, ImGuiMCP::ImVec4(0.035F, 0.035F, 0.035F, 0.97F));
+		ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_Border, ImGuiMCP::ImVec4(0.35F, 0.35F, 0.35F, 0.5F));
+		ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_Separator, ImGuiMCP::ImVec4(0.55F, 0.55F, 0.55F, 0.45F));
+		ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_Button, ImGuiMCP::ImVec4(0.10F, 0.10F, 0.10F, 1.0F));
+		ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_ButtonHovered, ImGuiMCP::ImVec4(0.24F, 0.24F, 0.24F, 1.0F));
+		ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_ButtonActive, ImGuiMCP::ImVec4(0.34F, 0.34F, 0.34F, 1.0F));
 		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), nullptr, ImGuiMCP::ImGuiWindowFlags_NoTitleBar | ImGuiMCP::ImGuiWindowFlags_NoResize | ImGuiMCP::ImGuiWindowFlags_NoMove | ImGuiMCP::ImGuiWindowFlags_NoCollapse))
 		{
 			// the owner 01:59: a game menu's back keys close it - Esc and Tab on the keyboard, B on a gamepad - and a Close button
 			// (there is no title bar any more)
 			if (ImGuiMCP::IsKeyPressed(ImGuiMCP::ImGuiKey_Escape, false) || ImGuiMCP::IsKeyPressed(ImGuiMCP::ImGuiKey_Tab, false) || ImGuiMCP::IsKeyPressed(ImGuiMCP::ImGuiKey_GamepadFaceRight, false)) { open = false; }
-			ImGuiMCP::TextColored(ImGuiMCP::ImVec4(0.9F, 0.8F, 0.55F, 1.0F), "%s", strings::TR("NJ_SS_WindowTitle", "The runesmith"));
-			ImGuiMCP::SameLine();
-			const std::string closeLabel = std::string(strings::TR("NJ_SS_Close", "Close")) + "##rsclose";
-			if (ImGuiMCP::SmallButton(closeLabel.c_str())) { open = false; }
+			// (the tab row comes first; Close sits at its end)
 			const char* tabs[] = { strings::TR("NJ_SS_TabSocket", "Socket"), strings::TR("NJ_SS_TabGrind", "Grind"), strings::TR("NJ_SS_TabCraft", "Craft"), strings::TR("NJ_SS_TabAddSlot", "Add slot"), strings::TR("NJ_SS_TabWords", "Words") };
 			const unsigned tabIcons[] = { fa::kGem, fa::kGrind, fa::kHammer, fa::kAdd, fa::kBook };
 			for (int t = 0; t < 5; ++t)
@@ -861,6 +871,9 @@ namespace UI
 				const std::string label = g_runesmithTab == t ? std::string("[ ") + tabs[t] + " ]" : std::string(tabs[t]);
 				if (IconButton(tabIcons[t], label.c_str(), "tab" + std::to_string(t), false)) { g_runesmithTab = t; }
 			}
+			ImGuiMCP::SameLine();
+			const std::string closeLabel = std::string(strings::TR("NJ_SS_Close", "Close")) + "##rsclose";
+			if (ImGuiMCP::Button(closeLabel.c_str())) { open = false; }
 			ImGuiMCP::Separator();
 			auto tierName = [](int a_t) -> const char* {
 				static const char* keys[] = { "NJ_SS_Tier0", "NJ_SS_Tier1", "NJ_SS_Tier2", "NJ_SS_Tier3", "NJ_SS_Tier4" };
@@ -887,6 +900,8 @@ namespace UI
 			}
 		}
 		ImGuiMCP::End();
+		ImGuiMCP::PopStyleColor(6);
+		ImGuiMCP::PopStyleVar(2);
 		if (!open)
 		{
 			if (g_runesmithWindow) { g_runesmithWindow->IsOpen = false; }
