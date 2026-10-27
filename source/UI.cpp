@@ -810,6 +810,55 @@ namespace UI
 		ImGuiMCP::TextDisabled(strings::TR("NJ_SS_Tallies", "Dust ground: %u - stones made: %u"), a_s.dustMade, a_s.stonesMade);
 	}
 
+	// The owner 22:39: an item card in a fixed place - tier colour, stat, its own enchantment, the stone lines, the phrase,
+	// and the slots as icons (filled in the stone's tier colour, empty, added ones marked +). 02:48: on the Socket and the
+	// Add slot tabs, whenever an item is selected.
+	void ItemCard(const ::SoulStones::ItemView* sel)
+	{
+		const ImGuiMCP::ImVec4 known{ 0.45F, 0.85F, 0.45F, 1.0F };
+		const ImGuiMCP::ImVec4 unknown{ 0.95F, 0.75F, 0.35F, 1.0F };
+		if (sel)
+		{
+			static const ImGuiMCP::ImVec4 tierCol[5] = { { 0.85F, 0.85F, 0.85F, 1.0F }, { 0.35F, 0.6F, 1.0F, 1.0F }, { 0.7F, 0.4F, 1.0F, 1.0F }, { 1.0F, 0.65F, 0.2F, 1.0F }, { 0.95F, 0.3F, 0.3F, 1.0F } };
+			const char* tierNames[5] = { "Common", "Magic", "Epic", "Legendary", "Unique" };
+			int ti = 0;
+			for (int t = 0; t < 5; ++t) { if (sel->itemTier == tierNames[t]) { ti = t; } }
+			ImGuiMCP::SeparatorText(strings::TR("NJ_SS_CardTitle", "Item card"));
+			if (ImGuiMCP::BeginChild("njss_card", ImGuiMCP::ImVec2(0.0F, 170.0F), true))
+			{
+				ImGuiMCP::TextColored(tierCol[ti], "%s", sel->name.c_str());
+				if (sel->stat > 0.0F)
+				{
+					ImGuiMCP::TextDisabled(sel->host == ::SoulStones::Host::kArmour ? strings::TR("NJ_SS_CardArmour", "Armour %.0f") : strings::TR("NJ_SS_CardDamage", "Damage %.0f"), sel->stat);
+				}
+				for (int k = 0; k < sel->slots; ++k)
+				{
+					const auto& st = sel->stones[k];
+					if (st.word >= 0) { const auto col = TierColour(st.tier); Icon(fa::kGem, &col); }
+					else { Icon(fa::kEmpty); }
+					if (k >= sel->naturalSlots) { ImGuiMCP::TextDisabled("+"); ImGuiMCP::SameLine(); }
+				}
+				if (sel->slots == 0) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_CardNoSlots", "no stone slots")); }
+				else { ImGuiMCP::NewLine(); }
+				for (const auto& l : sel->enchantLines) { ImGuiMCP::Text("%s", l.c_str()); }
+				for (int k = 0; k < sel->slots; ++k)
+				{
+					const auto& st = sel->stones[k];
+					if (st.word < 0) { continue; }
+					const auto col = TierColour(st.tier);
+					Icon(fa::kGem, &col);
+					ImGuiMCP::TextWrapped("%s", ::SoulStones::CellText(st.word, sel->host, st.tier).c_str());
+				}
+				if (sel->phrase >= 0)
+				{
+					Icon(fa::kScroll, sel->phraseKnown ? &known : &unknown);
+					ImGuiMCP::TextColored(sel->phraseKnown ? known : unknown, "%s", sel->phraseKnown ? ::SoulStones::PhraseName(sel->phrase).c_str() : strings::TR("NJ_SS_PhraseUnknown", "The stones spell a phrase you do not yet know."));
+				}
+			}
+			ImGuiMCP::EndChild();
+		}
+	}
+
 	// ENCHANTING-OFF.md 7: the Add slot tab - items below three slots, the cost of the next slot, Add.
 	void AddSlotTab(const ::SoulStones::Snapshot& a_s)
 	{
@@ -818,6 +867,10 @@ namespace UI
 		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SS_SlotIntro", "Thorvar cuts new stone slots into gear, up to three on any piece. Each new slot costs one orichalcum ingot and one soul gem, filled or empty: lesser for a piece's first added slot, greater for the second, grand for the third. The piece keeps its tier and colour."));
 		ImGuiMCP::TextDisabled(strings::TR("NJ_SS_SlotCarry", "You carry %d orichalcum ingot(s) and %d / %d / %d lesser / greater / grand soul gems."), a_s.addIngots, a_s.addGems[0], a_s.addGems[1], a_s.addGems[2]);
 		if (a_s.slotOffers.empty()) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_NoSlotOffers", "Nothing in your pack can take another slot.")); }
+		static std::string picked;
+		bool found = false;
+		for (const auto& o : a_s.slotOffers) { found |= o.key == picked; }
+		if (!found && !a_s.slotOffers.empty()) { picked = a_s.slotOffers.front().key; }
 		for (const auto& o : a_s.slotOffers)
 		{
 			if (IconButton(fa::kAdd, strings::TR("NJ_SS_AddSlot", "Add"), "as_" + o.key)) { ::SoulStones::RequestAddSlot(o.key); }
@@ -825,9 +878,14 @@ namespace UI
 			const bool can = a_s.addIngots >= 1 && a_s.addGems[o.gemTier] >= 1;
 			char line[256];
 			std::snprintf(line, sizeof(line), strings::TR("NJ_SS_SlotLine", "%s - %d of 3 slots; next: one ingot and one %s soul gem"), o.name.c_str(), o.slots, strings::TR(gemKeys[o.gemTier], gemEn[o.gemTier]));
-			if (can) { ImGuiMCP::Text("%s", line); }
-			else { ImGuiMCP::TextDisabled("%s", line); }
+			const std::string row = std::string(line) + "##pick" + o.key;
+			if (ImGuiMCP::Selectable(row.c_str(), o.key == picked)) { picked = o.key; }
+			(void)can;
 		}
+		// 02:48: the card of the item picked here (the same card as on the Socket tab)
+		const ::SoulStones::ItemView* sel = nullptr;
+		for (const auto& it : a_s.items) { if (it.key == picked) { sel = &it; } }
+		ItemCard(sel);
 	}
 
 	// The runesmith's window (D22): his services - Socket, Grind, Craft, Add slot - drawn with the Soul Stones page;
@@ -843,24 +901,14 @@ namespace UI
 		if (auto* io = ImGuiMCP::GetIO(); io && io->DisplaySize.x > 0.0F && io->DisplaySize.y > 0.0F)
 		{
 			const float w = io->DisplaySize.x, h = io->DisplaySize.y;
-			// the owner 01:59: like the inventory - the whole left side, edge to edge, opaque, no title bar
-			ImGuiMCP::SetNextWindowPos(ImGuiMCP::ImVec2(0.0F, 0.0F), ImGuiMCP::ImGuiCond_Always);
-			ImGuiMCP::SetNextWindowBgAlpha(1.0F);
+			// the owner 02:48: back to the framed window at its earlier place (3% in, 6% down) - the full-height panel is undone
+			ImGuiMCP::SetNextWindowPos(ImGuiMCP::ImVec2(w * 0.03F, h * 0.06F), ImGuiMCP::ImGuiCond_Always);
 			// 74d2: in third person the player stands left of centre behind the window - the window is narrower there
 			auto* cam = RE::PlayerCamera::GetSingleton();
 			const bool third = cam && cam->currentState && cam->currentState->id == RE::CameraState::kThirdPerson;
-			ImGuiMCP::SetNextWindowSize(ImGuiMCP::ImVec2(std::clamp(w * (third ? 0.36F : 0.42F), 420.0F, w * 0.6F), h), ImGuiMCP::ImGuiCond_Always);
+			ImGuiMCP::SetNextWindowSize(ImGuiMCP::ImVec2(std::clamp(w * (third ? 0.36F : 0.46F), 420.0F, w * 0.6F), h * 0.86F), ImGuiMCP::ImGuiCond_Always);
 		}
-		// the owner 02:07: no frame - a dark panel in Norden UI Black's look (near-black, thin grey rules, dark buttons)
-		ImGuiMCP::PushStyleVar(ImGuiMCP::ImGuiStyleVar_WindowBorderSize, 0.0F);
-		ImGuiMCP::PushStyleVar(ImGuiMCP::ImGuiStyleVar_WindowRounding, 0.0F);
-		ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_WindowBg, ImGuiMCP::ImVec4(0.035F, 0.035F, 0.035F, 0.97F));
-		ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_Border, ImGuiMCP::ImVec4(0.35F, 0.35F, 0.35F, 0.5F));
-		ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_Separator, ImGuiMCP::ImVec4(0.55F, 0.55F, 0.55F, 0.45F));
-		ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_Button, ImGuiMCP::ImVec4(0.10F, 0.10F, 0.10F, 1.0F));
-		ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_ButtonHovered, ImGuiMCP::ImVec4(0.24F, 0.24F, 0.24F, 1.0F));
-		ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_ButtonActive, ImGuiMCP::ImVec4(0.34F, 0.34F, 0.34F, 1.0F));
-		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), nullptr, ImGuiMCP::ImGuiWindowFlags_NoTitleBar | ImGuiMCP::ImGuiWindowFlags_NoResize | ImGuiMCP::ImGuiWindowFlags_NoMove | ImGuiMCP::ImGuiWindowFlags_NoCollapse))
+		if (ImGuiMCP::Begin(strings::TR("NJ_SS_WindowTitle", "The runesmith"), nullptr, ImGuiMCP::ImGuiWindowFlags_NoTitleBar | ImGuiMCP::ImGuiWindowFlags_NoCollapse))
 		{
 			// the owner 01:59: a game menu's back keys close it - Esc and Tab on the keyboard, B on a gamepad - and a Close button
 			// (there is no title bar any more)
@@ -903,8 +951,6 @@ namespace UI
 			}
 		}
 		ImGuiMCP::End();
-		ImGuiMCP::PopStyleColor(6);
-		ImGuiMCP::PopStyleVar(2);
 		if (!open)
 		{
 			if (g_runesmithWindow) { g_runesmithWindow->IsOpen = false; }
@@ -1029,48 +1075,8 @@ namespace UI
 		}
 		ImGuiMCP::EndChild();
 
-		// The owner 22:39: an item card in a fixed place - tier colour, stat, its own enchantment, the stone lines, the phrase,
-		// and the slots as icons (filled in the stone's tier colour, empty, added ones marked +)
-		if (sel)
-		{
-			static const ImGuiMCP::ImVec4 tierCol[5] = { { 0.85F, 0.85F, 0.85F, 1.0F }, { 0.35F, 0.6F, 1.0F, 1.0F }, { 0.7F, 0.4F, 1.0F, 1.0F }, { 1.0F, 0.65F, 0.2F, 1.0F }, { 0.95F, 0.3F, 0.3F, 1.0F } };
-			const char* tierNames[5] = { "Common", "Magic", "Epic", "Legendary", "Unique" };
-			int ti = 0;
-			for (int t = 0; t < 5; ++t) { if (sel->itemTier == tierNames[t]) { ti = t; } }
-			ImGuiMCP::SeparatorText(strings::TR("NJ_SS_CardTitle", "Item card"));
-			if (ImGuiMCP::BeginChild("njss_card", ImGuiMCP::ImVec2(0.0F, 170.0F), true))
-			{
-				ImGuiMCP::TextColored(tierCol[ti], "%s", sel->name.c_str());
-				if (sel->stat > 0.0F)
-				{
-					ImGuiMCP::TextDisabled(sel->host == ::SoulStones::Host::kArmour ? strings::TR("NJ_SS_CardArmour", "Armour %.0f") : strings::TR("NJ_SS_CardDamage", "Damage %.0f"), sel->stat);
-				}
-				for (int k = 0; k < sel->slots; ++k)
-				{
-					const auto& st = sel->stones[k];
-					if (st.word >= 0) { const auto col = TierColour(st.tier); Icon(fa::kGem, &col); }
-					else { Icon(fa::kEmpty); }
-					if (k >= sel->naturalSlots) { ImGuiMCP::TextDisabled("+"); ImGuiMCP::SameLine(); }
-				}
-				if (sel->slots == 0) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_CardNoSlots", "no stone slots")); }
-				else { ImGuiMCP::NewLine(); }
-				for (const auto& l : sel->enchantLines) { ImGuiMCP::Text("%s", l.c_str()); }
-				for (int k = 0; k < sel->slots; ++k)
-				{
-					const auto& st = sel->stones[k];
-					if (st.word < 0) { continue; }
-					const auto col = TierColour(st.tier);
-					Icon(fa::kGem, &col);
-					ImGuiMCP::TextWrapped("%s", ::SoulStones::CellText(st.word, sel->host, st.tier).c_str());
-				}
-				if (sel->phrase >= 0)
-				{
-					Icon(fa::kScroll, sel->phraseKnown ? &known : &unknown);
-					ImGuiMCP::TextColored(sel->phraseKnown ? known : unknown, "%s", sel->phraseKnown ? ::SoulStones::PhraseName(sel->phrase).c_str() : strings::TR("NJ_SS_PhraseUnknown", "The stones spell a phrase you do not yet know."));
-				}
-			}
-			ImGuiMCP::EndChild();
-		}
+		// The owner 22:39: the item card (ItemCard, also on the Add slot tab)
+		ItemCard(sel);
 
 		if (sel && s.canSocket && sel->stones[targetSlot].word < 0 && sel->key.find(":plain") == std::string::npos)
 		{
