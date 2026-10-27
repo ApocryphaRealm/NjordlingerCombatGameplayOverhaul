@@ -284,6 +284,8 @@ namespace UI
 		return g_statusCopy.c_str();
 	}
 
+	void HoldVanityCamera(bool a_hold);
+
 	void Register()
 	{
 		if (!SKSEMenuFramework::IsInstalled())
@@ -308,6 +310,7 @@ namespace UI
 		// The opener now checks a moment later that the window really drew, and if not sets it closed and open again.
 		::SoulStones::SetWindowOpener([](bool a_open) {
 			if (!g_runesmithWindow) { return; }
+			HoldVanityCamera(a_open);
 			g_runesmithWindow->IsOpen = a_open;
 			if (!a_open) { return; }
 			const auto asked = ++g_windowAsk;
@@ -587,6 +590,59 @@ namespace UI
 		RenderButtons();
 	}
 
+	// The owner 23:18: no idle vanity camera while the runesmith window is up. The game's own INI value
+	// fAutoVanityModeDelay:Camera is held at a very large delay and given back exactly when the window closes (the player's
+	// value is never written to any file).
+	// 11b9: moving the cursor over the window also turned the camera, so Thorvar left the frame - the game's own "looking"
+	// control is switched off while the window is up and back on when it closes (only if it was on before).
+	void HoldLooking(bool a_hold)
+	{
+		static bool s_heldLook = false;
+		auto* cm = RE::ControlMap::GetSingleton();
+		if (!cm) { return; }
+		if (a_hold && !s_heldLook && cm->IsLookingControlsEnabled())
+		{
+#if RUNTIME_LINE == 17
+			cm->ToggleControls(RE::UserEvents::USER_EVENT_FLAG::kLooking, false, false);
+#else
+			cm->ToggleControls(RE::UserEvents::USER_EVENT_FLAG::kLooking, false);
+#endif
+			s_heldLook = true;
+		}
+		else if (!a_hold && s_heldLook)
+		{
+#if RUNTIME_LINE == 17
+			cm->ToggleControls(RE::UserEvents::USER_EVENT_FLAG::kLooking, true, false);
+#else
+			cm->ToggleControls(RE::UserEvents::USER_EVENT_FLAG::kLooking, true);
+#endif
+			s_heldLook = false;
+		}
+	}
+
+	void HoldVanityCamera(bool a_hold)
+	{
+		HoldLooking(a_hold);
+		static bool s_held = false;
+		static float s_saved = 0.0F;
+		auto* ini = RE::INISettingCollection::GetSingleton();
+		auto* setting = ini ? ini->GetSetting("fAutoVanityModeDelay:Camera") : nullptr;
+		if (!setting) { return; }
+		if (a_hold && !s_held)
+		{
+			s_saved = setting->GetFloat();
+			setting->data.f = 1.0e9F;
+			s_held = true;
+			logger::info("runesmith window: the idle vanity camera is held off (was {:.0f} s)", s_saved);
+		}
+		else if (!a_hold && s_held)
+		{
+			setting->data.f = s_saved;
+			s_held = false;
+			logger::info("runesmith window: the idle vanity camera delay is back to {:.0f} s", s_saved);
+		}
+	}
+
 	// The owner 22:36: Font Awesome icons through AMF's own fonts (icons/fa-solid-900.ttf ships with AMF). An icon is drawn
 	// in the icon font, the label beside it in the page's font, so every language keeps its text.
 	namespace fa
@@ -843,8 +899,11 @@ namespace UI
 		if (s.serviceOpen) { ImGuiMCP::TextColored(known, "%s", strings::TR("NJ_SS_ServiceOpen", "The runesmith is at work: set and take out stones below.")); }
 		else { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SS_ServiceClosedCraft", "Stones are made, set and taken out only by the runesmith. Here you can see what your gear carries.")); }
 		{
-			ImGuiMCP::TextDisabled(strings::TR("NJ_SS_FeeLineDust", "Fee: one soul gem dust of the stone's tier for each stone set; taking one out is free. You carry %d / %d / %d / %d / %d dust (petty to grand)."),
-								   s.feeGems[0], s.feeGems[1], s.feeGems[2], s.feeGems[3], s.feeGems[4]);
+			// 11b9: the line ran past the window's right edge - wrapped
+			char fee[512];
+			std::snprintf(fee, sizeof(fee), strings::TR("NJ_SS_FeeLineDust", "Fee: one soul gem dust of the stone's tier for each stone set; taking one out is free. You carry %d / %d / %d / %d / %d dust (petty to grand)."),
+						  s.feeGems[0], s.feeGems[1], s.feeGems[2], s.feeGems[3], s.feeGems[4]);
+			ImGuiMCP::TextWrapped("%s", fee);
 		}
 
 		ImGuiMCP::SeparatorText(strings::TR("NJ_SS_ItemsTitle", "Your gear with slots"));

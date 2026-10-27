@@ -218,6 +218,8 @@ namespace SoulStones
 		std::atomic<bool> g_checkDistance{ false };
 		std::atomic<bool> g_windowPending{ false };   // the runesmith opened his service: show the window once the dialogue closes
 		std::atomic<int> g_requestedTab{ -1 };        // the tab his line asked for (0 socket, 1 grind, 2 craft)
+		bool g_heldRunesmith = false;                  // his AI is held while the window is open (main thread)
+		void ReleaseRunesmith();
 
 		RE::PlayerCharacter* Player() { return RE::PlayerCharacter::GetSingleton(); }
 
@@ -389,15 +391,17 @@ namespace SoulStones
 		}
 
 		// The preview card's data (the owner 22:39): tier, natural slots, the base's stat, the item's own enchantment.
-		void FillCard(ItemView& a_v, RE::TESBoundObject* a_obj, const Entry* a_e)
+		void FillCard(ItemView& a_v, RE::TESBoundObject* a_obj, const Entry* a_e, RE::InventoryEntryData* a_entry = nullptr)
 		{
 			a_v.naturalSlots = SlotsOf(a_obj);
 			if (auto* kf = a_obj->As<RE::BGSKeywordForm>())
 			{
 				for (const auto& [kw, name] : g_t.itemTierNames) { if (kw && kf->HasKeyword(kw)) { a_v.itemTier = name; } }
 			}
-			if (auto* w = a_obj->As<RE::TESObjectWEAP>()) { a_v.stat = static_cast<float>(w->GetAttackDamage()); }
-			else if (auto* ar = a_obj->As<RE::TESObjectARMO>()) { a_v.stat = static_cast<float>(ar->GetArmorRating()) / 100.0F; }
+			// 11b9: the value the inventory shows (skills, perks, tempering) when the entry is at hand, else the base's
+			auto* pl = Player();
+			if (auto* w = a_obj->As<RE::TESObjectWEAP>()) { a_v.stat = (a_entry && pl) ? pl->GetDamage(a_entry) : static_cast<float>(w->GetAttackDamage()); }
+			else if (auto* ar = a_obj->As<RE::TESObjectARMO>()) { a_v.stat = (a_entry && pl) ? pl->GetArmorValue(a_entry) : static_cast<float>(ar->GetArmorRating()) / 100.0F; }
 			auto line = [&](RE::EffectSetting* a_mg, float a_mag) {
 				if (!a_mg || a_mg->data.flags.any(RE::EffectSetting::EffectSettingData::Flag::kHideInUI)) { return; }
 				a_v.enchantLines.push_back(a_mag > 0.0F ? fmt::format("{} {:g}", a_mg->GetName(), std::round(a_mag * 10.0F) / 10.0F) : std::string(a_mg->GetName()));
@@ -1072,6 +1076,7 @@ namespace SoulStones
 		void CloseService(const char* a_why)
 		{
 			if (!g_service.exchange(false)) { return; }
+			ReleaseRunesmith();
 			logger::info("soul stones: the runesmith's service closes ({})", a_why);
 			if (g_windowOpener) { g_windowOpener(false); }
 		}
@@ -1230,7 +1235,7 @@ namespace SoulStones
 					else { v.key = fmt::format("{:08X}:list:{:X}", e->object->GetFormID(), reinterpret_cast<std::uintptr_t>(x)); }
 					v.phrase = SpelledPhrase(v.stones);
 					v.phraseKnown = v.phrase >= 0 && PhraseUnlocked(v.phrase);
-					FillCard(v, e->object, ent);
+					FillCard(v, e->object, ent, e);
 					s.items.push_back(std::move(v));
 				});
 				for (const auto& [obj, n] : counts)
@@ -1874,6 +1879,14 @@ namespace SoulStones
 		// Menus frames the player. The simplest safe method: no camera state is touched - the player turns to face a point
 		// a little LEFT of Thorvar (about 15 degrees, the right third of a 16:9 view), so the normal camera (first or third
 		// person) shows him on the right; nothing needs restoring when the window closes.
+		void ReleaseRunesmith()
+		{
+			if (!g_heldRunesmith) { return; }
+			g_heldRunesmith = false;
+			auto* ref = g_rs.npcRef ? RE::TESForm::LookupByID<RE::TESObjectREFR>(g_rs.npcRef) : nullptr;
+			if (auto* npc = ref ? ref->As<RE::Actor>() : nullptr) { npc->EnableAI(true); }
+		}
+
 		void FaceRunesmith()
 		{
 			auto* p = Player();
@@ -1881,10 +1894,17 @@ namespace SoulStones
 			if (!p || !ref || ref->GetParentCell() != p->GetParentCell()) { return; }
 			const auto d = ref->GetPosition() - p->GetPosition();
 			if (std::fabs(d.x) + std::fabs(d.y) < 1.0F) { return; }
-			constexpr float kOffset = 0.26F;   // radians, ~15 degrees: he stands right of centre
+			constexpr float kOffset = 0.52F;   // radians, ~30 degrees (11b9: 15 left him in the centre third at 1920x1080)
 			const float bearing = std::atan2(d.x, d.y);   // 0 = north (+y), clockwise
 			p->SetHeading(bearing - kOffset);
-			logger::info("soul stones: the player turns so the runesmith stands right of the window");
+			// 11b9: he wandered out of frame - while the service is open he faces the player and his AI holds still
+			if (auto* npc = ref->As<RE::Actor>(); npc && !g_heldRunesmith)
+			{
+				npc->SetHeading(std::atan2(-d.x, -d.y));
+				npc->EnableAI(false);
+				g_heldRunesmith = true;
+			}
+			logger::info("soul stones: the player turns so the runesmith stands right of the window; he holds still while it is open");
 		}
 
 		class MenuSink : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
@@ -2216,6 +2236,11 @@ namespace SoulStones
 		}
 		Recompute(true);
 		logger::info("soul stones: game loaded - {} socketed instance(s) in the table, {} equipped with stones", g_entries.size(), g_equipped.size());
+		// a save made while his window was open would keep his AI held: give it back at every load
+		if (auto* ref = g_rs.npcRef ? RE::TESForm::LookupByID<RE::TESObjectREFR>(g_rs.npcRef) : nullptr)
+		{
+			if (auto* npc = ref->As<RE::Actor>()) { npc->EnableAI(true); }
+		}
 		if (auto* q = g_rs.quest)
 		{
 			const bool running = q->IsRunning();
@@ -2311,6 +2336,7 @@ namespace SoulStones
 
 	void OnRevert()
 	{
+		g_heldRunesmith = false;   // a new or loaded game: the reference's AI comes from the save
 		g_entries.clear();
 		g_heldRecord.clear();
 		g_dustMade = 0;
@@ -2346,6 +2372,7 @@ namespace SoulStones
 			// efc8: the flag drops now (a caller reading IsServiceOpen right after sees it closed); the window closes on the main thread
 			if (!g_service.exchange(false)) { return; }
 			Queue([]() {
+				ReleaseRunesmith();
 				logger::info("soul stones: the runesmith's service closes (closed)");
 				if (g_windowOpener) { g_windowOpener(false); }
 				BuildSnapshot();

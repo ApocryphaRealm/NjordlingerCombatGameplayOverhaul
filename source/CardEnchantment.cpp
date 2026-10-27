@@ -51,6 +51,8 @@ namespace CardEnchantment
 			if (p[0] == 0x48 && p[1] == 0x89 && (p[2] == 0x5C || p[2] == 0x6C || p[2] == 0x74 || p[2] == 0x7C || p[2] == 0x4C || p[2] == 0x54) && p[3] == 0x24) { return 5; }   // mov [rsp+imm8], r
 			if (p[0] == 0x48 && p[1] == 0x89 && (p[2] == 0x58 || p[2] == 0x68 || p[2] == 0x70 || p[2] == 0x78 || p[2] == 0x48 || p[2] == 0x50)) { return 4; }   // mov [rax+imm8], r
 			if (p[0] == 0x48 && p[1] == 0x8B && p[2] == 0xD9) { return 3; }                      // mov rbx, rcx
+			if (p[0] == 0x48 && p[1] == 0x8B && p[2] == 0x41) { return 4; }                      // mov rax, [rcx+imm8] (11b9: 48 8B 41 08)
+			if (p[0] == 0x48 && p[1] == 0x85 && p[2] == 0xC0) { return 3; }                      // test rax, rax (11b9: 48 85 C0)
 			return 0;
 		}
 	}
