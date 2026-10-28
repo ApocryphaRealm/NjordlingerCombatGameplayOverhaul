@@ -2123,6 +2123,7 @@ namespace SoulStones
 			else if (a_other && (pr.on == Proc::On::kKill || pr.on == Proc::On::kNearDeath)) { targets.push_back(a_other); }   // raise the dead
 			if (targets.empty()) { return; }
 			auto* caster = p->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
+			int refused = 0;   // 31fb: graph events the target's graph would not take
 			for (auto* t : targets)
 			{
 				if (pr.op == "shader" && pr.shader) { t->ApplyEffectShader(pr.shader, pr.shaderDur); }
@@ -2132,6 +2133,7 @@ namespace SoulStones
 				if (!pr.anim.empty())
 				{
 					const bool took = t->NotifyAnimationGraph(pr.anim);
+					refused += took ? 0 : 1;
 					logger::info("soul stones: proc {} sent {} to {} - the graph {} it", a_key, pr.anim, t->GetName(), took ? "took" : "REFUSED");
 				}
 				if (pr.damage > 0.0F) { Damage(t, pr.damage); }
@@ -2148,7 +2150,8 @@ namespace SoulStones
 				}
 			}
 			g_procsFired.fetch_add(1);
-			if (loud) { logger::info("soul stones: proc {} fired on {} target(s){}", a_key, targets.size(), (pr.spell || !pr.anim.empty() || !pr.op.empty()) ? "" : " - NO spell resolved"); }
+			if (loud && refused > 0) { logger::info("soul stones: proc {} REFUSED - the graph would not take {} on {} of {} target(s); nothing happened", a_key, pr.anim, refused, targets.size()); }
+			else if (loud) { logger::info("soul stones: proc {} fired on {} target(s){}", a_key, targets.size(), (pr.spell || !pr.anim.empty() || !pr.op.empty()) ? "" : " - NO spell resolved"); }
 			else { logger::debug("soul stones: proc {} fired on {} target(s)", a_key, targets.size()); }
 		}
 
