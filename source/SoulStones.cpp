@@ -42,8 +42,9 @@ namespace SoulStones
 		// ---- the table read from stones.json (main thread after Install; read-only afterwards) --------------------------
 		struct Proc
 		{
-			enum class On { kHit, kHitBy, kKill, kCooldown, kTick, kNearDeath, kSprint } on = On::kHit;   // kTick: once a second while equipped;
-			// stub batch 2: kNearDeath - anyone but the player's side dies within the radius; kSprint - a sprint begins
+			enum class On { kHit, kHitBy, kKill, kCooldown, kTick, kNearDeath, kDodge } on = On::kHit;   // kTick: once a second while equipped;
+			// stub batch 2: kNearDeath - anyone but the player's side dies within the radius; kDodge - TK Dodge's dodge begins
+			// (the owner 21:43, 2026-10-27: "Make Wuld Nah Kest effect on dodge instead of on sprint")
 			bool power = false, sneak = false, blocked = false, lowHealth = false, storm = false;
 			RE::BGSKeyword* targetKeyword = nullptr;
 			int chance = 0;
@@ -315,7 +316,7 @@ namespace SoulStones
 				c.hasProc = true;
 				const auto on = p.value("on", std::string("hit"));
 				c.proc.on = on == "hitBy" ? Proc::On::kHitBy : on == "kill" ? Proc::On::kKill : on == "cooldown" ? Proc::On::kCooldown : on == "tick" ? Proc::On::kTick :
-				            on == "nearDeath" ? Proc::On::kNearDeath : on == "sprint" ? Proc::On::kSprint : Proc::On::kHit;
+				            on == "nearDeath" ? Proc::On::kNearDeath : on == "dodge" ? Proc::On::kDodge : Proc::On::kHit;
 				c.proc.op = p.value("op", std::string());
 				c.proc.shaderDur = p.value("shaderDur", 3.0F);
 				c.proc.radius = p.value("radius", 1024.0F);
@@ -2075,8 +2076,8 @@ namespace SoulStones
 			}
 			static thread_local std::mt19937 rng{ std::random_device{}() };
 			if (pr.chance > 0 && static_cast<int>(rng() % 100) >= pr.chance) { return; }
-			const bool loud = pr.on == Proc::On::kSprint || pr.on == Proc::On::kNearDeath;
-			if (loud) { logger::info("soul stones: proc {} evaluated ({})", a_key, pr.on == Proc::On::kSprint ? "a sprint began" : "a death nearby"); }
+			const bool loud = pr.on == Proc::On::kDodge || pr.on == Proc::On::kNearDeath;
+			if (loud) { logger::info("soul stones: proc {} evaluated ({})", a_key, pr.on == Proc::On::kDodge ? "a dodge began" : "a death nearby"); }
 			if (pr.cooldown > 0.0F)
 			{
 				const auto it = g_cooldowns.find(a_key);
@@ -2236,6 +2237,41 @@ namespace SoulStones
 			}
 		};
 
+		// The owner 21:43 (2026-10-27): Wuld Nah Kest's armour cell fires on a dodge. TK Dodge AIO's dodge animations carry the
+		// annotation TKDR_DodgeStart (its own plugin charges the dodge's stamina on the same event), so the player's animation
+		// graph is watched for it. Re-attached at every load, since a load builds the graph anew.
+		class DodgeSink : public RE::BSTEventSink<RE::BSAnimationGraphEvent>
+		{
+		public:
+			RE::BSEventNotifyControl ProcessEvent(const RE::BSAnimationGraphEvent* a_e, RE::BSTEventSource<RE::BSAnimationGraphEvent>*) override
+			{
+				if (!a_e || a_e->tag != "TKDR_DodgeStart" || g_equipped.empty()) { return RE::BSEventNotifyControl::kContinue; }
+				Queue([]() {
+					logger::info("soul stones: a dodge began (TKDR_DodgeStart) - {} piece(s) with stones worn", g_equipped.size());
+					Event ev;
+					ev.on = Proc::On::kDodge;
+					HandleEvent(ev);
+				});
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+		DodgeSink g_dodge;
+
+		void AttachDodge()
+		{
+			static bool s_told = false;
+			if (!GetModuleHandleW(L"TK_Dodge_RE.dll"))
+			{
+				if (!s_told) { s_told = true; logger::info("soul stones: TK Dodge is not loaded - the cells that fire on a dodge (Wuld Nah Kest on armour) stay dormant"); }
+				return;
+			}
+			auto* p = Player();
+			if (!p) { return; }
+			p->RemoveAnimationGraphEventSink(&g_dodge);
+			const bool ok = p->AddAnimationGraphEventSink(&g_dodge);
+			logger::info("soul stones: watching the player's animation graph for TK Dodge's dodge ({})", ok ? "attached" : "NOT attached");
+		}
+
 		class EquipSink : public RE::BSTEventSink<RE::TESEquipEvent>
 		{
 		public:
@@ -2353,23 +2389,6 @@ namespace SoulStones
 				std::this_thread::sleep_for(std::chrono::milliseconds(250));
 				static int ticks = 0;
 				++ticks;
-				if (!g_equipped.empty())
-				{
-					Queue([]() {
-						// stub batch 2 (Wuld Nah Kest armour): a sprint beginning, seen within a quarter second
-						static bool was = false;
-						auto* p = Player();
-						const bool now = p && p->AsActorState()->IsSprinting();
-						if (now && !was)
-						{
-							int phrases = 0;
-							for (const auto& eq : g_equipped) { phrases += eq.phrase >= 0 ? 1 : 0; }
-							logger::info("soul stones: a sprint began - {} piece(s) with stones worn, {} with an active phrase", g_equipped.size(), phrases);
-							Event ev; ev.on = Proc::On::kSprint; HandleEvent(ev);
-						}
-						was = now;
-					});
-				}
 				if (ticks % 4 == 0)
 				{
 					Queue([]() {
@@ -2651,6 +2670,7 @@ namespace SoulStones
 			if (w) { logger::info("soul stones: at load, word {:08X} flags {:08X} (learned {}, unlocked {})", w->GetFormID(), w->formFlags, Learned(w), Unlocked(w)); }
 		}
 		Recompute(true);
+		AttachDodge();
 		logger::info("soul stones: game loaded - {} socketed instance(s) in the table, {} equipped with stones", g_entries.size(), g_equipped.size());
 		// a save made while his window was open would keep his AI held: give it back at every load
 		if (auto* ref = g_rs.npcRef ? RE::TESForm::LookupByID<RE::TESObjectREFR>(g_rs.npcRef) : nullptr)

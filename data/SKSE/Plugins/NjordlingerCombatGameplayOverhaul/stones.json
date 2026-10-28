@@ -4885,9 +4885,9 @@
         "armour": {
           "kind": "proc",
           "effect": "0xABB",
-          "text": "Wuld Nah Kest: a short dash when a sprint begins (every 20 s).",
+          "text": "Wuld Nah Kest: a dodge carries on into a short Whirlwind dash (every 20 s).",
           "proc": {
-            "on": "sprint",
+            "on": "dodge",
             "at": "self",
             "cd": 20,
             "shoutForm": "Skyrim.esm|0x2F7BA",

@@ -2156,10 +2156,10 @@
         },
         "armour": {
           "k": "proc",
-          "d": "Wuld Nah Kest: a short dash when a sprint begins (every 20 s).",
-          "approx": "the dash is Whirlwind Sprint's first word, cast when a sprint begins",
+          "d": "Wuld Nah Kest: a dodge carries on into a short Whirlwind dash (every 20 s).",
+          "approx": "the dash is Whirlwind Sprint's first word, cast when TK Dodge's dodge begins (the owner 21:43, 2026-10-27: on dodge, not on sprint); dormant without TK Dodge",
           "proc": {
-            "on": "sprint",
+            "on": "dodge",
             "cast": {
               "shout": "Whirlwind Sprint",
               "level": 1
