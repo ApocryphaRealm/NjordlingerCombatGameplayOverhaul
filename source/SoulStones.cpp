@@ -1223,6 +1223,17 @@ namespace SoulStones
 			for (auto& [obj, x] : reequip) { Reequip(obj, x); }
 			std::vector<std::string> active;
 			ApplyEquipped(active);
+			// fe2e: proc stones are listed too, so a tester sees which cells act
+			for (const auto& eq : g_equipped)
+			{
+				const int h = static_cast<int>(eq.host);
+				for (int i = 0; i < 3; ++i)
+				{
+					const auto& st = eq.stones[i];
+					if (st.word >= 0 && g_t.words[st.word].hosts[h].hasProc) { active.push_back(fmt::format("proc: {} ({})", g_t.words[st.word].name, h == static_cast<int>(Host::kArmour) ? "armour" : "weapon")); }
+				}
+				if (eq.phrase >= 0 && g_t.phrases[eq.phrase].hosts[h].hasProc) { active.push_back(fmt::format("proc: {} phrase ({})", g_t.phrases[eq.phrase].shout, h == static_cast<int>(Host::kArmour) ? "armour" : "weapon")); }
+			}
 			{
 				std::scoped_lock l(g_lock);
 				g_snapshot.activePerks = std::move(active);
@@ -2003,7 +2014,10 @@ namespace SoulStones
 			for (auto& [obj, entry] : a_corpse->GetInventory())
 			{
 				if (!obj || entry.first <= 0 || entry.second->IsWorn() || entry.second->IsQuestObject()) { continue; }
-				if (!obj->Is(RE::FormType::Ingredient) && !obj->Is(RE::FormType::Misc)) { continue; }
+				// fe2e: venison is food (an ALCH), so food counts too - not potions or poisons
+				auto* alch = obj->As<RE::AlchemyItem>();
+				const bool food = alch && alch->IsFood();
+				if (!obj->Is(RE::FormType::Ingredient) && !obj->Is(RE::FormType::Misc) && !food) { continue; }
 				if (obj->IsGold()) { continue; }
 				add.emplace_back(obj, a_extra);
 			}
@@ -2061,11 +2075,17 @@ namespace SoulStones
 			}
 			static thread_local std::mt19937 rng{ std::random_device{}() };
 			if (pr.chance > 0 && static_cast<int>(rng() % 100) >= pr.chance) { return; }
+			const bool loud = pr.on == Proc::On::kSprint || pr.on == Proc::On::kNearDeath;
+			if (loud) { logger::info("soul stones: proc {} evaluated ({})", a_key, pr.on == Proc::On::kSprint ? "a sprint began" : "a death nearby"); }
 			if (pr.cooldown > 0.0F)
 			{
 				const auto it = g_cooldowns.find(a_key);
 				const auto cd = std::chrono::duration<float>(pr.cooldown * CooldownMult());
-				if (it != g_cooldowns.end() && now - it->second < cd) { return; }
+				if (it != g_cooldowns.end() && now - it->second < cd)
+				{
+					if (loud) { logger::info("soul stones: proc {} held by its cooldown", a_key); }
+					return;
+				}
 				g_cooldowns[a_key] = now;
 			}
 			float mag = pr.hasMag ? pr.mag[std::clamp(a_tier, 0, kTiers - 1)] : 0.0F;
@@ -2117,7 +2137,8 @@ namespace SoulStones
 				}
 			}
 			g_procsFired.fetch_add(1);
-			logger::debug("soul stones: proc {} fired on {} target(s)", a_key, targets.size());
+			if (loud) { logger::info("soul stones: proc {} fired on {} target(s){}", a_key, targets.size(), pr.spell ? "" : " - NO spell resolved"); }
+			else { logger::debug("soul stones: proc {} fired on {} target(s)", a_key, targets.size()); }
 		}
 
 		void HandleEvent(const Event& a_ev)
@@ -2339,7 +2360,13 @@ namespace SoulStones
 						static bool was = false;
 						auto* p = Player();
 						const bool now = p && p->AsActorState()->IsSprinting();
-						if (now && !was) { Event ev; ev.on = Proc::On::kSprint; HandleEvent(ev); }
+						if (now && !was)
+						{
+							int phrases = 0;
+							for (const auto& eq : g_equipped) { phrases += eq.phrase >= 0 ? 1 : 0; }
+							logger::info("soul stones: a sprint began - {} piece(s) with stones worn, {} with an active phrase", g_equipped.size(), phrases);
+							Event ev; ev.on = Proc::On::kSprint; HandleEvent(ev);
+						}
 						was = now;
 					});
 				}
