@@ -644,7 +644,7 @@
     "NJCGO_StoneFx_Ah_armour: an animal you kill carries one more (two at the top tiers) of each pelt, hide, meat and other ingredient on it",
     "NJCGO_StoneFx_Wuld_armour: movement speed while sprinting stands in for sprint speed",
     "NJCGO_StoneFx_Kest_armour: faster stamina regeneration while sprinting stands in for \u0027stamina on sprint\u0027",
-    "NJCGO_StoneFx_WuldNahKest_armour: the dash is Whirlwind Sprint\u0027s first word, cast when TK Dodge\u0027s dodge begins (the owner 21:43, 2026-10-27: on dodge, not on sprint); dormant without TK Dodge",
+    "NJCGO_StoneFx_WuldNahKest_armour: the dash is Whirlwind Sprint\u0027s short dash (the behaviour graph\u0027s ShoutSprintShortStart), sent when TK Dodge\u0027s dodge begins (the owner 21:43, 2026-10-27: on dodge, not on sprint); dormant without TK Dodge",
     "NJCGO_StoneFx_Grah_armour: applies in and out of combat",
     "NJCGO_StoneFx_Dun_melee: while power attacking",
     "NJCGO_StoneFx_Dun_ranged: while the bow is out",

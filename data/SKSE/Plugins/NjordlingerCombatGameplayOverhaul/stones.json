@@ -4888,10 +4888,9 @@
           "text": "Wuld Nah Kest: a dodge carries on into a short Whirlwind dash (every 20 s).",
           "proc": {
             "on": "dodge",
+            "anim": "ShoutSprintShortStart",
             "at": "self",
-            "cd": 20,
-            "shoutForm": "Skyrim.esm|0x2F7BA",
-            "level": 1
+            "cd": 20
           }
         }
       }

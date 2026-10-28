@@ -64,6 +64,10 @@ namespace SoulStones
 			float radius = 1024.0F;
 			RE::BGSKeyword* nearKeyword = nullptr;   // nearbyKw: the targets must carry it
 			RE::TESEffectShader* shader = nullptr;
+			// d987 / a46d: Whirlwind Sprint's spells carry a Script effect with no script - the dash is the behaviour graph's
+			// (ShoutSprintShortStart / Medium / Long / Longest), so casting the word from code moves nothing. A proc with
+			// "anim" sends that graph event to the target instead.
+			std::string anim;
 			bool combat = false;                // a tick fires only while the player is in combat
 			bool guarding = false;              // a tick fires only while blocking or holding a drawn bow
 		};
@@ -318,6 +322,7 @@ namespace SoulStones
 				c.proc.on = on == "hitBy" ? Proc::On::kHitBy : on == "kill" ? Proc::On::kKill : on == "cooldown" ? Proc::On::kCooldown : on == "tick" ? Proc::On::kTick :
 				            on == "nearDeath" ? Proc::On::kNearDeath : on == "dodge" ? Proc::On::kDodge : Proc::On::kHit;
 				c.proc.op = p.value("op", std::string());
+				c.proc.anim = p.value("anim", std::string());
 				c.proc.shaderDur = p.value("shaderDur", 3.0F);
 				c.proc.radius = p.value("radius", 1024.0F);
 				c.proc.combat = p.value("combat", false);
@@ -2124,6 +2129,11 @@ namespace SoulStones
 				if (pr.op == "calm" && t->IsInCombat()) { t->StopCombat(); }
 				if (pr.op == "yield") { ExtraYield(t, static_cast<int>(std::lround(std::max(1.0F, mag)))); continue; }
 				if (pr.op == "mark") { Mark(t, mag); continue; }
+				if (!pr.anim.empty())
+				{
+					const bool took = t->NotifyAnimationGraph(pr.anim);
+					logger::info("soul stones: proc {} sent {} to {} - the graph {} it", a_key, pr.anim, t->GetName(), took ? "took" : "REFUSED");
+				}
 				if (pr.damage > 0.0F) { Damage(t, pr.damage); }
 				// bfbb: a tick proc re-cast every second stacked (Elemental Fury's speed 115 -> 265) - a target that still carries
 				// the helper's effect is skipped until it lapses
@@ -2138,7 +2148,7 @@ namespace SoulStones
 				}
 			}
 			g_procsFired.fetch_add(1);
-			if (loud) { logger::info("soul stones: proc {} fired on {} target(s){}", a_key, targets.size(), pr.spell ? "" : " - NO spell resolved"); }
+			if (loud) { logger::info("soul stones: proc {} fired on {} target(s){}", a_key, targets.size(), (pr.spell || !pr.anim.empty() || !pr.op.empty()) ? "" : " - NO spell resolved"); }
 			else { logger::debug("soul stones: proc {} fired on {} target(s)", a_key, targets.size()); }
 		}
 
@@ -2860,6 +2870,21 @@ namespace SoulStones
 	}
 
 	void RequestAddSlot(const std::string& a_itemKey) { Queue([key = a_itemKey]() { DoAddSlot(key); }); }
+
+	// DevBench (d987: bench.input key taps never reached TK Dodge): start a dodge exactly as TK Dodge AIO does - its
+	// dodging.cpp sends TKDodgeForward / Back / Left / Right to the actor's graph; the dodge animation then raises
+	// TKDR_DodgeStart, which TK Dodge charges stamina on and the dodge cells fire on.
+	void RequestTestDodge(const std::string& a_direction)
+	{
+		Queue([dir = a_direction]() {
+			auto* p = Player();
+			const std::string ev = "TKDodge" + dir;
+			const bool took = p && p->NotifyAnimationGraph(ev);
+			logger::info("soul stones: test dodge - {} sent to the player's graph, {}", ev, took ? "taken" : "REFUSED (TK Dodge's behaviour not built, or the player cannot dodge now)");
+			std::scoped_lock l(g_lock);
+			g_snapshot.lastResult = fmt::format("test dodge {}: {}", ev, took ? "taken" : "refused");
+		});
+	}
 
 	void RequestGrind(RE::FormID a_gem, bool a_all) { Queue([a_gem, a_all]() { DoGrind(a_gem, a_all); }); }
 

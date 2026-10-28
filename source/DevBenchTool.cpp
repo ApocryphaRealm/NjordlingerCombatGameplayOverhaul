@@ -191,6 +191,12 @@ namespace DevBenchTool
 				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true }, { "note", "read stones.lastResult with op=stones a moment later" } });
 				return;
 			}
+			if (op == "stonesdodge")
+			{
+				SoulStones::RequestTestDodge(args.value("dir", std::string("Forward")));
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "queued", true }, { "note", "dir = Forward / Back / Left / Right; read stones.lastResult with op=stones a moment later" } });
+				return;
+			}
 			if (op == "stonescraft")
 			{
 				SoulStones::RequestCraft(wordIndex(), tierIndex());
