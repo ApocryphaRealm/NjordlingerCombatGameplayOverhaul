@@ -673,5 +673,12 @@
     "NJCGO_StoneFx_LaasSlenAus_melee: the same poison at any health (the doubling below half health is not built)",
     "NJCGO_StoneFx_LaasSlenAus_ranged: the same poison at any health (the doubling below half health is not built)",
     "NJCGO_StoneFx_Fiik_ranged: the mirrored blow is a fixed amount by tier, not the blow\u0027s own damage; the mark lasts 10 seconds"
+  ],
+  "runeDustTextureSets": [
+    "0xC6D",
+    "0xC6E",
+    "0xC6F",
+    "0xC70",
+    "0xC71"
   ]
 }

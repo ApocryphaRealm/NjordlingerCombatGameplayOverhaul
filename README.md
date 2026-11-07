@@ -45,7 +45,8 @@ Sleeping Giant Inn in Riverwood, after his short quest, for one soul gem of the 
 
 | File | What it does |
 |---|---|
-| `NjordlingerCombatGameplayOverhaul.esp` | The 300 stones (the vanilla soul gem models, referenced), the word and phrase effects, perks, abilities, helper spells, tier glow shaders, the Shout clones, loot lists, the runesmith, his quest, dialogue and shop. |
+| `meshes\NjordlingerCGO\Runes`, `textures\NjordlingerCGO\Runes` | The rune-stone models: one carved stone per word (the dragon-script letters cut in and inlaid with glowing soul gem dust) and the uncarved Rune Blank. Built with `build_all.py` in `D:\Claude output\4. plans\cgo-rune-stones` (Blender with PyNifly). |
+| `NjordlingerCombatGameplayOverhaul.esp` | The 320 stones and the Rune Blank (our own rune-stone models; each tier swaps in its dust texture set), the word and phrase effects, perks, abilities, helper spells, tier glow shaders, the Shout clones, loot lists, the runesmith, his quest, dialogue and shop. |
 | `Scripts\*.pex` (+ `Scripts\Source`) | Three dialogue fragments: the quest's two stages and his barter menu. |
 | `SKSE\Plugins\SkyPatcher\leveledList\NjordlingerCGO\SoulStones.ini` | Stones in boss chests (tier by the place's level) and where soul gems are sold. |
 | `SKSE\Plugins\InventoryInjector\NjordlingerCGO_StoneIcons.json` | A soul-gem icon in the tier colour (I4). |

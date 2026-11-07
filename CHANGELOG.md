@@ -69,6 +69,7 @@
   profile's load order and verifies every form they name.
 
 ### Added
+- Our own models for the soul stones and the Rune Blank: a palm-sized dark slate stone with chipped edges and faint chisel marks. Each of the 64 words has its own carved stone, its dragon-script letters cut into the face, the cuts inlaid with glittering soul gem dust that glows softly in the tier colour (Petty to Grand). The blank is the same stone, uncarved. 65 meshes in meshes\NjordlingerCGO\Runes and 13 textures in textures\NjordlingerCGO\Runes. Each tier colour is a texture-set swap (five new texture sets, NJCGO_RuneDust_<tier>, added after every other record, so no form ID moves). The stones drop and land as items and face the camera in the inventory.
 - Clothing tiers: named robes and hoods unique, fine robes and hoods epic, robes magic, other clothing common
 - Carry weight sliders: the starting carry weight and the carry weight per Adaptive Attributes Stamina point
 - The runesmith adds stone slots to gear, up to three, for one orichalcum ingot and a soul gem per slot

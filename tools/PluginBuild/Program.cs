@@ -599,6 +599,7 @@ forms["dll"] =new JsonArray(dllDone.Select(s => (JsonNode)JsonValue.Create(s)!).
 forms["stubs"] = new JsonArray(stubs.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
 forms["approximations"] = new JsonArray(approx.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
 
+if (File.Exists(stonesPath)) { StoneBuild.ApplyRuneModels(mod, JsonNode.Parse(File.ReadAllText(stonesPath))!, forms); }   // newest records: last
 var esp = Path.Combine(repo, "data", "NjordlingerCombatGameplayOverhaul.esp");
 mod.WriteToBinary(esp);
 // The SEQ file (combined run 68e5: Thorvar offered none of his topics): a start-game-enabled quest with dialogue needs

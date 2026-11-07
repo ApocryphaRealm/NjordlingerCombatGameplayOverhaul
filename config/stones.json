@@ -223,6 +223,14 @@
     "blankName": "Rune Blank",
     "blankWeight": 0.3
   },
+  "runeModels": {
+    "_comment": "The owner 2026-11-06: our own rune-stone models in place of the vanilla soul gems and the ingot. One mesh per word (the glyphs cut in, the channels inlaid with dust as the shape RuneInlay, 3D index 1) plus the uncarved blank; the tier colour is a texture-set swap (MODS) to NJCGO_RuneDust_<tier>, built last so no form ID moves. Sources and build: D:\\Claude output\\4. plans\\cgo-rune-stones (build_all.py).",
+    "meshFolder": "NjordlingerCGO\\Runes",
+    "textureFolder": "NjordlingerCGO\\Runes",
+    "blank": "runeblank.nif",
+    "inlayShape": "RuneInlay",
+    "inlayIndex": 1
+  },
   "shoutEdids": {
     "Unrelenting Force": "UnrelentingForceShout",
     "Fire Breath": "FireBreathShout",

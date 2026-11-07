@@ -823,4 +823,60 @@ static class StoneBuild
         };
         Console.WriteLine($"stones: {stonesByTier.Sum(l => l.Count)} stones, {recCount} effects that act, {markerCount} card lines, {perkCount} perks, {selfCount} abilities, {helperForms.Count} helpers; not in loot or at merchants (D22 revised)");
     }
+
+    // ---- the owner 2026-11-06: our own rune-stone models (config/stones.json "runeModels") ------------------------------
+    // Called last, just before the plugin is written: the five TXSTs are the newest records, so no form ID moves. Every
+    // stone takes its word's mesh (the channels' inlay is the shape RuneInlay, 3D index 1) with its tier's dust texture set
+    // swapped in (MODS); the Rune Blank takes the uncarved mesh. New models carry no MODT (lesson: MODT across form 40).
+    public static void ApplyRuneModels(SkyrimMod mod, JsonNode cfg, JsonObject forms)
+    {
+        var rm = cfg["runeModels"];
+        if (rm == null) { return; }
+        var tiers = cfg["tiers"]!.AsArray().Select(n => n!.GetValue<string>()).ToArray();
+        var meshes = rm["meshFolder"]!.GetValue<string>();
+        var tex = rm["textureFolder"]!.GetValue<string>();
+        var inlay = rm["inlayShape"]!.GetValue<string>();
+        var inlayIndex = rm["inlayIndex"]!.GetValue<int>();
+        var sets = new TextureSet[tiers.Length];
+        var txOut = new JsonArray();
+        for (var t = 0; t < tiers.Length; ++t)
+        {
+            var low = tiers[t].ToLowerInvariant();
+            var ts = mod.TextureSets.AddNew("NJCGO_RuneDust_" + tiers[t]);
+            ts.ObjectBounds = new ObjectBounds();
+            ts.Diffuse = $@"{tex}\runedust_{low}.dds";
+            ts.NormalOrGloss = $@"{tex}\runedust_n.dds";
+            // the glow map in both slots the engine may read it from (the other one is unused by a Glow shader)
+            ts.GlowOrDetailMap = $@"{tex}\runedust_{low}_g.dds";
+            ts.EnvironmentMaskOrSubsurfaceTint = $@"{tex}\runedust_{low}_g.dds";
+            sets[t] = ts;
+            txOut.Add($"0x{ts.FormKey.ID:X3}");
+        }
+        int stones = 0, blanks = 0;
+        foreach (var misc in mod.MiscItems)
+        {
+            var edid = misc.EditorID ?? "";
+            if (edid == "NJCGO_RuneBlank")
+            {
+                misc.Model = new Model { File = $@"{meshes}\{rm["blank"]!.GetValue<string>()}" };
+                ++blanks;
+                continue;
+            }
+            if (!edid.StartsWith("NJCGO_Stone_")) { continue; }
+            var parts = edid.Split('_');
+            var t = Array.IndexOf(tiers, parts[^1]);
+            if (parts.Length != 4 || t < 0) { throw new InvalidOperationException($"rune models: unexpected stone EditorID {edid}"); }
+            misc.Model = new Model
+            {
+                File = $@"{meshes}\rune_{parts[2].ToLowerInvariant()}.nif",
+                AlternateTextures = new ExtendedList<AlternateTexture>
+                {
+                    new AlternateTexture { Name = inlay, Index = inlayIndex, NewTexture = sets[t].ToLink<ITextureSetGetter>() }
+                }
+            };
+            ++stones;
+        }
+        forms["runeDustTextureSets"] = txOut;
+        Console.WriteLine($"rune models: {stones} stones and {blanks} blank on {meshes}, {sets.Length} dust texture sets");
+    }
 }
