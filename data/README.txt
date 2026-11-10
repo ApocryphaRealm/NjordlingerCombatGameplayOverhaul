@@ -30,6 +30,10 @@ WHAT IS IN THIS BUILD
   word order add its phrase once you have unlocked its three words; a Shout-only phrase on armour lets you shout it.
   Thorvar Stone-Speaker at the Sleeping Giant Inn in Riverwood sets and takes them out after his short quest, for one
   soul gem of the stone's size each time, and sells stones. The Soul Stones tab shows what your gear carries.
+- Smithing (Smithing tab): tempering as normal, first level only (stations stop at Fine), or sharpening - activating a
+  grindstone sharpens the melee weapon in your right hand to Fine, and it deals +50% damage until its edge wears back
+  to normal. Edges wear with use: each hit you land wears the weapon's tempering, one level lasting a number of hits
+  set per material (Wood 15 to Daedric 60).
 
 REQUIREMENTS
 SKSE64; Address Library for SKSE Plugins; Apocrypha Menu Framework (the settings pages); Keyword Item Distributor;

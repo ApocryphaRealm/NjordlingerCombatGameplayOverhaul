@@ -114,6 +114,21 @@ namespace settings
 		inline bool weaponGlow = true;                     // bWeaponGlow:SoulStones - a drawn weapon glows in its best stone's tier colour
 	}
 
+	// Smithing (4. plans\njcgo-tempering-mode-20261110, the owner 2026-11-10): the tempering mode, the sharpening bonus and
+	// edge wear by hits and material - see Smithing.h.
+	namespace smithing
+	{
+		inline int temperingMode = 0;                      // iTemperingMode:Smithing - 0 normal, 1 first level only, 2 sharpening
+		inline float sharpenBonus = 0.50F;                 // fSharpenDamageBonus:Smithing - 0 to 2 (0.50 = +50% damage)
+		inline bool edgeWear = true;                       // bEdgeWear:Smithing - hits wear a weapon's tempering
+		// [Wear] iHits<Material>: how many landed hits one quality level of tempering lasts, by weapon material
+		inline constexpr int kMaterialCount = 17;
+		inline constexpr const char* kMaterialIni[kMaterialCount] = { "Wood", "Iron", "Steel", "Silver", "Imperial", "Draugr", "Orcish",
+			"Dwarven", "Elven", "Nordic", "Falmer", "Glass", "Ebony", "Stalhrim", "Dragonbone", "Daedric", "Other" };
+		inline constexpr int kDefaultHits[kMaterialCount] = { 15, 20, 25, 25, 22, 22, 30, 35, 35, 40, 30, 40, 50, 55, 60, 60, 30 };
+		inline int hits[kMaterialCount]{ 15, 20, 25, 25, 22, 22, 30, 35, 35, 40, 30, 40, 50, 55, 60, 60, 30 };
+	}
+
 	void Init(const std::string& a_iniFileName);
 	bool Reload();
 	bool Save();

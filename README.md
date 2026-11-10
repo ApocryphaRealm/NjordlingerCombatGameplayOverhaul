@@ -59,6 +59,20 @@ drawn weapon glow. Content: `config\stones.json` (every number a default to tune
 `tools\build-papyrus.py` (needs the Papyrus compiler and the game's script sources). `tools\make-glyphs.py` renders the
 glyph atlas from the game's own dragon font; `tools\word-numbers.py` writes the numbers into the design's word table.
 
+## Smithing: tempering modes, sharpening and edge wear
+
+The Smithing tab and `[Smithing]` / `[Wear]` in the INI:
+
+| Setting | What it does |
+|---|---|
+| `iTemperingMode=0` Normal tempering | The grindstone and the armour workbench temper as in the game (the default). |
+| `iTemperingMode=1` First level only | Tempering stops at the first quality, Fine, at both stations. An item already Fine or better cannot be improved further. |
+| `iTemperingMode=2` Sharpening | Activating a grindstone sharpens the melee weapon in your right hand to Fine at once, without the menu. While its tempering is above normal you deal `fSharpenDamageBonus` (0.50 = +50%) more weapon damage - the Sharpened ability in Active Effects. The armour workbench keeps normal tempering. |
+| `bEdgeWear=1` | Each hit you land with your equipped melee weapon (not a miss, not a bash) wears its tempering by one quality level divided by the hits in its material's row. It stops at normal. Every mode. |
+| `[Wear] iHits<Material>` | How many landed hits one quality level lasts: Wood 15, Iron 20, Imperial and Ancient Nord 22, Steel and Silver 25, Orcish and Falmer 30, Dwarven and Elven 35, Nordic and Glass 40, Ebony 50, Stalhrim 55, Dragonbone and Daedric 60, Other 30. Read from the weapon's material keyword; a weapon with two takes the first row in this order. |
+
+The quality values come from the game (fHealthDataValue1 = Fine, 1.1; one level = fHealthDataValue2 - fHealthDataValue1). Without a Smithing-tab change a fresh install tempers as before, but edges do wear (bEdgeWear is on). Use one wear system: a durability mod such as Simple Degradation would wear the same weapons a second time.
+
 ## Requirements
 
 - SKSE64 for 1.5.97

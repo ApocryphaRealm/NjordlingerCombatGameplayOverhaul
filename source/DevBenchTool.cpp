@@ -14,6 +14,7 @@
 #include "StatsMenuClass.h"
 #include "Settings.h"
 #include "Shouting.h"
+#include "Smithing.h"
 #include "CarryWeight.h"
 #include "SoulStones.h"
 #include "UI.h"
@@ -127,6 +128,27 @@ namespace DevBenchTool
 				if (args.contains("enabled")) { Shouting::RequestSetEnabled(args.value("enabled", false)); }
 				if (args.contains("autoConvert")) { Shouting::RequestSetAutoConvert(args.value("autoConvert", false)); }
 				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "shouting", nlohmann::json::parse(Shouting::StatusJson(), nullptr, false) } });
+				return;
+			}
+			if (op == "smithing")
+			{
+				// mode=<0-2> bonus=<0-2> wear=<bool> hits={"Iron":5,...} set the Smithing tab; sharpen=true activates a grindstone
+				// as the player would (Sharpening mode's path, whatever the mode); wearHits=<n> lands n hits with the right-hand weapon
+				if (args.contains("mode")) { settings::smithing::temperingMode = std::clamp(args.value("mode", 0), 0, 2); }
+				if (args.contains("bonus")) { settings::smithing::sharpenBonus = std::clamp(args.value("bonus", 0.5F), 0.0F, 2.0F); }
+				if (args.contains("wear")) { settings::smithing::edgeWear = args.value("wear", true); }
+				if (args.contains("hits") && args["hits"].is_object())
+				{
+					for (int i = 0; i < settings::smithing::kMaterialCount; ++i)
+					{
+						if (args["hits"].contains(settings::smithing::kMaterialIni[i])) { settings::smithing::hits[i] = std::clamp(args["hits"].value(settings::smithing::kMaterialIni[i], 30), 1, 500); }
+					}
+				}
+				if (args.value("sharpen", false)) { Smithing::RequestSharpen(); }
+				if (args.contains("wearHits")) { Smithing::RequestWearHits(std::clamp(args.value("wearHits", 1), 1, 1000)); }
+				Smithing::RequestApply();
+				Write(a_sink, a_write, { { "ok", true }, { "op", op }, { "note", "changes are queued to the main thread: call op=smithing again to read them" },
+					{ "smithing", nlohmann::json::parse(Smithing::StatusJson(), nullptr, false) } });
 				return;
 			}
 			if (op == "carry")
@@ -268,10 +290,11 @@ namespace DevBenchTool
 			"quest-reward rows, the race-menu class category, level-up gains and the attribute-pick skip, the perk lock and crafting gate counts, the engine patches. "
 			"op=choose class=<id> picks the starting class; op=upgrade index=<n> takes option n of the upgrade on offer; op=evolvebox index=<n> presses button n of the Stats Menu evolution box (the last is Later); op=xp amount=<n> adds class experience; "
 			"op=quest quest=<editorID> pays that quest's row as if it had completed; op=reload re-reads the INI; op=strings reports the active language; "
-			"op=gear reports the Gear module (the player's pieces per set, the 2- and 4-piece abilities held, uniques worn, the no-enchant pass); op=gearrecount recounts the player's pieces; op=geardiag reads the player's unique abilities and their active effects into gear.diagnose; op=gearset sets=<bool> uniques=<bool> setStrength=<0.25-2> uniqueStrength=<0.25-2> sets the Gear tab's switches and strengths.\","
+			"op=gear reports the Gear module (the player's pieces per set, the 2- and 4-piece abilities held, uniques worn, the no-enchant pass); op=gearrecount recounts the player's pieces; op=geardiag reads the player's unique abilities and their active effects into gear.diagnose; op=gearset sets=<bool> uniques=<bool> setStrength=<0.25-2> uniqueStrength=<0.25-2> sets the Gear tab's switches and strengths; op=smithing reports the Smithing tab (mode, bonus, wear table, the right-hand weapon's tempering and material, Sharpened, the hooks) and takes mode=<0-2> bonus=<0-2> wear=<bool> hits={material:n} sharpen=true wearHits=<n>.\","
 			"\"inputSchema\":{\"type\":\"object\",\"properties\":{\"op\":{\"type\":\"string\"},\"class\":{\"type\":\"string\"},\"index\":{\"type\":\"integer\"},"
 			"\"amount\":{\"type\":\"number\"},\"quest\":{\"type\":\"string\"},"
-			"\"sets\":{\"type\":\"boolean\"},\"uniques\":{\"type\":\"boolean\"},\"setStrength\":{\"type\":\"number\"},\"uniqueStrength\":{\"type\":\"number\"}}},"
+			"\"sets\":{\"type\":\"boolean\"},\"uniques\":{\"type\":\"boolean\"},\"setStrength\":{\"type\":\"number\"},\"uniqueStrength\":{\"type\":\"number\"},"
+			"\"mode\":{\"type\":\"integer\"},\"bonus\":{\"type\":\"number\"},\"wear\":{\"type\":\"boolean\"},\"hits\":{\"type\":\"object\"},\"sharpen\":{\"type\":\"boolean\"},\"wearHits\":{\"type\":\"integer\"}}},"
 			"\"readOnly\":false"
 			"}";
 		if (devBench->RegisterTool("njcgo.control", descriptor, &ControlTool, nullptr))

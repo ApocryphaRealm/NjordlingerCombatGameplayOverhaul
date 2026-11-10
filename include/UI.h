@@ -1,7 +1,7 @@
 #pragma once
 
 // Njordlinger Combat Gameplay Overhaul - the settings page inside the Apocrypha Menu Framework (PLAN.md phase 2 step 8):
-// one section, a tab per module - Progression, Classes, Quest Rewards, Gear (phase 3), Soul Stones (phase 4). The patterns (export probe, precise sliders,
+// one section, a tab per module - Progression, Classes, Quest Rewards, Gear (phase 3), Soul Stones (phase 4), Smithing (tempering modes and edge wear). The patterns (export probe, precise sliders,
 // toggles, Save / Reload / Restore, TR() strings) are Character Progression Control's and Souls to Perks'.
 
 namespace UI
@@ -16,6 +16,7 @@ namespace UI
 		void __stdcall QuestRewards();
 		void __stdcall Gear();
 		void __stdcall SoulStones();
+		void __stdcall Smithing();
 	}
 
 	// The runesmith's window (phase 4, D22): the Soul Stones page while his service is open.

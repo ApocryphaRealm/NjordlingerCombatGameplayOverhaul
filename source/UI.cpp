@@ -19,6 +19,7 @@
 #include "CarryWeight.h"
 #include "GuildRoutes.h"
 #include "Skills.h"
+#include "Smithing.h"
 #include "SoulStones.h"
 
 #include "utils/Logger.h"
@@ -99,6 +100,10 @@ namespace UI
 			}
 			return s_names[static_cast<std::size_t>(a_i)].empty() ? strings::TR(kSkillKeys[a_i], kSkillLabels[a_i]) : s_names[static_cast<std::size_t>(a_i)].c_str();
 		}
+
+		constexpr const char* const kMaterialKeys[settings::smithing::kMaterialCount] = { "NJ_Mat_Wood", "NJ_Mat_Iron", "NJ_Mat_Steel", "NJ_Mat_Silver",
+			"NJ_Mat_Imperial", "NJ_Mat_Draugr", "NJ_Mat_Orcish", "NJ_Mat_Dwarven", "NJ_Mat_Elven", "NJ_Mat_Nordic", "NJ_Mat_Falmer", "NJ_Mat_Glass", "NJ_Mat_Ebony",
+			"NJ_Mat_Stalhrim", "NJ_Mat_Dragonbone", "NJ_Mat_Daedric", "NJ_Mat_Other" };
 
 		constexpr const char* const kGroupKeys[] = { "NJ_Group_Warrior", "NJ_Group_Magic", "NJ_Group_Covert" };
 		constexpr const char* const kGroupLabels[] = { "Warrior", "Magic", "Covert" };
@@ -243,6 +248,7 @@ namespace UI
 					g_perksTableSeeded = false;
 					Classes::RequestApply();
 					Gear::RequestApply();
+					::Smithing::RequestApply();
 					SetStatus(ok ? strings::TR("NJ_StatusReloaded", "Settings reloaded from the INI.") : strings::TR("NJ_StatusReloadFail", "Could not read the INI. See the log for why."));
 				});
 			}
@@ -255,6 +261,7 @@ namespace UI
 					g_perksTableSeeded = false;
 					Classes::RequestApply();
 					Gear::RequestApply();
+					::Smithing::RequestApply();
 				});
 				SetStatus(strings::TR("NJ_StatusRestored", "Defaults restored. Press Save to keep them."));
 			}
@@ -312,6 +319,7 @@ namespace UI
 		SKSEMenuFramework::AddSectionItem("Quest Rewards", Pages::QuestRewards);
 		SKSEMenuFramework::AddSectionItem("Gear", Pages::Gear);
 		SKSEMenuFramework::AddSectionItem("Soul Stones", Pages::SoulStones);
+		SKSEMenuFramework::AddSectionItem("Smithing", Pages::Smithing);
 		// the runesmith's window: the same socketing page, opened when his "Set my soul stones." line ends
 		g_runesmithWindow = SKSEMenuFramework::AddWindow(RunesmithWindow, true);
 		// 6616: on the first line after the window was closed with its X, IsOpen = true did not show it (the second line did).
@@ -540,6 +548,64 @@ namespace UI
 		HelpMarker(strings::TR("NJ_HelpMarkLockedTrees", "In the skills menu's ring, the trees your class locks are dimmed and marked (locked). Their perks cannot be taken either way."));
 		const auto lk = Lockouts::GetState();
 		ImGuiMCP::TextDisabled(strings::TR("NJ_LockReadout", "Perks conditioned: %u (entry points %u) - crafting refusals this session: %u"), lk.perksConditioned, lk.entriesConditioned, lk.craftingRefusals);
+		ImGuiMCP::PopItemWidth();
+		RenderButtons();
+	}
+
+	// The Smithing tab (4. plans\njcgo-tempering-mode-20261110): the tempering mode, the sharpening bonus, edge wear by
+	// hits and material.
+	void __stdcall Pages::Smithing()
+	{
+		strings::Tick();
+		using namespace settings;
+		ImGuiMCP::PushItemWidth(260.0F);
+		const auto s = ::Smithing::GetSnapshot();
+
+		ImGuiMCP::SeparatorText(strings::TR("NJ_SmTemperTitle", "Tempering"));
+		int mode = smithing::temperingMode;
+		bool modeChanged = false;
+		modeChanged |= ImGuiMCP::RadioButton(strings::TR("NJ_SmModeNormal", "Normal tempering"), &mode, 0);
+		ImGuiMCP::SameLine();
+		modeChanged |= ImGuiMCP::RadioButton(strings::TR("NJ_SmModeFirst", "First level only"), &mode, 1);
+		ImGuiMCP::SameLine();
+		modeChanged |= ImGuiMCP::RadioButton(strings::TR("NJ_SmModeSharpen", "Sharpening"), &mode, 2);
+		if (modeChanged && mode != smithing::temperingMode)
+		{
+			smithing::temperingMode = mode;
+			::Smithing::RequestApply();
+		}
+		if (smithing::temperingMode == 0) { ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SmHelpNormal", "The grindstone and the armour workbench temper as in the game.")); }
+		else if (smithing::temperingMode == 1) { ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SmHelpFirst", "The grindstone and the armour workbench stop at the first quality, Fine. An item already Fine or better cannot be improved further; items tempered higher before keep what they have.")); }
+		else { ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SmHelpSharpen", "Activating a grindstone sharpens the melee weapon in your right hand to Fine at once - no menu. While its tempering is above normal it deals the bonus below; hits wear the edge away. The armour workbench keeps normal tempering.")); }
+		float pct = smithing::sharpenBonus * 100.0F;
+		if (NudgeableSlider(strings::TR("NJ_SmBonus", "Extra damage while sharp, percent"), &pct, 0.0F, 200.0F, "%.0f", 1.0F))
+		{
+			smithing::sharpenBonus = pct / 100.0F;
+			::Smithing::RequestApply();
+		}
+		HelpMarker(strings::TR("NJ_SmHelpBonus", "Sharpening mode only: the extra weapon damage while the equipped weapon's tempering is above normal. Shown in Active Effects as Sharpened."));
+		if (!s.temperHook) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SmNoCap", "First level only could not attach to this game version (see the log): tempering stays normal.")); }
+
+		ImGuiMCP::SeparatorText(strings::TR("NJ_SmWearTitle", "Edge wear"));
+		ImGuiMCP::Toggle(strings::TR("NJ_SmEdgeWear", "Edges wear with use"), &smithing::edgeWear);
+		HelpMarker(strings::TR("NJ_SmHelpWear", "Each hit you land with your equipped melee weapon wears its tempering: one quality level lasts the number of hits in its material's row below. It stops at normal. Misses and bashes do not wear. Applies in every tempering mode."));
+		if (s.weapon.empty() || !s.melee) { ImGuiMCP::TextDisabled("%s", strings::TR("NJ_SmNoWeapon", "No melee weapon in your right hand.")); }
+		else
+		{
+			const int row = s.material >= 0 ? s.material : smithing::kMaterialCount - 1;
+			ImGuiMCP::TextDisabled(strings::TR("NJ_SmWeaponLine", "%s - tempering %.3f (Fine is %.2f) - %s: one level lasts %d hits"), s.weapon.c_str(), s.health, s.fine,
+				strings::TR(kMaterialKeys[row], smithing::kMaterialIni[row]), smithing::hits[row]);
+		}
+		ImGuiMCP::TextDisabled(strings::TR("NJ_SmCounters", "This session: %u sharpened, %u hits worn, %u edges lost, %u improvements held at Fine"), s.sharpens, s.hitsWorn, s.edgesLost, s.capped);
+
+		ImGuiMCP::SeparatorText(strings::TR("NJ_SmTableTitle", "Hits per quality level, by material"));
+		ImGuiMCP::TextWrapped("%s", strings::TR("NJ_SmTableHelp", "A weapon with two material keywords takes the first row that matches, in this order. Other: a weapon with none of them."));
+		for (int i = 0; i < smithing::kMaterialCount; ++i)
+		{
+			ImGuiMCP::PushID(i);
+			NudgeableSliderInt(strings::TR(kMaterialKeys[i], smithing::kMaterialIni[i]), &smithing::hits[i], 1, 500);
+			ImGuiMCP::PopID();
+		}
 		ImGuiMCP::PopItemWidth();
 		RenderButtons();
 	}

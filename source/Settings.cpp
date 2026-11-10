@@ -139,6 +139,10 @@ namespace settings
 			stones::nameSlots = true;
 			stones::nameDragonLetters = false;
 			stones::weaponGlow = true;
+			smithing::temperingMode = 0;
+			smithing::sharpenBonus = 0.50F;
+			smithing::edgeWear = true;
+			for (int i = 0; i < smithing::kMaterialCount; ++i) { smithing::hits[i] = smithing::kDefaultHits[i]; }
 		}
 
 		void Clamp()
@@ -161,6 +165,9 @@ namespace settings
 			classes::xpPerLevel = std::clamp(classes::xpPerLevel, 0.0F, 10.0F);
 			gear::setStrength = std::clamp(gear::setStrength, 0.25F, 2.0F);
 			gear::uniqueStrength = std::clamp(gear::uniqueStrength, 0.25F, 2.0F);
+			smithing::temperingMode = std::clamp(smithing::temperingMode, 0, 2);
+			smithing::sharpenBonus = std::clamp(smithing::sharpenBonus, 0.0F, 2.0F);
+			for (int i = 0; i < smithing::kMaterialCount; ++i) { smithing::hits[i] = std::clamp(smithing::hits[i], 1, 500); }
 		}
 
 		bool LoadFileValues(const std::string& a_path)
@@ -225,6 +232,10 @@ namespace settings
 			get("bnameslots:soulstones", stones::nameSlots, ParseBool);
 			get("bnamedragonletters:soulstones", stones::nameDragonLetters, ParseBool);
 			get("bweaponglow:soulstones", stones::weaponGlow, ParseBool);
+			get("itemperingmode:smithing", smithing::temperingMode, ParseInt);
+			get("fsharpendamagebonus:smithing", smithing::sharpenBonus, ParseFloat);
+			get("bedgewear:smithing", smithing::edgeWear, ParseBool);
+			for (int i = 0; i < smithing::kMaterialCount; ++i) { get(Lower(std::string("iHits") + smithing::kMaterialIni[i]) + ":wear", smithing::hits[i], ParseInt); }
 			questrewards::overrides.clear();
 			for (const auto& [id, value] : f.rows)
 			{
@@ -347,6 +358,10 @@ namespace settings
 		ok &= WriteKey(lines, "SoulStones", "bNameSlots", stones::nameSlots ? "1" : "0");
 		ok &= WriteKey(lines, "SoulStones", "bNameDragonLetters", stones::nameDragonLetters ? "1" : "0");
 		ok &= WriteKey(lines, "SoulStones", "bWeaponGlow", stones::weaponGlow ? "1" : "0");
+		ok &= WriteKey(lines, "Smithing", "iTemperingMode", std::to_string(smithing::temperingMode));
+		ok &= WriteKey(lines, "Smithing", "fSharpenDamageBonus", FormatFloat(smithing::sharpenBonus));
+		ok &= WriteKey(lines, "Smithing", "bEdgeWear", smithing::edgeWear ? "1" : "0");
+		for (int i = 0; i < smithing::kMaterialCount; ++i) { ok &= WriteKey(lines, "Wear", (std::string("iHits") + smithing::kMaterialIni[i]).c_str(), std::to_string(smithing::hits[i])); }
 		for (const auto& [id, points] : questrewards::overrides) { ok &= WriteKey(lines, "QuestRewardRows", id.c_str(), std::to_string(points)); }
 
 		std::ofstream out(iniPath, std::ios::trunc);

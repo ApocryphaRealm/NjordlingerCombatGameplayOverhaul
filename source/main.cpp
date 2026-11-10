@@ -18,6 +18,7 @@
 #include "RaceMenuClass.h"
 #include "Settings.h"
 #include "SkillExperience.h"
+#include "Smithing.h"
 #include "StatsMenuClass.h"
 #include "Skills.h"
 #include "Shouting.h"
@@ -63,6 +64,7 @@ namespace
 			GuildRoutes::Install();
 			RowTint::Install();
 			CharacterSheetFix::Install();
+			Smithing::Install();
 			Shouting::Install();
 			CarryWeight::Install();
 			QuestRewards::Install();
@@ -78,6 +80,7 @@ namespace
 			SoulStones::OnGameLoaded();
 			Shouting::OnGameLoaded();
 			CarryWeight::OnGameLoaded();
+			Smithing::OnGameLoaded();
 			break;
 		default:
 			break;
@@ -137,8 +140,8 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	SKSE::Init(a_skse);
 
 	// Trampoline space for the engine patches installed at kDataLoaded: each far branch or call takes 14 bytes; the
-	// skill-improve and attribute-gain entry hooks also park their prologue thunks here.
-	SKSE::AllocTrampoline(512);
+	// skill-improve and attribute-gain entry hooks also park their prologue thunks here; Smithing's tempering cap takes one call.
+	SKSE::AllocTrampoline(640);
 
 	settings::Init("NjordlingerCombatGameplayOverhaul.ini");
 	settings::ApplyLogLevel();

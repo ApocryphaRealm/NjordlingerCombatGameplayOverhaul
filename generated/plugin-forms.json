@@ -680,5 +680,9 @@
     "0xC6F",
     "0xC70",
     "0xC71"
-  ]
+  ],
+  "smithing": {
+    "sharpenedSpell": "0xC73",
+    "sharpenedEffect": "0xC72"
+  }
 }
